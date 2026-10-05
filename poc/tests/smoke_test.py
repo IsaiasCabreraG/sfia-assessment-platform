@@ -148,25 +148,25 @@ def identificar_modulos(sin_llm: bool) -> str:
     print("Módulos bajo prueba")
     for nombre, url, ruta, obligatorio in modulos:
         if nombre == "llm" and sin_llm:
-            print(f"  {nombre:<8}(omitido: --sin-llm)")
+            print(f"  {nombre:<10}(omitido: --sin-llm)")
             continue
         estado, cuerpo = llamar("GET", f"{url}{ruta}", timeout=10)
         if estado == 200 and isinstance(cuerpo, dict) and cuerpo.get("modulo") == nombre:
             versiones = ", ".join(f"{k} {v}" for k, v in cuerpo.get("versiones", {}).items())
             extra = f" · comando: {cuerpo['comando']}" if "comando" in cuerpo else ""
-            print(f"  {nombre:<8}{cuerpo.get('variante', '?'):<22}{versiones}{extra}")
+            print(f"  {nombre:<10}{cuerpo.get('variante', '?'):<22}{versiones}{extra}")
             etiquetas.append(f"{nombre}={cuerpo.get('variante', '?')}")
         elif obligatorio:
             fallos += 1
-            print(f"  {nombre:<8}NO IDENTIFICADO  -> {(estado, cuerpo)}")
+            print(f"  {nombre:<10}NO IDENTIFICADO  -> {(estado, cuerpo)}")
         else:
-            print(f"  {nombre:<8}no está corriendo (no hace falta para esta prueba)")
+            print(f"  {nombre:<10}no está corriendo (no hace falta para esta prueba)")
     try:
         version_bd = psql("SHOW server_version", solo_datos=True)
-        print(f"  {'db':<8}PostgreSQL {version_bd}")
+        print(f"  {'db':<10}PostgreSQL {version_bd}")
         etiquetas.append(f"db=PostgreSQL {version_bd.split()[0]}")
     except (KeyError, FileNotFoundError, subprocess.CalledProcessError):
-        print(f"  {'db':<8}versión no disponible")
+        print(f"  {'db':<10}versión no disponible")
     print()
     return ", ".join(etiquetas)
 
@@ -198,6 +198,15 @@ def probar(sin_llm: bool, secreto: str) -> None:
         i["titulo"] == titulo and i["creado_por"] == NOMBRE_PRUEBA for i in cuerpo
     )
     comprobar("el ítem creado aparece con su creado_por", encontrado, (estado, cuerpo))
+
+    print("Backend: identificación de módulos")
+    estado, cuerpo = llamar("GET", f"{BACKEND}/modulos", timeout=15)
+    nombres = [m.get("modulo") for m in cuerpo] if estado == 200 and isinstance(cuerpo, list) else []
+    comprobar(
+        "GET /modulos -> 200 con backend, llm, auth y db",
+        nombres == ["backend", "llm", "auth", "db"],
+        (estado, cuerpo),
+    )
 
     if sin_llm:
         print("LLM: omitido (--sin-llm)")

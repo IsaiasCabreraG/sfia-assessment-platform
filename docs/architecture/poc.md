@@ -32,7 +32,7 @@ Cada módulo de PoC es independiente y puede cubrir más de un contenedor del C4
 
 | Módulo | Responsabilidad | Candidatos |
 |---|---|---|
-| Frontend | SPA con tres secciones: tabla con datos de la BD, formulario que escribe en la BD y consulta a la IA | React, Vue (TypeScript + Vite) |
+| Frontend | SPA con tres secciones: tabla con datos de la BD, formulario que escribe en la BD y consulta a la IA | React, Vue (TypeScript + Vite; Vue usa TypeScript 5 porque vue-tsc no es compatible con la versión 7) |
 | Backend | API REST: `GET /items`, `POST /items`, `POST /ai/ask` y `GET /modulos` (identifica los módulos, sin token). Valida el JWT en cada llamada y registra al usuario en `users` (por `google_id`) la primera vez que lo ve | Python/FastAPI, Node.js (Express + TypeScript) |
 | Autenticación | Login con Google (OIDC) y emisión del JWT. Servicio Python independiente | Authlib (flujo en el backend), google-auth (botón de Google en el frontend, verificación del token en el backend) |
 | LLM | `ask(prompt) → texto`. Lanza la CLI `claude -p` como subproceso. El comando es configurable para usar otros modelos. Servicio Python independiente | Una implementación (Python) |
