@@ -36,7 +36,7 @@ Cada módulo de PoC es independiente y puede cubrir más de un contenedor del C4
 | Backend | API REST: `GET /items`, `POST /items`, `POST /ai/ask`. Valida el JWT en cada llamada y registra al usuario en `users` (por `google_id`) la primera vez que lo ve | Python/FastAPI, Node.js |
 | Autenticación | Login con Google (OIDC) y emisión del JWT. Servicio Python independiente | Authlib (flujo en el backend), google-auth (botón de Google en el frontend, verificación del token en el backend) |
 | LLM | `ask(prompt) → texto`. Lanza la CLI `claude -p` como subproceso. El comando es configurable para usar otros modelos. Servicio Python independiente | Una implementación (Python) |
-| Base de datos | PostgreSQL con las tablas `users` e `items` Acceso con **ORM**: SQLAlchemy (con FastAPI), Prisma o Drizzle (con Node). Acceso con **SQL directo**: psycopg (con FastAPI), pg (con Node) |
+| Base de datos | PostgreSQL con las tablas `users` e `items` Acceso con **ORM**: SQLAlchemy (con FastAPI). Acceso con **SQL directo**: psycopg (con FastAPI), pg (con Node) |
 
 ### Datos
 
@@ -51,6 +51,7 @@ Cada módulo de PoC es independiente y puede cubrir más de un contenedor del C4
 | Frontend ↔ Backend | REST con el JWT en el encabezado `Authorization` |
 | Backend ↔ Base de datos | SQL, mediante un ORM o con consultas directas |
 | Backend ↔ LLM | HTTP al servicio LLM (`POST /ask`) |
+| Cualquier módulo ↔ prueba de humo | `GET /health` sin token: devuelve `modulo`, `variante` y `versiones`, para identificar qué implementación se prueba |
 
 ## 6. Flujo de prueba
 
@@ -89,7 +90,9 @@ Todo corre en local, sin contenedores: es una prueba de concepto. Cada rol tiene
 
 - La configuración (puertos, URLs, claves, comando de la CLI) va en variables de entorno (`.env`).
 - Un `Makefile` arranca la combinación elegida con un comando, por ejemplo `make run FRONT=vue BACK=node AUTH=authlib`.
+- `bash poc/<módulo>/run.sh` levanta cada módulo Python: crea su entorno virtual y su `.env` si faltan, instala las dependencias si cambiaron y arranca `uvicorn`.
 - Se anotan las versiones de Python, Node y PostgreSQL usadas en cada resultado, porque el entorno no es reproducible.
+- `python3 poc/smoke_test.py` ejecuta una prueba de humo del backend y del LLM, e imprime la variante y las versiones de cada módulo (`--sin-llm` omite las llamadas a la CLI).
 
 ## 10. Pendiente
 

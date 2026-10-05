@@ -15,8 +15,10 @@ En otra terminal:
         -d '{"prompt":"Di hola en una frase"}'
 """
 import os
+import platform
 import shlex
 import subprocess
+from importlib.metadata import version
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -28,6 +30,16 @@ CLI_COMMAND = shlex.split(os.getenv("LLM_CLI_COMMAND", "claude -p"))
 TIMEOUT = int(os.getenv("LLM_TIMEOUT_SECONDS", "120"))
 
 app = FastAPI(title="PoC - Módulo LLM")
+
+
+@app.get("/health")
+def health():
+    return {
+        "modulo": "llm",
+        "variante": "python-cli",
+        "versiones": {"python": platform.python_version(), "fastapi": version("fastapi")},
+        "comando": " ".join(CLI_COMMAND),
+    }
 
 
 class AskRequest(BaseModel):

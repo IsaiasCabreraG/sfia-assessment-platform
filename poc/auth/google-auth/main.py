@@ -17,7 +17,9 @@ El frontend (http://localhost:5173) obtiene el ID token con el botón de Google 
     POST http://localhost:8001/auth/google   {"id_token": "<token de Google>"}
 """
 import os
+import platform
 import time
+from importlib.metadata import version
 
 import jwt
 from dotenv import load_dotenv
@@ -42,6 +44,19 @@ app.add_middleware(
     allow_methods=["POST"],
     allow_headers=["Content-Type"],
 )
+
+
+@app.get("/health")
+def health():
+    return {
+        "modulo": "auth",
+        "variante": "google-auth",
+        "versiones": {
+            "python": platform.python_version(),
+            "fastapi": version("fastapi"),
+            "google-auth": version("google-auth"),
+        },
+    }
 
 
 class GoogleLoginRequest(BaseModel):

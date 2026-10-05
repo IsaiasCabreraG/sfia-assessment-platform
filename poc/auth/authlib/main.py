@@ -14,7 +14,9 @@ Luego abre en el navegador http://localhost:8001/auth/login, inicia sesión con 
 y la respuesta del callback será un JSON con el JWT.
 """
 import os
+import platform
 import time
+from importlib.metadata import version
 
 import jwt
 from authlib.integrations.starlette_client import OAuth, OAuthError
@@ -40,6 +42,19 @@ oauth.register(
     client_secret=os.environ["GOOGLE_CLIENT_SECRET"],
     client_kwargs={"scope": "openid email profile"},
 )
+
+
+@app.get("/health")
+def health():
+    return {
+        "modulo": "auth",
+        "variante": "authlib",
+        "versiones": {
+            "python": platform.python_version(),
+            "fastapi": version("fastapi"),
+            "authlib": version("authlib"),
+        },
+    }
 
 
 @app.get("/auth/login")
