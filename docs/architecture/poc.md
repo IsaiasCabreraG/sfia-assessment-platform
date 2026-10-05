@@ -33,10 +33,10 @@ Cada módulo de PoC es independiente y puede cubrir más de un contenedor del C4
 | Módulo | Responsabilidad | Candidatos |
 |---|---|---|
 | Frontend | SPA con tres secciones: tabla con datos de la BD, formulario que escribe en la BD y consulta a la IA | React, Vue |
-| Backend | API REST: `GET /items`, `POST /items`, `POST /ai/ask`. Valida el JWT en cada llamada | Python/FastAPI, Node.js |
+| Backend | API REST: `GET /items`, `POST /items`, `POST /ai/ask`. Valida el JWT en cada llamada y registra al usuario en `users` (por `google_id`) la primera vez que lo ve | Python/FastAPI, Node.js |
 | Autenticación | Login con Google (OIDC) y emisión del JWT. Servicio Python independiente | Authlib (flujo en el backend), google-auth (botón de Google en el frontend, verificación del token en el backend) |
 | LLM | `ask(prompt) → texto`. Lanza la CLI `claude -p` como subproceso. El comando es configurable para usar otros modelos. Servicio Python independiente | Una implementación (Python) |
-| Base de datos | PostgreSQL con las tablas `users` e `items` | SQLAlchemy (con FastAPI), Prisma o Drizzle (con Node) |
+| Base de datos | PostgreSQL con las tablas `users` e `items` Acceso con **ORM**: SQLAlchemy (con FastAPI), Prisma o Drizzle (con Node). Acceso con **SQL directo**: psycopg (con FastAPI), pg (con Node) |
 
 ### Datos
 
@@ -47,11 +47,10 @@ Cada módulo de PoC es independiente y puede cubrir más de un contenedor del C4
 
 | Conexión | Contrato |
 |---|---|
-| Frontend ↔ Autenticación | Redirección o botón de Google; el módulo devuelve un JWT |
+| Frontend ↔ Autenticación | Redirección o botón de Google; el módulo devuelve un JWT firmado con HS256 (secreto compartido con el backend) |
 | Frontend ↔ Backend | REST con el JWT en el encabezado `Authorization` |
-| Backend ↔ Base de datos | SQL mediante el ORM del backend |
+| Backend ↔ Base de datos | SQL, mediante un ORM o con consultas directas |
 | Backend ↔ LLM | HTTP al servicio LLM (`POST /ask`) |
-| Autenticación ↔ Base de datos | Lectura y escritura de `users` |
 
 ## 6. Flujo de prueba
 
@@ -67,12 +66,14 @@ Al ser intercambiables, se prueba cada implementación contra las demás fijas:
 - Frontend: React o Vue, contra el mismo backend.
 - Backend: FastAPI o Node, con el mismo frontend, la misma BD y los mismos servicios.
 - Autenticación: Authlib o google-auth, con el mismo frontend y backend.
+- Acceso a datos: ORM o SQL directo, con el mismo frontend, backend y BD.
 
 ## 8. Limitaciones conocidas
 
 - El módulo LLM usa la sesión de la CLI `claude` instalada en la máquina local. Sirve para la PoC, no para un despliegue. Cada consulta levanta un proceso y tarda varios segundos.
 - El módulo LLM debe pasar el prompt sin `shell=True` (o por stdin) y con un timeout.
 - Los resultados de esta PoC no reflejan cómo se conectará el producto final al LLM.
+- La PoC concentra el acceso a la BD en el backend. Esto difiere de la arquitectura original (un schema por módulo) y no valida schemas ni roles de BD por módulo.
 
 ## 9. Ejecución
 
@@ -92,6 +93,5 @@ Todo corre en local, sin contenedores: es una prueba de concepto. Cada rol tiene
 
 ## 10. Pendiente
 
-- Firma del JWT: secreto compartido (HS256) o clave pública (RS256).
 - Criterios de comparación de cada módulo (esfuerzo, rendimiento, mantenibilidad u otros).
 - Estructura interna de cada módulo.

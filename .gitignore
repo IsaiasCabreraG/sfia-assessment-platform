@@ -2,3 +2,5 @@ scratchpad/
 Taller de Titulo/
 .claude/settings.local.json
 .env
+client_secret*.json
+__pycache__/
