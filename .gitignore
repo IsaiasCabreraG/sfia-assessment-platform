@@ -4,3 +4,4 @@ Taller de Titulo/
 .env
 client_secret*.json
 __pycache__/
+node_modules/

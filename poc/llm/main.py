@@ -18,6 +18,7 @@ import os
 import platform
 import shlex
 import subprocess
+import tempfile
 from importlib.metadata import version
 
 from dotenv import load_dotenv
@@ -28,6 +29,9 @@ load_dotenv()
 
 CLI_COMMAND = shlex.split(os.getenv("LLM_CLI_COMMAND", "claude -p"))
 TIMEOUT = int(os.getenv("LLM_TIMEOUT_SECONDS", "120"))
+# Carpeta desde la que se lanza la CLI. Debe ser neutra: si está dentro de un proyecto, la CLI
+# carga su CLAUDE.md y su memoria y contamina las respuestas.
+CLI_CWD = os.getenv("LLM_CLI_CWD") or tempfile.gettempdir()
 
 app = FastAPI(title="PoC - Módulo LLM")
 
@@ -39,6 +43,7 @@ def health():
         "variante": "python-cli",
         "versiones": {"python": platform.python_version(), "fastapi": version("fastapi")},
         "comando": " ".join(CLI_COMMAND),
+        "cwd": CLI_CWD,
     }
 
 
@@ -60,6 +65,7 @@ def ask(req: AskRequest) -> AskResponse:
             capture_output=True,
             text=True,
             timeout=TIMEOUT,
+            cwd=CLI_CWD,
         )
     except subprocess.TimeoutExpired:
         raise HTTPException(status_code=504, detail="La CLI excedió el tiempo límite")

@@ -33,7 +33,7 @@ Cada módulo de PoC es independiente y puede cubrir más de un contenedor del C4
 | Módulo | Responsabilidad | Candidatos |
 |---|---|---|
 | Frontend | SPA con tres secciones: tabla con datos de la BD, formulario que escribe en la BD y consulta a la IA | React, Vue |
-| Backend | API REST: `GET /items`, `POST /items`, `POST /ai/ask`. Valida el JWT en cada llamada y registra al usuario en `users` (por `google_id`) la primera vez que lo ve | Python/FastAPI, Node.js |
+| Backend | API REST: `GET /items`, `POST /items`, `POST /ai/ask`. Valida el JWT en cada llamada y registra al usuario en `users` (por `google_id`) la primera vez que lo ve | Python/FastAPI, Node.js (Express + TypeScript) |
 | Autenticación | Login con Google (OIDC) y emisión del JWT. Servicio Python independiente | Authlib (flujo en el backend), google-auth (botón de Google en el frontend, verificación del token en el backend) |
 | LLM | `ask(prompt) → texto`. Lanza la CLI `claude -p` como subproceso. El comando es configurable para usar otros modelos. Servicio Python independiente | Una implementación (Python) |
 | Base de datos | PostgreSQL con las tablas `users` e `items` Acceso con **ORM**: SQLAlchemy (con FastAPI). Acceso con **SQL directo**: psycopg (con FastAPI), pg (con Node) |
@@ -73,6 +73,7 @@ Al ser intercambiables, se prueba cada implementación contra las demás fijas:
 
 - El módulo LLM usa la sesión de la CLI `claude` instalada en la máquina local. Sirve para la PoC, no para un despliegue. Cada consulta levanta un proceso y tarda varios segundos.
 - El módulo LLM debe pasar el prompt sin `shell=True` (o por stdin) y con un timeout.
+- La CLI hereda el contexto del directorio desde el que se lanza (CLAUDE.md y memoria del proyecto). El módulo LLM la lanza desde una carpeta neutra, configurable con `LLM_CLI_CWD`.
 - Los resultados de esta PoC no reflejan cómo se conectará el producto final al LLM.
 - La PoC concentra el acceso a la BD en el backend. Esto difiere de la arquitectura original (un schema por módulo) y no valida schemas ni roles de BD por módulo.
 
@@ -90,7 +91,7 @@ Todo corre en local, sin contenedores: es una prueba de concepto. Cada rol tiene
 
 - La configuración (puertos, URLs, claves, comando de la CLI) va en variables de entorno (`.env`).
 - Un `Makefile` arranca la combinación elegida con un comando, por ejemplo `make run FRONT=vue BACK=node AUTH=authlib`.
-- `bash poc/<módulo>/run.sh` levanta cada módulo Python: crea su entorno virtual y su `.env` si faltan, instala las dependencias si cambiaron y arranca `uvicorn`.
+- `bash poc/<módulo>/run.sh` levanta cada módulo: en Python, crea su entorno virtual y su `.env` si faltan, instala las dependencias si cambiaron y arranca `uvicorn`; en Node, instala con `npm` y arranca con `node`.
 - Se anotan las versiones de Python, Node y PostgreSQL usadas en cada resultado, porque el entorno no es reproducible.
 - `python3 poc/smoke_test.py` ejecuta una prueba de humo del backend y del LLM, e imprime la variante y las versiones de cada módulo (`--sin-llm` omite las llamadas a la CLI).
 
