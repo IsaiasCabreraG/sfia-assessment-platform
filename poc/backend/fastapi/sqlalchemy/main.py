@@ -17,7 +17,7 @@ el módulo LLM en el puerto 8002. Detén antes la otra variante del backend (amb
 
 Prueba automática (desde la raíz del repositorio):
 
-    python3 poc/smoke_test.py
+    python3 poc/tests/smoke_test.py
 
 Prueba manual: saca un token en http://localhost:8001/auth/login (módulo de autenticación) y:
 
@@ -39,8 +39,9 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from sqlalchemy import BigInteger, DateTime, ForeignKey, create_engine, func, select
+from sqlalchemy import BigInteger, DateTime, ForeignKey, create_engine, func, select, text
 from sqlalchemy.engine import URL
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
@@ -56,6 +57,7 @@ JWT_SECRET = os.environ["JWT_SECRET"]
 LLM_URL = os.getenv("LLM_URL", "http://localhost:8002")
 LLM_TIMEOUT_SECONDS = float(os.getenv("LLM_TIMEOUT_SECONDS", "130"))
 FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
+AUTH_URL = os.getenv("AUTH_URL", "http://localhost:8001")
 
 engine = create_engine(
     URL.create(
@@ -108,8 +110,7 @@ app.add_middleware(
 )
 
 
-@app.get("/health")
-def health():
+def salud_propia() -> dict:
     return {
         "modulo": "backend",
         "variante": "fastapi-sqlalchemy",
@@ -120,6 +121,33 @@ def health():
             "psycopg": version("psycopg"),
         },
     }
+
+
+@app.get("/health")
+def health():
+    return salud_propia()
+
+
+def salud_de(modulo: str, url: str) -> dict:
+    """Consulta el /health de otro módulo; si no responde, lo indica en vez de fallar."""
+    try:
+        resp = httpx.get(f"{url}/health", timeout=3)
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, ValueError):
+        return {"modulo": modulo, "variante": None, "error": "sin respuesta"}
+
+
+@app.get("/modulos")
+def modulos():
+    """Variante y versiones de los módulos de la PoC, para identificar qué se está probando."""
+    try:
+        with Session(engine) as db:
+            version_bd = db.execute(text("SHOW server_version")).scalar_one().split()[0]
+        bd = {"modulo": "db", "variante": "postgresql", "versiones": {"postgresql": version_bd}}
+    except SQLAlchemyError:
+        bd = {"modulo": "db", "variante": None, "error": "sin respuesta"}
+    return [salud_propia(), salud_de("llm", LLM_URL), salud_de("auth", AUTH_URL), bd]
 
 
 def usuario_actual(authorization: str = Header(default="")) -> dict:

@@ -41,7 +41,7 @@ app = FastAPI(title="PoC - Autenticación (google-auth)")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[FRONTEND_ORIGIN],
-    allow_methods=["POST"],
+    allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
 )
 
@@ -56,6 +56,8 @@ def health():
             "fastapi": version("fastapi"),
             "google-auth": version("google-auth"),
         },
+        # Público por diseño: el frontend lo usa para mostrar el botón de Google.
+        "google_client_id": GOOGLE_CLIENT_ID,
     }
 
 

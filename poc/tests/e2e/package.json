@@ -1,0 +1,14 @@
+{
+  "name": "poc-tests-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "playwright test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^24.0.0",
+    "typescript": "^7.0.2"
+  }
+}

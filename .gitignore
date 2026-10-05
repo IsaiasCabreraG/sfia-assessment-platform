@@ -5,3 +5,5 @@ Taller de Titulo/
 client_secret*.json
 __pycache__/
 node_modules/
+dist/
+test-results/

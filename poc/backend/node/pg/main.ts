@@ -18,7 +18,7 @@
  *
  * Prueba automática (desde la raíz del repositorio):
  *
- *     python3 poc/smoke_test.py
+ *     python3 poc/tests/smoke_test.py
  *
  * Prueba manual: saca un token en http://localhost:8001/auth/login y:
  *
@@ -48,6 +48,7 @@ const JWT_SECRET = new TextEncoder().encode(entorno("JWT_SECRET"));
 const LLM_URL = process.env.LLM_URL ?? "http://localhost:8002";
 const LLM_TIMEOUT_SECONDS = Number(process.env.LLM_TIMEOUT_SECONDS ?? "130");
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ?? "http://localhost:5173";
+const AUTH_URL = process.env.AUTH_URL ?? "http://localhost:8001";
 const PORT = Number(process.env.PORT ?? "8000");
 
 // BIGINT (int8) llega como texto por defecto; se convierte a número para igualar el contrato
@@ -78,8 +79,8 @@ const app = express();
 app.use(cors({ origin: FRONTEND_ORIGIN, methods: ["GET", "POST"], allowedHeaders: ["Authorization", "Content-Type"] }));
 app.use(express.json());
 
-app.get("/health", (_req: Request, res: Response) => {
-  res.json({
+function saludPropia(): Record<string, unknown> {
+  return {
     modulo: "backend",
     variante: "node-pg",
     versiones: {
@@ -88,7 +89,38 @@ app.get("/health", (_req: Request, res: Response) => {
       pg: versionDe("pg"),
       jose: versionDe("jose"),
     },
-  });
+  };
+}
+
+app.get("/health", (_req: Request, res: Response) => {
+  res.json(saludPropia());
+});
+
+/** Consulta el /health de otro módulo; si no responde, lo indica en vez de fallar. */
+async function saludDe(modulo: string, url: string): Promise<Record<string, unknown>> {
+  try {
+    const respuesta = await fetch(`${url}/health`, { signal: AbortSignal.timeout(3000) });
+    if (!respuesta.ok) {
+      throw new Error(`HTTP ${respuesta.status}`);
+    }
+    return (await respuesta.json()) as Record<string, unknown>;
+  } catch {
+    return { modulo, variante: null, error: "sin respuesta" };
+  }
+}
+
+/** Variante y versiones de los módulos de la PoC, para identificar qué se está probando. */
+app.get("/modulos", async (_req: Request, res: Response) => {
+  let bd: Record<string, unknown>;
+  try {
+    const resultado = await pool.query<{ server_version: string }>("SHOW server_version");
+    const version = resultado.rows[0].server_version.split(" ")[0];
+    bd = { modulo: "db", variante: "postgresql", versiones: { postgresql: version } };
+  } catch {
+    bd = { modulo: "db", variante: null, error: "sin respuesta" };
+  }
+  const [llm, auth] = await Promise.all([saludDe("llm", LLM_URL), saludDe("auth", AUTH_URL)]);
+  res.json([saludPropia(), llm, auth, bd]);
 });
 
 /** Valida el JWT y deja en `res.locals.user` la fila de `users`, creándola la primera vez. */

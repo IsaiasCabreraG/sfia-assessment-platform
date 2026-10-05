@@ -44,6 +44,7 @@ JWT_SECRET = os.environ["JWT_SECRET"]
 LLM_URL = os.getenv("LLM_URL", "http://localhost:8002")
 LLM_TIMEOUT_SECONDS = float(os.getenv("LLM_TIMEOUT_SECONDS", "130"))
 FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
+AUTH_URL = os.getenv("AUTH_URL", "http://localhost:8001")
 DB_CONNINFO = make_conninfo(
     host=os.getenv("POC_DB_HOST", "localhost"),
     port=os.getenv("POC_DB_PORT", "5432"),
@@ -89,8 +90,7 @@ def usuario_actual(authorization: str = Header(default="")) -> dict:
     return user
 
 
-@app.get("/health")
-def health():
+def salud_propia() -> dict:
     return {
         "modulo": "backend",
         "variante": "fastapi-psycopg",
@@ -100,6 +100,33 @@ def health():
             "psycopg": version("psycopg"),
         },
     }
+
+
+@app.get("/health")
+def health():
+    return salud_propia()
+
+
+def salud_de(modulo: str, url: str) -> dict:
+    """Consulta el /health de otro módulo; si no responde, lo indica en vez de fallar."""
+    try:
+        resp = httpx.get(f"{url}/health", timeout=3)
+        resp.raise_for_status()
+        return resp.json()
+    except (httpx.HTTPError, ValueError):
+        return {"modulo": modulo, "variante": None, "error": "sin respuesta"}
+
+
+@app.get("/modulos")
+def modulos():
+    """Variante y versiones de los módulos de la PoC, para identificar qué se está probando."""
+    try:
+        with connect() as conn:
+            version_bd = conn.execute("SHOW server_version").fetchone()["server_version"].split()[0]
+        bd = {"modulo": "db", "variante": "postgresql", "versiones": {"postgresql": version_bd}}
+    except psycopg.Error:
+        bd = {"modulo": "db", "variante": None, "error": "sin respuesta"}
+    return [salud_propia(), salud_de("llm", LLM_URL), salud_de("auth", AUTH_URL), bd]
 
 
 class ItemIn(BaseModel):

@@ -3,8 +3,8 @@
 
 Uso (desde la raíz del repositorio), con la BD, el backend (8000) y el LLM (8002) corriendo:
 
-    python3 poc/smoke_test.py             # prueba completa
-    python3 poc/smoke_test.py --sin-llm   # omite las pruebas que llaman a la CLI (lentas)
+    python3 poc/tests/smoke_test.py             # prueba completa
+    python3 poc/tests/smoke_test.py --sin-llm   # omite las pruebas que llaman a la CLI (lentas)
 
 No necesita entorno virtual (solo librería estándar). Fabrica un token con el JWT_SECRET
 (del entorno o de poc/auth/authlib/.env), así que no depende del login con Google, que se
@@ -25,10 +25,11 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-RAIZ = Path(__file__).resolve().parent
+RAIZ = Path(__file__).resolve().parent.parent
 BACKEND = "http://localhost:8000"
 LLM = "http://localhost:8002"
 AUTH = "http://localhost:8001"
+FRONTEND = "http://localhost:5173"
 GOOGLE_ID_PRUEBA = "smoke-test"
 NOMBRE_PRUEBA = "Smoke Test"
 
@@ -136,15 +137,20 @@ def identificar_modulos(sin_llm: bool) -> str:
     """Imprime la variante y las versiones de cada módulo (GET /health y psql).
     Devuelve una etiqueta corta para la línea final."""
     global fallos
-    # (nombre, url, obligatorio)
-    modulos = [("backend", BACKEND, True), ("llm", LLM, not sin_llm), ("auth", AUTH, False)]
+    # (nombre, url, ruta de identificación, obligatorio)
+    modulos = [
+        ("backend", BACKEND, "/health", True),
+        ("llm", LLM, "/health", not sin_llm),
+        ("auth", AUTH, "/health", False),
+        ("frontend", FRONTEND, "/health.json", False),
+    ]
     etiquetas = []
     print("Módulos bajo prueba")
-    for nombre, url, obligatorio in modulos:
+    for nombre, url, ruta, obligatorio in modulos:
         if nombre == "llm" and sin_llm:
             print(f"  {nombre:<8}(omitido: --sin-llm)")
             continue
-        estado, cuerpo = llamar("GET", f"{url}/health", timeout=10)
+        estado, cuerpo = llamar("GET", f"{url}{ruta}", timeout=10)
         if estado == 200 and isinstance(cuerpo, dict) and cuerpo.get("modulo") == nombre:
             versiones = ", ".join(f"{k} {v}" for k, v in cuerpo.get("versiones", {}).items())
             extra = f" · comando: {cuerpo['comando']}" if "comando" in cuerpo else ""
