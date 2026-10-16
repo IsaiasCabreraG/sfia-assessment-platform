@@ -14,7 +14,7 @@ Probar distintas tecnologías y las conexiones entre ellas, para decidir el stac
 - Frontend, backend, base de datos, autenticación con Google y llamada a un LLM.
 - Las conexiones entre ellos: frontend ↔ backend, frontend ↔ autenticación, backend ↔ base de datos, backend ↔ LLM.
 
-**Fuera:** Constructor visual, `share_token`, Ejecución, Evaluación Automática, Catálogo SFIA, Analítica, eventos (`public.events`), roles y organizaciones, y el tutor socrático.
+**Fuera:** Constructor visual, `share_token`, Ejecución, Evaluación Automática, Catálogo SFIA, Analítica, eventos, roles y organizaciones, y el tutor socrático.
 
 ## 3. Principio de diseño: módulos intercambiables
 
@@ -76,7 +76,7 @@ Al ser intercambiables, se prueba cada implementación contra las demás fijas:
 - El módulo LLM debe pasar el prompt sin `shell=True` (o por stdin) y con un timeout.
 - La CLI hereda el contexto del directorio desde el que se lanza (CLAUDE.md y memoria del proyecto). El módulo LLM la lanza desde una carpeta neutra, configurable con `LLM_CLI_CWD`.
 - Los resultados de esta PoC no reflejan cómo se conectará el producto final al LLM.
-- La PoC concentra el acceso a la BD en el backend. Esto difiere de la arquitectura original (un schema por módulo) y no valida schemas ni roles de BD por módulo.
+- La PoC concentra el acceso a la BD en el backend. La organización de la BD en la arquitectura (schemas y acceso por módulo) está por decidirse y la PoC no la valida.
 
 ## 9. Ejecución
 

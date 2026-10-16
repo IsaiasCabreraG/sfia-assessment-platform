@@ -9,10 +9,10 @@ Plataforma de evaluación técnica y práctica para ingeniería de software basa
 **Responsabilidad**: Fuente de verdad de la taxonomía SFIA (skills, niveles 1-7, perfiles de rol, mapeos skill ↔ contenido).
 
 **Owns (datos)**:
-- `sfia.skills` — código, nombre, descripción, categoría
-- `sfia.levels` — nivel 1-7, descripción genérica de responsabilidad
-- `sfia.role_profiles` — perfil (ej: "Software Engineer L3"), skills requeridos con nivel mínimo
-- `sfia.skill_content_mapping` — skill_id ↔ content_item_id (qué items evalúan qué skill)
+- `skills` — código, nombre, descripción, categoría
+- `levels` — nivel 1-7, descripción genérica de responsabilidad
+- `role_profiles` — perfil (ej: "Software Engineer L3"), skills requeridos con nivel mínimo
+- `skill_content_mapping` — skill_id ↔ content_item_id (qué items evalúan qué skill)
 
 **API (REST)**:
 ```
@@ -41,13 +41,13 @@ POST   /role-profiles             # Admin: crear perfil
 
 ## 2. Generación de Contenido
 
-**Responsabilidad**: Crear, versionar y validar items de evaluación (preguntas, ejercicios, simulaciones, rúbricas). Sub-módulos internos por tipo.
+**Responsabilidad**: Crear, versionar y validar items de evaluación (preguntas, ejercicios, simulaciones, rúbricas). Sub-módulos internos por tipo. Su interfaz vive en el **Portal de Contenido** (SPA), que solo llama a Generación de Contenido; este consulta a Catálogo SFIA.
 
 **Owns (datos)**:
-- `content.items` — id, tipo (question/coding/system_design/debugging/project/simulation), enunciado, metadatos (skill_id, nivel, dificultad, tags), versión, estado (draft/validated/deprecated)
-- `content.rubrics` — item_id, criterios[], pesos, umbrales
-- `content.simulation_scripts` — simulation_id, prompts LLM, flujo socrático *(fuera de esta iteración)*
-- `content.assets` — archivos adjuntos (S3/bucket)
+- `items` — id, tipo (question/coding/system_design/debugging/project/simulation), enunciado, metadatos (skill_id, nivel, dificultad, tags), versión, estado (draft/validated/deprecated)
+- `rubrics` — item_id, criterios[], pesos, umbrales
+- `simulation_scripts` — simulation_id, prompts LLM, flujo socrático *(fuera de esta iteración)*
+- `assets` — archivos adjuntos (S3/bucket)
 
 **APIs internas (REST)**:
 ```
@@ -55,7 +55,7 @@ POST   /role-profiles             # Admin: crear perfil
 GET    /questions?skill_id=&level=&difficulty=
 POST   /questions
 PUT    /questions/{id}
-POST   /questions/{id}/validate     # Experto aprueba
+POST   /questions/{id}/validate     # Experto validador aprueba (rol `validator`)
 
 # Tutor socrático (fuera de esta iteración)
 GET    /simulations?skill_id=&level=
@@ -86,8 +86,8 @@ GET    /exercises/{id}/tests        # Tests unitarios para auto-eval
 **Responsabilidad**: Componer evaluaciones completas — seleccionar skills, elegir items, definir pesos, timer, orden. Backend REST. Su interfaz vive en el **Portal de Gestión** (SPA), que solo llama al Constructor; este consulta a Catálogo SFIA, Generación de Contenido y Analítica.
 
 **Owns (datos)**:
-- `builder.evaluations` — skills, items, pesos, timer, orden, estado (draft/published), `share_token`
-- `builder.templates` — plantillas de evaluación
+- `evaluations` — skills, items, pesos, timer, orden, estado (draft/published), `share_token`
+- `templates` — plantillas de evaluación
 
 **Flujo**:
 1. El portal pide al Constructor skills y niveles (que los toma de Catálogo SFIA)
@@ -111,7 +111,7 @@ GET    /evaluations/{id}/reports     # Consulta Analítica
 | `EvaluationComposed` | `evaluation_id, name, skills[], items[], config{weights, timer, order}, status: draft|published` |
 | `TemplatePublished` | `template_id, name, evaluation_config` |
 
-**Consumidores**: Ejecución de Evaluaciones (lee `builder.evaluations` por SQL, solo lectura, al entrar por link)
+**Consumidores**: Ejecución de Evaluaciones (lee `evaluations` por SQL, solo lectura, al entrar por link; el esquema de acceso está por decidirse)
 
 ---
 
@@ -120,11 +120,11 @@ GET    /evaluations/{id}/reports     # Consulta Analítica
 **Responsabilidad**: Runtime de la evaluación — sesiones, timer real-time, entrega secuencial de items, captura de respuestas crudas.
 
 **Owns (datos)**:
-- `execution.sessions` — id, evaluation_id, candidate_id, org_id, status (in_progress/completed/abandoned), started_at, finished_at
-- `execution.attempts` — session_id, item_id, order, started_at, submitted_at, time_spent_ms
-- `execution.responses` — attempt_id, payload (código, texto, archivos, clicks), raw_answer
+- `sessions` — id, evaluation_id, candidate_id, org_id, status (in_progress/completed/abandoned), started_at, finished_at
+- `attempts` — session_id, item_id, order, started_at, submitted_at, time_spent_ms
+- `responses` — attempt_id, payload (código, texto, archivos, clicks), raw_answer
 
-**Lee (solo lectura)**: `builder.evaluations`, mediante un rol de BD con SELECT únicamente. `execution.sessions.evaluation_id` es una referencia lógica, sin FK entre schemas.
+**Lee (solo lectura)**: `evaluations`. La forma de acceso (rol de BD, schemas) está por decidirse. `sessions.evaluation_id` es una referencia lógica.
 
 **API (REST + WebSocket)**:
 ```
@@ -159,8 +159,8 @@ Client → Server: {type: "submit_response", item_id, payload}
 **Responsabilidad**: Corrección asíncrona por categoría. No cubre todo — tiene límites definidos.
 
 **Owns (datos)**:
-- `evaluation.results` — session_id, item_id, score (0-1), verdict (pass/fail/partial), feedback, details (JSON), evaluated_at
-- `evaluation.aggregate_scores` — session_id, skill_scores{}, overall_score, percentile, evaluated_at
+- `results` — session_id, item_id, score (0-1), verdict (pass/fail/partial), feedback, details (JSON), evaluated_at
+- `aggregate_scores` — session_id, skill_scores{}, overall_score, percentile, evaluated_at
 
 **Estrategias por tipo**:
 | Tipo | Método |
@@ -191,10 +191,10 @@ GET    /evaluations/{sessionId}/items/{itemId} # Detalle por item
 **Responsabilidad**: Event store consumer, vistas materializadas, dashboards live, export, benchmarking.
 
 **Owns (datos)**:
-- `analytics.events` — **tabla central append-only** (event store)
-- `analytics.mv_candidate_progress` — vista materializada: candidato × skill × tiempo → score, trend
-- `analytics.mv_org_benchmarks` — vista materializada: org/industria × skill → percentiles
-- `analytics.mv_evaluation_quality` — vista materializada: evaluación → reliability, discrimination index
+- `events` — **tabla central append-only** (event store)
+- `mv_candidate_progress` — vista materializada: candidato × skill × tiempo → score, trend
+- `mv_org_benchmarks` — vista materializada: org/industria × skill → percentiles
+- `mv_evaluation_quality` — vista materializada: evaluación → reliability, discrimination index
 
 **API (REST + WebSocket)**:
 ```
@@ -219,10 +219,10 @@ Server → Client: {type: "metric_update", metric, value}  # Dashboards live
 **Responsabilidad**: AuthN/AuthZ, organizaciones/workspaces, roles, membresías, tokens JWT. Base para multi-tenancy.
 
 **Owns (datos)**:
-- `identity.users` — id, email, name, avatar, google_id, created_at
-- `identity.orgs` — id, name, slug, plan, settings, created_at
-- `identity.memberships` — user_id, org_id, role (admin/recruiter/teacher/student/candidate/viewer), joined_at
-- `identity.tokens` — refresh tokens, access tokens (JWT con claims: org_id, roles, exp)
+- `users` — id, email, name, avatar, google_id, created_at
+- `orgs` — id, name, slug, plan, settings, created_at
+- `memberships` — user_id, org_id, role (admin/recruiter/teacher/student/candidate/validator/viewer), joined_at
+- `tokens` — refresh tokens, access tokens (JWT con claims: org_id, roles, exp)
 
 **API (REST + OAuth2/OIDC)**:
 ```
@@ -255,23 +255,10 @@ DELETE /orgs/{id}/members/{user_id}      # Expulsar
 
 ## Base de Datos Compartida (PostgreSQL)
 
-```
-PostgreSQL (instancia única)
-├── schema sfia          # Catálogo SFIA
-├── schema content       # Generación de Contenido
-├── schema builder       # Constructor de Evaluaciones
-├── schema execution     # Ejecución de Evaluaciones
-├── schema evaluation    # Evaluación Automática
-├── schema analytics     # Analítica (vistas materializadas)
-├── schema identity      # Identidad y Acceso
-└── schema public
-    └── events           # Tabla central append-only (event store)
-        # columnas: id, type, aggregate_id, payload(jsonb), metadata, created_at
-```
+PostgreSQL (instancia única). **Pendiente de decisión:** cómo se organiza la base de datos (schemas, qué módulos acceden a cuáles y de qué forma).
 
-**Patrón de eventos**:
+**Patrón de eventos** (sujeto a la decisión anterior):
 - Productores: `INSERT INTO events (type, aggregate_id, payload) VALUES ...`
-- Excepción de lectura entre schemas: Ejecución lee `builder.evaluations` (solo SELECT)
 - Consumidor Analítica: `SELECT * FROM events WHERE id > last_processed ORDER BY id` (polling) o CDC (Debezium)
 
 ---
@@ -292,12 +279,12 @@ GitHub no es un sistema externo del producto: se usa solo como repositorio y CI/
 
 Ver `figures/fig-01-c4-containers.png`.
 
-- Portal de Gestión → Constructor (REST). Portal del Postulante → Ejecución y Analítica (REST + WebSocket).
-- Ambos portales → Identidad → Google (login OIDC).
-- Constructor → Catálogo SFIA, Generación de Contenido y Analítica (REST).
-- Ejecución → `builder.evaluations` (SQL, solo lectura).
+- Portal de Contenido → Generación de Contenido (REST). Portal de Gestión → Constructor (REST). Portal del Postulante → Ejecución y Analítica (REST + WebSocket).
+- Los tres portales → Identidad → Google (login OIDC).
+- Constructor → Catálogo SFIA, Generación de Contenido y Analítica (REST). Generación de Contenido → Catálogo SFIA (REST).
+- Ejecución → `evaluations` (SQL, solo lectura).
 - Generación de Contenido y Evaluación Automática → Proveedor de LLM (API).
-- Ejecución → Evaluación Automática, y todos los módulos → Analítica (eventos en `public.events`).
+- Ejecución → Evaluación Automática, y todos los módulos → Analítica (eventos en `events`).
 
 ---
 

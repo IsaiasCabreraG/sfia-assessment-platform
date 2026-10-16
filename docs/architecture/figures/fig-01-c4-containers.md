@@ -13,12 +13,13 @@ Mostrar los contenedores desplegables de la plataforma de evaluación técnica b
 ### Personas
 | Actor | Rol |
 |---|---|
+| Experto validador | Revisa y aprueba los ítems generados |
 | Reclutador / Empresa | Crea y comparte evaluaciones, revisa resultados, compara candidatos |
 | Docente / Investigador | Crea y comparte evaluaciones, analiza alineación currículo-industria |
 | Estudiante | Practica y rinde evaluaciones para aprender y medir su avance |
 | Postulante | Rinde evaluaciones técnicas en procesos de selección |
 
-Reclutador y Docente usan el Portal de Gestión; Estudiante y Postulante, el Portal del Postulante. Ambos acceden por HTTPS.
+Reclutador y Docente usan el Portal de Gestión y el Portal de Contenido; el Experto validador, solo el Portal de Contenido; Estudiante y Postulante, el Portal del Postulante. Ambos acceden por HTTPS.
 
 ### Sistemas externos
 | Sistema | Integración |
@@ -28,30 +29,30 @@ Reclutador y Docente usan el Portal de Gestión; Estudiante y Postulante, el Por
 | Proveedor de LLM | API de un modelo de lenguaje (proveedor genérico, por definir). La usan Generación de Contenido (borradores de ítems y rúbricas) y Evaluación Automática (LLM-as-judge) |
 
 ### Contenedores
-| Contenedor | Tecnología | Responsabilidad | Schema |
-|---|---|---|---|
-| Portal de Gestión | SPA (React/Vue) | Interfaz del Constructor visual y de los reportes. Solo llama al Constructor (y a Identidad para el login). Sin persistencia propia | — |
-| Portal del Postulante | SPA (React/Vue) | Rendir y practicar evaluaciones; ver resultados y progreso propios. Sin persistencia propia | — |
-| Constructor de Evaluaciones | REST API | Compone evaluaciones y plantillas; al publicar genera un link compartible. Consulta Catálogo, Generación y Analítica | `builder` |
-| Catálogo SFIA | REST API | Skills, niveles 1-7, perfiles de rol y mapeos skill ↔ item | `sfia` |
-| Generación de Contenido | REST API + Workers IA (Python) | Banco de preguntas y ejercicios técnicos con generación asistida por IA; versionado y validación por experto | `content` |
-| Identidad y Acceso | OAuth2 / OIDC | Login con Google (OIDC), organizaciones, roles, tokens JWT, base de multi-tenancy | `identity` |
-| Analítica y Reportes | REST API + WebSocket | Consume todos los eventos; vistas materializadas, dashboards live, export | `analytics` |
-| Evaluación Automática | Async Workers (Python) | Corrección por tipo: MCQ, tests unitarios en sandbox, LLM-as-judge con rúbrica | `evaluation` |
-| Ejecución de Evaluaciones | REST API + WebSocket | Sesiones, timer real-time, entrega secuencial de items, respuestas crudas | `execution` |
+| Contenedor | Tecnología | Responsabilidad |
+|---|---|---|
+| Portal de Contenido | SPA (React/Vue) | Generar, editar y validar ítems con IA. Solo llama a Generación de Contenido (y a Identidad para el login). Sin persistencia propia |
+| Portal de Gestión | SPA (React/Vue) | Interfaz del Constructor visual y de los reportes. Solo llama al Constructor (y a Identidad para el login). Sin persistencia propia |
+| Portal del Postulante | SPA (React/Vue) | Rendir y practicar evaluaciones; ver resultados y progreso propios. Sin persistencia propia |
+| Constructor de Evaluaciones | REST API | Compone evaluaciones y plantillas; al publicar genera un link compartible. Consulta Catálogo, Generación y Analítica |
+| Catálogo SFIA | REST API | Skills, niveles 1-7, perfiles de rol y mapeos skill ↔ item |
+| Generación de Contenido | REST API + Workers IA (Python) | Banco de preguntas y ejercicios técnicos con generación asistida por IA; versionado y validación por experto. Consulta Catálogo SFIA |
+| Identidad y Acceso | OAuth2 / OIDC | Login con Google (OIDC), organizaciones, roles, tokens JWT, base de multi-tenancy |
+| Analítica y Reportes | REST API + WebSocket | Consume todos los eventos; vistas materializadas, dashboards live, export |
+| Evaluación Automática | Async Workers (Python) | Corrección por tipo: MCQ, tests unitarios en sandbox, LLM-as-judge con rúbrica |
+| Ejecución de Evaluaciones | REST API + WebSocket | Sesiones, timer real-time, entrega secuencial de items, respuestas crudas |
 
 ### Base de datos
-PostgreSQL en una única instancia, con un schema por módulo (`sfia`, `content`, `builder`, `execution`, `evaluation`, `analytics`, `identity`) y la tabla `public.events` como event store append-only (`id, type, aggregate_id, payload jsonb, metadata, created_at`).
+PostgreSQL en una única instancia. Los schemas, y qué módulos acceden a cuáles y de qué forma, están por decidirse.
 
 ## Relaciones (leyenda de flechas)
 
 | Estilo | Significado |
 |---|---|
-| Azul, doble punta | SQL de cada contenedor sobre su propio schema |
-| Naranja | Eventos sobre `events`. Escriben: Catálogo, Generación, Identidad y Ejecución. Lee: Analítica (todos los eventos). Lee y escribe: Evaluación Automática (consume `SessionCompleted`, emite `EvaluationScored` / `EvaluationFailed`) |
-| Negro | Actor → portal y portal → contenedor. Portal de Gestión → Constructor; Portal del Postulante → Ejecución y Analítica; ambos portales → Identidad (login) |
-| Turquesa | REST entre contenedores: Constructor → Catálogo, Generación y Analítica |
-| Azul discontinuo | Lectura SQL de Ejecución sobre `builder.evaluations`. Solo SELECT; Ejecución no escribe en `builder` |
+| Azul, doble punta | Acceso SQL de cada contenedor a la base de datos |
+| Naranja | Eventos a través de la BD. Escriben: Catálogo, Generación, Identidad y Ejecución. Lee: Analítica (todos los eventos). Lee y escribe: Evaluación Automática (consume `SessionCompleted`, emite `EvaluationScored` / `EvaluationFailed`) |
+| Negro | Actor → portal y portal → contenedor. Portal de Contenido → Generación; Portal de Gestión → Constructor; Portal del Postulante → Ejecución y Analítica; los tres portales → Identidad (login) |
+| Turquesa | REST entre contenedores: Constructor → Catálogo, Generación y Analítica; Generación → Catálogo |
 | Morado discontinuo | Integración con sistemas externos |
 
 Los portales no se comunican con Evaluación Automática: los resultados llegan al usuario a través de Ejecución y Analítica.
@@ -69,6 +70,7 @@ msedge --headless --hide-scrollbars --force-device-scale-factor=2 --window-size=
 - Tecnologías definitivas por contenedor (hoy "Node/Go/Python" sin fijar).
 - Proveedor de LLM concreto (hoy genérico).
 - Tutor socrático: fuera de esta iteración, no aparece en esta figura.
-- Organización final de los frontends (hoy dos portales: Gestión y Postulante).
+- Organización final de los frontends (hoy tres portales: Contenido, Gestión y Postulante).
 - Quién puede abrir un link compartido (organización, grupo, anónimo).
+- Schemas de la BD y acceso de cada módulo a ellos (hoy por decidirse).
 - Si el MVP se implementa como monolito modular en vez de servicios separados; en ese caso esta figura pasaría a representar módulos y no despliegues.

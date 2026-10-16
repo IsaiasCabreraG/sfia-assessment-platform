@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<title>Figura 2 — Arquitectura de la PoC</title>
+<style>
+ html,body{margin:0;background:#fff;font-family:"Segoe UI",Arial,sans-serif}
+ .box{box-sizing:border-box;width:100%;height:100%;padding:8px 12px;color:#fff;display:flex;flex-direction:column;justify-content:center;text-align:center}
+ .t{font-weight:700;font-size:16px;line-height:1.2}
+ .k{font-size:12px;opacity:.9;margin:2px 0 5px}
+ .d{font-size:12.5px;line-height:1.3}
+ .lb{font-size:12.5px;font-weight:600}
+ .dbt{font-size:17px;font-weight:700;fill:#fff}
+ .sch{font-size:13.5px;font-weight:600;fill:#14452f;font-family:Consolas,monospace}
+ .lg{font-size:13px;fill:#333}
+</style></head>
+<body><svg xmlns="http://www.w3.org/2000/svg" width="1400" height="700" viewBox="0 0 1400 700"><defs><marker id="m-ui" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#333333"/></marker><marker id="m-svc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0e8a8a"/></marker><marker id="m-sql" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1b4f9c"/></marker><marker id="m-sub" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d9822b"/></marker><marker id="m-ext" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7b3fa0"/></marker></defs><rect x="40" y="300" width="200" height="80" rx="8" fill="#08427b"/><foreignObject x="40" y="300" width="200" height="80"><div xmlns="http://www.w3.org/1999/xhtml" class="box"><div class="t">Usuario</div><div class="k">[Persona]</div><div class="d">Navegador en localhost</div></div></foreignObject>
+<rect x="40" y="60" width="200" height="100" rx="8" fill="#7f7f7f"/><foreignObject x="40" y="60" width="200" height="100"><div xmlns="http://www.w3.org/1999/xhtml" class="box"><div class="t">Google (OIDC)</div><div class="k">[Sistema externo]</div><div class="d">Identidad del usuario</div></div></foreignObject>
+<rect x="330" y="60" width="280" height="110" rx="8" fill="#1168bd"/><foreignObject x="330" y="60" width="280" height="110"><div xmlns="http://www.w3.org/1999/xhtml" class="box"><div class="t">Módulo auth :8001</div><div class="k">[FastAPI · Authlib | google-auth]</div><div class="d">Verifica la identidad con Google y emite el JWT HS256 (1 h). Solo emite el token; no persiste usuarios ni accede a la BD</div></div></foreignObject>
+<rect x="330" y="270" width="280" height="140" rx="8" fill="#1168bd"/><foreignObject x="330" y="270" width="280" height="140"><div xmlns="http://www.w3.org/1999/xhtml" class="box"><div class="t">Módulo frontend :5173</div><div class="k">[SPA · React | Vue + Vite]</div><div class="d">Detecta la variante de auth vía /modulos, guarda el JWT en localStorage y lo envía como Bearer</div></div></foreignObject>
+<rect x="770" y="270" width="230" height="170" rx="8" fill="#1168bd"/><foreignObject x="770" y="270" width="230" height="170"><div xmlns="http://www.w3.org/1999/xhtml" class="box"><div class="t">Módulo backend :8000</div><div class="k">[FastAPI psycopg | FastAPI SQLAlchemy | Node pg]</div><div class="d">Valida el JWT y crea el usuario por google_id. Rutas: /items, /ai/ask, /modulos</div></div></foreignObject>
+<rect x="1060" y="40" width="300" height="100" rx="8" fill="#1168bd"/><foreignObject x="1060" y="40" width="300" height="100"><div xmlns="http://www.w3.org/1999/xhtml" class="box"><div class="t">Módulo LLM :8002</div><div class="k">[FastAPI · Python]</div><div class="d">POST /ask: lanza la CLI por subproceso, prompt por stdin, sin shell</div></div></foreignObject>
+<rect x="1060" y="190" width="300" height="80" rx="8" fill="#1168bd"/><foreignObject x="1060" y="190" width="300" height="80"><div xmlns="http://www.w3.org/1999/xhtml" class="box"><div class="t">CLI claude -p</div><div class="k">[Proceso local]</div><div class="d">Se ejecuta con cwd neutro (directorio temporal)</div></div></foreignObject>
+<rect x="1060" y="320" width="300" height="70" rx="8" fill="#7f7f7f"/><foreignObject x="1060" y="320" width="300" height="70"><div xmlns="http://www.w3.org/1999/xhtml" class="box"><div class="t">API de Claude</div><div class="k">[Sistema externo]</div><div class="d">Modelo de lenguaje</div></div></foreignObject>
+<rect x="1060" y="500" width="300" height="150" rx="12" fill="#1f7a5a"/><text x="1075" y="525" class="dbt">PostgreSQL 16 :5432</text><rect x="1075" y="545" width="130" height="36" rx="6" fill="#e8f5ee"/><text x="1140" y="568" text-anchor="middle" class="sch">users</text><rect x="1215" y="545" width="130" height="36" rx="6" fill="#e8f5ee"/><text x="1280" y="568" text-anchor="middle" class="sch">items</text><text x="1075" y="613" style="font-size:13px;fill:#fff">Solo el backend accede a la BD:</text><text x="1075" y="629" style="font-size:13px;fill:#fff">crea users desde los claims del JWT</text><text x="1075" y="645" style="font-size:13px;fill:#fff">y guarda items</text>
+<path d="M240,340 L330,340" fill="none" stroke="#333333" stroke-width="2" marker-end="url(#m-ui)"/>
+<text x="285" y="330" text-anchor="middle" class="lb" fill="#333333">HTTPS</text>
+<path d="M330,100 L240,100" fill="none" stroke="#7b3fa0" stroke-width="2" marker-end="url(#m-ext)" marker-start="url(#m-ext)"/>
+<text x="285" y="90" text-anchor="middle" class="lb" fill="#7b3fa0">OIDC</text>
+<path d="M470,270 L470,170" fill="none" stroke="#333333" stroke-width="2" marker-end="url(#m-ui)"/>
+<text x="480" y="215" text-anchor="start" class="lb" fill="#333333">Login: redirección (authlib)</text>
+<text x="480" y="230" text-anchor="start" class="lb" fill="#333333">o POST /auth/google (google-auth)</text>
+<path d="M610,340 L770,340" fill="none" stroke="#333333" stroke-width="2" marker-end="url(#m-ui)"/>
+<text x="690" y="290" text-anchor="middle" class="lb" fill="#333333">REST</text>
+<text x="690" y="305" text-anchor="middle" class="lb" fill="#333333">Bearer JWT</text>
+<text x="690" y="320" text-anchor="middle" class="lb" fill="#333333">(sub, email, nombre)</text>
+<path d="M850,270 L850,115 L610,115" fill="none" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-svc)"/>
+<text x="730" y="105" text-anchor="middle" class="lb" fill="#0e8a8a">GET /health</text>
+<path d="M1000,320 L1030,320 L1030,90 L1060,90" fill="none" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-svc)"/>
+<text x="1022" y="200" text-anchor="end" class="lb" fill="#0e8a8a">POST /ask</text>
+<path d="M1000,400 L1030,400 L1030,565 L1060,565" fill="none" stroke="#1b4f9c" stroke-width="2" marker-end="url(#m-sql)" marker-start="url(#m-sql)"/>
+<text x="1035" y="445" text-anchor="start" class="lb" fill="#1b4f9c">SQL</text>
+<text x="1035" y="460" text-anchor="start" class="lb" fill="#1b4f9c">INSERT / SELECT</text>
+<text x="1035" y="475" text-anchor="start" class="lb" fill="#1b4f9c">users, items</text>
+<path d="M1210,140 L1210,190" fill="none" stroke="#d9822b" stroke-width="2" marker-end="url(#m-sub)"/>
+<text x="1220" y="170" text-anchor="start" class="lb" fill="#d9822b">subproceso (stdin / stdout)</text>
+<path d="M1210,270 L1210,320" fill="none" stroke="#7b3fa0" stroke-width="2" marker-end="url(#m-ext)"/>
+<text x="1220" y="300" text-anchor="start" class="lb" fill="#7b3fa0">HTTPS</text>
+<text x="40" y="420" class="lg">authlib: Google redirige al callback del módulo auth, que redirige al frontend con #access_token.</text>
+<path d="M40,480 L80,480" stroke="#333333" stroke-width="2.5"/><text x="90" y="484" class="lg">Navegador del usuario: HTTPS / REST con JWT</text>
+<path d="M40,508 L80,508" stroke="#0e8a8a" stroke-width="2.5"/><text x="90" y="512" class="lg">REST entre módulos</text>
+<path d="M40,536 L80,536" stroke="#1b4f9c" stroke-width="2.5"/><text x="90" y="540" class="lg">SQL (conexión por operación)</text>
+<path d="M40,564 L80,564" stroke="#d9822b" stroke-width="2.5"/><text x="90" y="568" class="lg">Subproceso local</text>
+<path d="M40,592 L80,592" stroke="#7b3fa0" stroke-width="2.5"/><text x="90" y="596" class="lg">Sistema externo</text>
+<text x="40" y="640" class="lg">JWT HS256: auth y backend comparten JWT_SECRET (claims sub, email, nombre, iat, exp).</text></svg></body></html>
