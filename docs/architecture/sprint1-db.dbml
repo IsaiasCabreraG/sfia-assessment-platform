@@ -1,0 +1,218 @@
+// Modelo de BD Sprint 1 (tabla base + extensiones, un schema por módulo) - pegar en https://dbdiagram.io/d
+// Dependencias (FK físicas): content -> catalog, content -> identity. identity y catalog no dependen de nadie.
+
+Table identity.users {
+  id uuid [pk]
+  email varchar [unique, not null]
+  name varchar
+  avatar varchar
+  google_id varchar [unique, not null]
+  created_at timestamptz [not null]
+}
+
+Table identity.user_roles {
+  user_id uuid [ref: > identity.users.id]
+  role varchar [note: 'teacher_recruiter | validator | admin']
+  indexes { (user_id, role) [pk] }
+}
+
+Table identity.refresh_tokens {
+  id uuid [pk]
+  user_id uuid [ref: > identity.users.id, not null]
+  token_hash varchar [not null]
+  expires_at timestamptz [not null]
+  revoked_at timestamptz
+}
+
+Table catalog.skills {
+  id uuid [pk]
+  code varchar [unique, not null]
+  name varchar [not null]
+  description text
+  category varchar
+}
+
+Table catalog.levels {
+  level smallint [pk, note: '1 a 7']
+  description text
+}
+
+Table catalog.role_profiles {
+  id uuid [pk]
+  name varchar [not null]
+}
+
+Table catalog.role_profile_skills {
+  profile_id uuid [ref: > catalog.role_profiles.id]
+  skill_id uuid [ref: > catalog.skills.id]
+  min_level smallint [ref: > catalog.levels.level, not null]
+  indexes { (profile_id, skill_id) [pk] }
+}
+
+Table content.generation_requests {
+  id uuid [pk]
+  requested_by uuid [ref: > identity.users.id, not null]
+  skill_id uuid [ref: > catalog.skills.id, not null]
+  level smallint [ref: > catalog.levels.level, not null]
+  item_type varchar [not null]
+  item_count int [not null]
+  estimated_minutes int [not null]
+  context text [note: 'contexto indicado por el usuario; se usa al regenerar']
+  status varchar [not null]
+  created_at timestamptz [not null]
+}
+
+// ---------- Base ----------
+
+Table content.items {
+  id uuid [pk]
+  status varchar [not null, note: 'active | inactive']
+  skill_id uuid [ref: > catalog.skills.id, not null, note: 'una skill por ítem']
+  created_by uuid [ref: > identity.users.id, not null]
+  created_at timestamptz [not null]
+}
+
+Table content.item_versions {
+  id uuid [pk]
+  item_id uuid [ref: > content.items.id, not null]
+  type varchar [not null, note: 'single_choice | true_false | open_question | coding | system_design | debugging; puede cambiar solo al regenerar']
+  version int [not null, note: 'CHECK >= 1']
+  origin varchar [not null, note: 'generated | regenerated | edited']
+  generation_request_id uuid [ref: > content.generation_requests.id, note: 'pedido de generación o regeneración; vacío si origin = edited']
+  level smallint [ref: > catalog.levels.level, not null]
+  estimated_minutes int [not null, note: 'CHECK > 0']
+  evaluation_goal text [not null, note: 'qué busca evaluar el ítem']
+  statement text [not null]
+  created_at timestamptz [not null]
+  indexes {
+    (item_id, version) [unique]
+  }
+}
+
+// ---------- Extensiones ----------
+
+Table content.item_choice_options {
+  id uuid [pk]
+  item_version_id uuid [ref: > content.item_versions.id, not null]
+  position smallint [not null, note: 'CHECK >= 1']
+  text text [not null]
+  is_correct boolean [not null]
+}
+
+Table content.item_true_false {
+  item_version_id uuid [pk, ref: - content.item_versions.id]
+  correct_answer boolean [not null]
+}
+
+Table content.item_open_question {
+  item_version_id uuid [pk, ref: - content.item_versions.id]
+  reference_answer text [not null]
+}
+
+Table content.item_coding {
+  item_version_id uuid [pk, ref: - content.item_versions.id]
+  language varchar [not null, note: 'texto libre']
+  function_signature text [not null]
+  starter_code text
+  unit_tests text [not null]
+  time_limit_seconds int [not null, note: 'CHECK > 0']
+  memory_limit_mb int [not null, note: 'CHECK > 0']
+  reference_solution text [not null]
+}
+
+Table content.item_system_design {
+  item_version_id uuid [pk, ref: - content.item_versions.id]
+  scenario text [not null]
+  functional_requirements text[]
+  non_functional_requirements text[]
+  constraints text[]
+  reference_answer text [not null]
+}
+
+Table content.item_debugging {
+  item_version_id uuid [pk, ref: - content.item_versions.id]
+  language varchar [not null, note: 'texto libre']
+  code text [not null]
+  symptom_input text
+  symptom_expected text [not null]
+  symptom_observed text [not null]
+  reference_answer text [not null]
+}
+
+Table content.item_findings {
+  id uuid [pk]
+  item_version_id uuid [ref: > content.item_versions.id, not null]
+  line int [note: 'CHECK >= 1']
+  description text [not null]
+}
+
+// ---------- Rúbrica (solo tipos abiertos) ----------
+
+Table content.rubric_criteria {
+  id uuid [pk]
+  item_version_id uuid [ref: > content.item_versions.id, not null, note: 'open_question, system_design o debugging']
+  name varchar [not null]
+  weight smallint [not null, note: 'CHECK 1 a 100; los pesos de la versión suman 100 (regla de la aplicación)']
+  position smallint [not null, note: 'CHECK >= 1']
+}
+
+Table content.rubric_levels {
+  criterion_id uuid [ref: > content.rubric_criteria.id]
+  score smallint [note: 'CHECK 0 a 3']
+  descriptor text [not null]
+  indexes { (criterion_id, score) [pk] }
+}
+
+// ---------- Puntuación y eventos ----------
+
+Table content.item_scores {
+  id uuid [pk]
+  item_version_id uuid [ref: > content.item_versions.id, not null]
+  validator_id uuid [ref: > identity.users.id, not null]
+  score numeric(2,1) [not null, note: 'CHECK 0.0 a 5.0']
+  created_at timestamptz [not null]
+  indexes { (item_version_id, validator_id) [unique] }
+}
+
+Table events.events {
+  id bigserial [pk]
+  type varchar [not null]
+  aggregate_id uuid
+  payload jsonb
+  created_at timestamptz [not null]
+}
+
+// ---------- Grupos por schema ----------
+
+TableGroup identity {
+  identity.users
+  identity.user_roles
+  identity.refresh_tokens
+}
+
+TableGroup catalog {
+  catalog.skills
+  catalog.levels
+  catalog.role_profiles
+  catalog.role_profile_skills
+}
+
+TableGroup content {
+  content.generation_requests
+  content.items
+  content.item_versions
+  content.item_choice_options
+  content.item_true_false
+  content.item_open_question
+  content.item_coding
+  content.item_system_design
+  content.item_debugging
+  content.item_findings
+  content.rubric_criteria
+  content.rubric_levels
+  content.item_scores
+}
+
+TableGroup events {
+  events.events
+}

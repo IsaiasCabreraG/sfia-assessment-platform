@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<title>Figura 3 — Modelo de datos del Sprint 1</title>
+<style>
+ html,body{margin:0;background:#fff;font-family:"Segoe UI",Arial,sans-serif}
+ .ti{font-size:24px;font-weight:700;fill:#222}
+ .su{font-size:14px;fill:#555}
+ .bl{font-size:16px;font-weight:700}
+ .th{font-size:14px;font-weight:700;fill:#fff}
+ .cn{font-size:12.5px;font-family:Consolas,monospace;fill:#222}
+ .ct{font-size:11.5px;font-family:Consolas,monospace;fill:#777}
+ .bd{font-size:9.5px;font-weight:700;fill:#fff;font-family:"Segoe UI",Arial,sans-serif}
+ .lg{font-size:13px;fill:#333}
+</style></head>
+
+<body><svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1400" viewBox="0 0 2400 1400">
+<defs>
+<marker id="m-id" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d9822b"/></marker>
+<marker id="m-cat" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0e8a8a"/></marker>
+<marker id="m-in" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1b4f9c"/></marker>
+</defs>
+<text x="30" y="42" class="ti">Figura 3 — Modelo de datos del Sprint 1</text>
+<text x="30" y="66" class="su">PostgreSQL con un schema por módulo. Las flechas van de la tabla con la FK a la tabla referenciada.</text>
+<rect x="30" y="95" width="1500" height="235" rx="14" fill="#e6f4f4" stroke="#0e8a8a" stroke-width="1.5"/>
+<text x="1520" y="119" text-anchor="end" class="bl" fill="#0e8a8a">catalog · Catálogo SFIA</text>
+<rect x="20" y="450" width="1870" height="940" rx="14" fill="#e9f0fa" stroke="#1b4f9c" stroke-width="1.5"/>
+<text x="1870" y="474" text-anchor="end" class="bl" fill="#1b4f9c">content · Generación de Contenido</text>
+<rect x="1980" y="95" width="390" height="520" rx="14" fill="#fdf3e7" stroke="#d9822b" stroke-width="1.5"/>
+<text x="2360" y="119" text-anchor="end" class="bl" fill="#d9822b">identity · Identidad y Acceso</text>
+<rect x="1980" y="650" width="390" height="230" rx="14" fill="#f1f1f1" stroke="#7f7f7f" stroke-width="1.5"/>
+<text x="2360" y="674" text-anchor="end" class="bl" fill="#7f7f7f">events · Eventos</text>
+<polyline points="2100,340 2100,312" fill="none" stroke="#d9822b" stroke-width="2" marker-end="url(#m-id)"/>
+<polyline points="2330,503 2350,503 2350,191 2330,191" fill="none" stroke="#d9822b" stroke-width="2" marker-end="url(#m-id)"/>
+<polyline points="1170,191 1130,191" fill="none" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-cat)"/>
+<polyline points="1230,150 1230,135 300,135 300,150" fill="none" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-cat)"/>
+<polyline points="1330,246 1330,265 700,265 700,224" fill="none" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-cat)"/>
+<polyline points="800,563 780,563 780,541 760,541" fill="none" stroke="#1b4f9c" stroke-width="2" marker-end="url(#m-in)"/>
+<polyline points="800,651 410,651 410,541 390,541" fill="none" stroke="#1b4f9c" stroke-width="2" marker-end="url(#m-in)"/>
+<polyline points="1170,563 1150,563 1150,541 1130,541" fill="none" stroke="#1b4f9c" stroke-width="2" marker-end="url(#m-in)"/>
+<polyline points="1170,1201 1130,1201" fill="none" stroke="#1b4f9c" stroke-width="2" marker-end="url(#m-in)"/>
+<polyline points="965,800 965,772" fill="none" stroke="#1b4f9c" stroke-width="2" marker-end="url(#m-in)"/>
+<polyline points="225,800 1705,800" fill="none" stroke="#1b4f9c" stroke-width="2"/>
+<polyline points="225,850 225,800" fill="none" stroke="#1b4f9c" stroke-width="2"/>
+<polyline points="595,850 595,800" fill="none" stroke="#1b4f9c" stroke-width="2"/>
+<polyline points="965,850 965,800" fill="none" stroke="#1b4f9c" stroke-width="2"/>
+<polyline points="1335,850 1335,800" fill="none" stroke="#1b4f9c" stroke-width="2"/>
+<polyline points="1705,850 1705,800" fill="none" stroke="#1b4f9c" stroke-width="2"/>
+<polyline points="225,1160 225,1076 410,1076 410,800" fill="none" stroke="#1b4f9c" stroke-width="2"/>
+<polyline points="595,1160 595,1090 780,1090 780,800" fill="none" stroke="#1b4f9c" stroke-width="2"/>
+<polyline points="965,1160 965,1104 1150,1104 1150,800" fill="none" stroke="#1b4f9c" stroke-width="2"/>
+<polyline points="120,500 120,290" fill="none" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-cat)"/>
+<polyline points="470,500 470,375 300,375 300,290" fill="none" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-cat)"/>
+<polyline points="160,500 160,360 520,360 520,224" fill="none" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-cat)"/>
+<polyline points="900,500 900,390 620,390 620,224" fill="none" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-cat)"/>
+<polyline points="260,500 260,405 1905,405 1905,183 2000,183" fill="none" stroke="#d9822b" stroke-width="2" marker-end="url(#m-id)"/>
+<polyline points="550,500 550,420 1920,420 1920,191 2000,191" fill="none" stroke="#d9822b" stroke-width="2" marker-end="url(#m-id)"/>
+<polyline points="1500,585 1935,585 1935,199 2000,199" fill="none" stroke="#d9822b" stroke-width="2" marker-end="url(#m-id)"/>
+<circle cx="965" cy="800" r="3.5" fill="#1b4f9c"/>
+<circle cx="225" cy="800" r="3.5" fill="#1b4f9c"/>
+<circle cx="595" cy="800" r="3.5" fill="#1b4f9c"/>
+<circle cx="965" cy="800" r="3.5" fill="#1b4f9c"/>
+<circle cx="1335" cy="800" r="3.5" fill="#1b4f9c"/>
+<circle cx="1705" cy="800" r="3.5" fill="#1b4f9c"/>
+<circle cx="410" cy="800" r="3.5" fill="#1b4f9c"/>
+<circle cx="780" cy="800" r="3.5" fill="#1b4f9c"/>
+<circle cx="1150" cy="800" r="3.5" fill="#1b4f9c"/>
+<rect x="2000" y="150" width="330" height="162" rx="6" fill="#fff" stroke="#d9822b" stroke-width="1.5"/>
+<rect x="2000" y="150" width="330" height="30" rx="6" fill="#d9822b"/>
+<rect x="2000" y="168" width="330" height="12" fill="#d9822b"/>
+<text x="2010" y="170" class="th">users</text>
+<rect x="2006" y="184" width="23" height="14" rx="3" fill="#333333"/>
+<text x="2017.5" y="194" text-anchor="middle" class="bd">PK</text>
+<text x="2060" y="195" class="cn">id</text>
+<text x="2322" y="195" text-anchor="end" class="ct">uuid</text>
+<rect x="2001" y="202" width="328" height="22" fill="#f4f6f9"/>
+<rect x="2006" y="206" width="23" height="14" rx="3" fill="#8a8a8a"/>
+<text x="2017.5" y="216" text-anchor="middle" class="bd">UQ</text>
+<text x="2060" y="217" class="cn">email</text>
+<text x="2322" y="217" text-anchor="end" class="ct">varchar</text>
+<text x="2060" y="239" class="cn">name</text>
+<text x="2322" y="239" text-anchor="end" class="ct">varchar</text>
+<rect x="2001" y="246" width="328" height="22" fill="#f4f6f9"/>
+<text x="2060" y="261" class="cn">avatar</text>
+<text x="2322" y="261" text-anchor="end" class="ct">varchar</text>
+<rect x="2006" y="272" width="23" height="14" rx="3" fill="#8a8a8a"/>
+<text x="2017.5" y="282" text-anchor="middle" class="bd">UQ</text>
+<text x="2060" y="283" class="cn">google_id</text>
+<text x="2322" y="283" text-anchor="end" class="ct">varchar</text>
+<rect x="2001" y="290" width="328" height="22" fill="#f4f6f9"/>
+<text x="2060" y="305" class="cn">created_at</text>
+<text x="2322" y="305" text-anchor="end" class="ct">timestamptz</text>
+<rect x="2000" y="340" width="330" height="74" rx="6" fill="#fff" stroke="#d9822b" stroke-width="1.5"/>
+<rect x="2000" y="340" width="330" height="30" rx="6" fill="#d9822b"/>
+<rect x="2000" y="358" width="330" height="12" fill="#d9822b"/>
+<text x="2010" y="360" class="th">user_roles</text>
+<rect x="2006" y="374" width="23" height="14" rx="3" fill="#333333"/>
+<text x="2017.5" y="384" text-anchor="middle" class="bd">PK</text>
+<rect x="2032" y="374" width="23" height="14" rx="3" fill="#d9822b"/>
+<text x="2043.5" y="384" text-anchor="middle" class="bd">FK</text>
+<text x="2060" y="385" class="cn">user_id</text>
+<text x="2322" y="385" text-anchor="end" class="ct">uuid</text>
+<rect x="2001" y="392" width="328" height="22" fill="#f4f6f9"/>
+<rect x="2006" y="396" width="23" height="14" rx="3" fill="#333333"/>
+<text x="2017.5" y="406" text-anchor="middle" class="bd">PK</text>
+<text x="2060" y="407" class="cn">role</text>
+<text x="2322" y="407" text-anchor="end" class="ct">varchar</text>
+<rect x="2000" y="440" width="330" height="140" rx="6" fill="#fff" stroke="#d9822b" stroke-width="1.5"/>
+<rect x="2000" y="440" width="330" height="30" rx="6" fill="#d9822b"/>
+<rect x="2000" y="458" width="330" height="12" fill="#d9822b"/>
+<text x="2010" y="460" class="th">refresh_tokens</text>
+<rect x="2006" y="474" width="23" height="14" rx="3" fill="#333333"/>
+<text x="2017.5" y="484" text-anchor="middle" class="bd">PK</text>
+<text x="2060" y="485" class="cn">id</text>
+<text x="2322" y="485" text-anchor="end" class="ct">uuid</text>
+<rect x="2001" y="492" width="328" height="22" fill="#f4f6f9"/>
+<rect x="2006" y="496" width="23" height="14" rx="3" fill="#d9822b"/>
+<text x="2017.5" y="506" text-anchor="middle" class="bd">FK</text>
+<text x="2060" y="507" class="cn">user_id</text>
+<text x="2322" y="507" text-anchor="end" class="ct">uuid</text>
+<text x="2060" y="529" class="cn">token_hash</text>
+<text x="2322" y="529" text-anchor="end" class="ct">varchar</text>
+<rect x="2001" y="536" width="328" height="22" fill="#f4f6f9"/>
+<text x="2060" y="551" class="cn">expires_at</text>
+<text x="2322" y="551" text-anchor="end" class="ct">timestamptz</text>
+<text x="2060" y="573" class="cn">revoked_at</text>
+<text x="2322" y="573" text-anchor="end" class="ct">timestamptz</text>
+<rect x="60" y="150" width="330" height="140" rx="6" fill="#fff" stroke="#0e8a8a" stroke-width="1.5"/>
+<rect x="60" y="150" width="330" height="30" rx="6" fill="#0e8a8a"/>
+<rect x="60" y="168" width="330" height="12" fill="#0e8a8a"/>
+<text x="70" y="170" class="th">skills</text>
+<rect x="66" y="184" width="23" height="14" rx="3" fill="#333333"/>
+<text x="77.5" y="194" text-anchor="middle" class="bd">PK</text>
+<text x="120" y="195" class="cn">id</text>
+<text x="382" y="195" text-anchor="end" class="ct">uuid</text>
+<rect x="61" y="202" width="328" height="22" fill="#f4f6f9"/>
+<rect x="66" y="206" width="23" height="14" rx="3" fill="#8a8a8a"/>
+<text x="77.5" y="216" text-anchor="middle" class="bd">UQ</text>
+<text x="120" y="217" class="cn">code</text>
+<text x="382" y="217" text-anchor="end" class="ct">varchar</text>
+<text x="120" y="239" class="cn">name</text>
+<text x="382" y="239" text-anchor="end" class="ct">varchar</text>
+<rect x="61" y="246" width="328" height="22" fill="#f4f6f9"/>
+<text x="120" y="261" class="cn">description</text>
+<text x="382" y="261" text-anchor="end" class="ct">text</text>
+<text x="120" y="283" class="cn">category</text>
+<text x="382" y="283" text-anchor="end" class="ct">varchar</text>
+<rect x="430" y="150" width="330" height="74" rx="6" fill="#fff" stroke="#0e8a8a" stroke-width="1.5"/>
+<rect x="430" y="150" width="330" height="30" rx="6" fill="#0e8a8a"/>
+<rect x="430" y="168" width="330" height="12" fill="#0e8a8a"/>
+<text x="440" y="170" class="th">levels</text>
+<rect x="436" y="184" width="23" height="14" rx="3" fill="#333333"/>
+<text x="447.5" y="194" text-anchor="middle" class="bd">PK</text>
+<text x="490" y="195" class="cn">level</text>
+<text x="752" y="195" text-anchor="end" class="ct">smallint</text>
+<rect x="431" y="202" width="328" height="22" fill="#f4f6f9"/>
+<text x="490" y="217" class="cn">description</text>
+<text x="752" y="217" text-anchor="end" class="ct">text</text>
+<rect x="800" y="150" width="330" height="74" rx="6" fill="#fff" stroke="#0e8a8a" stroke-width="1.5"/>
+<rect x="800" y="150" width="330" height="30" rx="6" fill="#0e8a8a"/>
+<rect x="800" y="168" width="330" height="12" fill="#0e8a8a"/>
+<text x="810" y="170" class="th">role_profiles</text>
+<rect x="806" y="184" width="23" height="14" rx="3" fill="#333333"/>
+<text x="817.5" y="194" text-anchor="middle" class="bd">PK</text>
+<text x="860" y="195" class="cn">id</text>
+<text x="1122" y="195" text-anchor="end" class="ct">uuid</text>
+<rect x="801" y="202" width="328" height="22" fill="#f4f6f9"/>
+<text x="860" y="217" class="cn">name</text>
+<text x="1122" y="217" text-anchor="end" class="ct">varchar</text>
+<rect x="1170" y="150" width="330" height="96" rx="6" fill="#fff" stroke="#0e8a8a" stroke-width="1.5"/>
+<rect x="1170" y="150" width="330" height="30" rx="6" fill="#0e8a8a"/>
+<rect x="1170" y="168" width="330" height="12" fill="#0e8a8a"/>
+<text x="1180" y="170" class="th">role_profile_skills</text>
+<rect x="1176" y="184" width="23" height="14" rx="3" fill="#333333"/>
+<text x="1187.5" y="194" text-anchor="middle" class="bd">PK</text>
+<rect x="1202" y="184" width="23" height="14" rx="3" fill="#0e8a8a"/>
+<text x="1213.5" y="194" text-anchor="middle" class="bd">FK</text>
+<text x="1230" y="195" class="cn">profile_id</text>
+<text x="1492" y="195" text-anchor="end" class="ct">uuid</text>
+<rect x="1171" y="202" width="328" height="22" fill="#f4f6f9"/>
+<rect x="1176" y="206" width="23" height="14" rx="3" fill="#333333"/>
+<text x="1187.5" y="216" text-anchor="middle" class="bd">PK</text>
+<rect x="1202" y="206" width="23" height="14" rx="3" fill="#0e8a8a"/>
+<text x="1213.5" y="216" text-anchor="middle" class="bd">FK</text>
+<text x="1230" y="217" class="cn">skill_id</text>
+<text x="1492" y="217" text-anchor="end" class="ct">uuid</text>
+<rect x="1176" y="228" width="23" height="14" rx="3" fill="#0e8a8a"/>
+<text x="1187.5" y="238" text-anchor="middle" class="bd">FK</text>
+<text x="1230" y="239" class="cn">min_level</text>
+<text x="1492" y="239" text-anchor="end" class="ct">smallint</text>
+<rect x="2000" y="690" width="330" height="140" rx="6" fill="#fff" stroke="#7f7f7f" stroke-width="1.5"/>
+<rect x="2000" y="690" width="330" height="30" rx="6" fill="#7f7f7f"/>
+<rect x="2000" y="708" width="330" height="12" fill="#7f7f7f"/>
+<text x="2010" y="710" class="th">events</text>
+<rect x="2006" y="724" width="23" height="14" rx="3" fill="#333333"/>
+<text x="2017.5" y="734" text-anchor="middle" class="bd">PK</text>
+<text x="2060" y="735" class="cn">id</text>
+<text x="2322" y="735" text-anchor="end" class="ct">bigserial</text>
+<rect x="2001" y="742" width="328" height="22" fill="#f4f6f9"/>
+<text x="2060" y="757" class="cn">type</text>
+<text x="2322" y="757" text-anchor="end" class="ct">varchar</text>
+<text x="2060" y="779" class="cn">aggregate_id</text>
+<text x="2322" y="779" text-anchor="end" class="ct">uuid</text>
+<rect x="2001" y="786" width="328" height="22" fill="#f4f6f9"/>
+<text x="2060" y="801" class="cn">payload</text>
+<text x="2322" y="801" text-anchor="end" class="ct">jsonb</text>
+<text x="2060" y="823" class="cn">created_at</text>
+<text x="2322" y="823" text-anchor="end" class="ct">timestamptz</text>
+<rect x="60" y="500" width="330" height="250" rx="6" fill="#fff" stroke="#1b4f9c" stroke-width="1.5"/>
+<rect x="60" y="500" width="330" height="30" rx="6" fill="#1b4f9c"/>
+<rect x="60" y="518" width="330" height="12" fill="#1b4f9c"/>
+<text x="70" y="520" class="th">generation_requests</text>
+<rect x="66" y="534" width="23" height="14" rx="3" fill="#333333"/>
+<text x="77.5" y="544" text-anchor="middle" class="bd">PK</text>
+<text x="120" y="545" class="cn">id</text>
+<text x="382" y="545" text-anchor="end" class="ct">uuid</text>
+<rect x="61" y="552" width="328" height="22" fill="#f4f6f9"/>
+<rect x="66" y="556" width="23" height="14" rx="3" fill="#1b4f9c"/>
+<text x="77.5" y="566" text-anchor="middle" class="bd">FK</text>
+<text x="120" y="567" class="cn">requested_by</text>
+<text x="382" y="567" text-anchor="end" class="ct">uuid</text>
+<rect x="66" y="578" width="23" height="14" rx="3" fill="#1b4f9c"/>
+<text x="77.5" y="588" text-anchor="middle" class="bd">FK</text>
+<text x="120" y="589" class="cn">skill_id</text>
+<text x="382" y="589" text-anchor="end" class="ct">uuid</text>
+<rect x="61" y="596" width="328" height="22" fill="#f4f6f9"/>
+<rect x="66" y="600" width="23" height="14" rx="3" fill="#1b4f9c"/>
+<text x="77.5" y="610" text-anchor="middle" class="bd">FK</text>
+<text x="120" y="611" class="cn">level</text>
+<text x="382" y="611" text-anchor="end" class="ct">smallint</text>
+<text x="120" y="633" class="cn">item_type</text>
+<text x="382" y="633" text-anchor="end" class="ct">varchar</text>
+<rect x="61" y="640" width="328" height="22" fill="#f4f6f9"/>
+<text x="120" y="655" class="cn">item_count</text>
+<text x="382" y="655" text-anchor="end" class="ct">int</text>
+<text x="120" y="677" class="cn">estimated_minutes</text>
+<text x="382" y="677" text-anchor="end" class="ct">int</text>
+<rect x="61" y="684" width="328" height="22" fill="#f4f6f9"/>
+<text x="120" y="699" class="cn">context</text>
+<text x="382" y="699" text-anchor="end" class="ct">text</text>
+<text x="120" y="721" class="cn">status</text>
+<text x="382" y="721" text-anchor="end" class="ct">varchar</text>
+<rect x="61" y="728" width="328" height="22" fill="#f4f6f9"/>
+<text x="120" y="743" class="cn">created_at</text>
+<text x="382" y="743" text-anchor="end" class="ct">timestamptz</text>
+<rect x="430" y="500" width="330" height="140" rx="6" fill="#fff" stroke="#1b4f9c" stroke-width="1.5"/>
+<rect x="430" y="500" width="330" height="30" rx="6" fill="#1b4f9c"/>
+<rect x="430" y="518" width="330" height="12" fill="#1b4f9c"/>
+<text x="440" y="520" class="th">items</text>
+<rect x="436" y="534" width="23" height="14" rx="3" fill="#333333"/>
+<text x="447.5" y="544" text-anchor="middle" class="bd">PK</text>
+<text x="490" y="545" class="cn">id</text>
+<text x="752" y="545" text-anchor="end" class="ct">uuid</text>
+<rect x="431" y="552" width="328" height="22" fill="#f4f6f9"/>
+<text x="490" y="567" class="cn">status</text>
+<text x="752" y="567" text-anchor="end" class="ct">varchar</text>
+<rect x="436" y="578" width="23" height="14" rx="3" fill="#1b4f9c"/>
+<text x="447.5" y="588" text-anchor="middle" class="bd">FK</text>
+<text x="490" y="589" class="cn">skill_id</text>
+<text x="752" y="589" text-anchor="end" class="ct">uuid</text>
+<rect x="431" y="596" width="328" height="22" fill="#f4f6f9"/>
+<rect x="436" y="600" width="23" height="14" rx="3" fill="#1b4f9c"/>
+<text x="447.5" y="610" text-anchor="middle" class="bd">FK</text>
+<text x="490" y="611" class="cn">created_by</text>
+<text x="752" y="611" text-anchor="end" class="ct">uuid</text>
+<text x="490" y="633" class="cn">created_at</text>
+<text x="752" y="633" text-anchor="end" class="ct">timestamptz</text>
+<rect x="800" y="500" width="330" height="272" rx="6" fill="#fff" stroke="#1b4f9c" stroke-width="1.5"/>
+<rect x="800" y="500" width="330" height="30" rx="6" fill="#1b4f9c"/>
+<rect x="800" y="518" width="330" height="12" fill="#1b4f9c"/>
+<text x="810" y="520" class="th">item_versions</text>
+<rect x="806" y="534" width="23" height="14" rx="3" fill="#333333"/>
+<text x="817.5" y="544" text-anchor="middle" class="bd">PK</text>
+<text x="860" y="545" class="cn">id</text>
+<text x="1122" y="545" text-anchor="end" class="ct">uuid</text>
+<rect x="801" y="552" width="328" height="22" fill="#f4f6f9"/>
+<rect x="806" y="556" width="23" height="14" rx="3" fill="#1b4f9c"/>
+<text x="817.5" y="566" text-anchor="middle" class="bd">FK</text>
+<text x="860" y="567" class="cn">item_id</text>
+<text x="1122" y="567" text-anchor="end" class="ct">uuid</text>
+<text x="860" y="589" class="cn">type</text>
+<text x="1122" y="589" text-anchor="end" class="ct">varchar</text>
+<rect x="801" y="596" width="328" height="22" fill="#f4f6f9"/>
+<text x="860" y="611" class="cn">version</text>
+<text x="1122" y="611" text-anchor="end" class="ct">int</text>
+<text x="860" y="633" class="cn">origin</text>
+<text x="1122" y="633" text-anchor="end" class="ct">varchar</text>
+<rect x="801" y="640" width="328" height="22" fill="#f4f6f9"/>
+<rect x="806" y="644" width="23" height="14" rx="3" fill="#1b4f9c"/>
+<text x="817.5" y="654" text-anchor="middle" class="bd">FK</text>
+<text x="860" y="655" class="cn">generation_request_id</text>
+<text x="1122" y="655" text-anchor="end" class="ct">uuid</text>
+<rect x="806" y="666" width="23" height="14" rx="3" fill="#1b4f9c"/>
+<text x="817.5" y="676" text-anchor="middle" class="bd">FK</text>
+<text x="860" y="677" class="cn">level</text>
+<text x="1122" y="677" text-anchor="end" class="ct">smallint</text>
+<rect x="801" y="684" width="328" height="22" fill="#f4f6f9"/>
+<text x="860" y="699" class="cn">estimated_minutes</text>
+<text x="1122" y="699" text-anchor="end" class="ct">int</text>
+<text x="860" y="721" class="cn">evaluation_goal</text>
+<text x="1122" y="721" text-anchor="end" class="ct">text</text>
+<rect x="801" y="728" width="328" height="22" fill="#f4f6f9"/>
+<text x="860" y="743" class="cn">statement</text>
+<text x="1122" y="743" text-anchor="end" class="ct">text</text>
+<text x="860" y="765" class="cn">created_at</text>
+<text x="1122" y="765" text-anchor="end" class="ct">timestamptz</text>
+<rect x="1170" y="500" width="330" height="140" rx="6" fill="#fff" stroke="#1b4f9c" stroke-width="1.5"/>
+<rect x="1170" y="500" width="330" height="30" rx="6" fill="#1b4f9c"/>
+<rect x="1170" y="518" width="330" height="12" fill="#1b4f9c"/>
+<text x="1180" y="520" class="th">item_scores</text>
+<rect x="1176" y="534" width="23" height="14" rx="3" fill="#333333"/>
+<text x="1187.5" y="544" text-anchor="middle" class="bd">PK</text>
+<text x="1230" y="545" class="cn">id</text>
+<text x="1492" y="545" text-anchor="end" class="ct">uuid</text>
+<rect x="1171" y="552" width="328" height="22" fill="#f4f6f9"/>
+<rect x="1176" y="556" width="23" height="14" rx="3" fill="#1b4f9c"/>
+<text x="1187.5" y="566" text-anchor="middle" class="bd">FK</text>
+<text x="1230" y="567" class="cn">item_version_id</text>
+<text x="1492" y="567" text-anchor="end" class="ct">uuid</text>
+<rect x="1176" y="578" width="23" height="14" rx="3" fill="#1b4f9c"/>
+<text x="1187.5" y="588" text-anchor="middle" class="bd">FK</text>
+<text x="1230" y="589" class="cn">validator_id</text>
+<text x="1492" y="589" text-anchor="end" class="ct">uuid</text>
+<rect x="1171" y="596" width="328" height="22" fill="#f4f6f9"/>
+<text x="1230" y="611" class="cn">score</text>
+<text x="1492" y="611" text-anchor="end" class="ct">numeric(2,1)</text>
+<text x="1230" y="633" class="cn">created_at</text>
+<text x="1492" y="633" text-anchor="end" class="ct">timestamptz</text>
+<rect x="60" y="850" width="330" height="140" rx="6" fill="#fff" stroke="#1b4f9c" stroke-width="1.5"/>
+<rect x="60" y="850" width="330" height="30" rx="6" fill="#1b4f9c"/>
+<rect x="60" y="868" width="330" height="12" fill="#1b4f9c"/>
+<text x="70" y="870" class="th">item_choice_options</text>
+<rect x="66" y="884" width="23" height="14" rx="3" fill="#333333"/>
+<text x="77.5" y="894" text-anchor="middle" class="bd">PK</text>
+<text x="120" y="895" class="cn">id</text>
+<text x="382" y="895" text-anchor="end" class="ct">uuid</text>
+<rect x="61" y="902" width="328" height="22" fill="#f4f6f9"/>
+<rect x="66" y="906" width="23" height="14" rx="3" fill="#1b4f9c"/>
+<text x="77.5" y="916" text-anchor="middle" class="bd">FK</text>
+<text x="120" y="917" class="cn">item_version_id</text>
+<text x="382" y="917" text-anchor="end" class="ct">uuid</text>
+<text x="120" y="939" class="cn">position</text>
+<text x="382" y="939" text-anchor="end" class="ct">smallint</text>
+<rect x="61" y="946" width="328" height="22" fill="#f4f6f9"/>
+<text x="120" y="961" class="cn">text</text>
+<text x="382" y="961" text-anchor="end" class="ct">text</text>
+<text x="120" y="983" class="cn">is_correct</text>
+<text x="382" y="983" text-anchor="end" class="ct">boolean</text>
+<rect x="430" y="850" width="330" height="74" rx="6" fill="#fff" stroke="#1b4f9c" stroke-width="1.5"/>
+<rect x="430" y="850" width="330" height="30" rx="6" fill="#1b4f9c"/>
+<rect x="430" y="868" width="330" height="12" fill="#1b4f9c"/>
+<text x="440" y="870" class="th">item_true_false</text>
+<rect x="436" y="884" width="23" height="14" rx="3" fill="#333333"/>
+<text x="447.5" y="894" text-anchor="middle" class="bd">PK</text>
+<rect x="462" y="884" width="23" height="14" rx="3" fill="#1b4f9c"/>
+<text x="473.5" y="894" text-anchor="middle" class="bd">FK</text>
+<text x="490" y="895" class="cn">item_version_id</text>
+<text x="752" y="895" text-anchor="end" class="ct">uuid</text>
+<rect x="431" y="902" width="328" height="22" fill="#f4f6f9"/>
+<text x="490" y="917" class="cn">correct_answer</text>
+<text x="752" y="917" text-anchor="end" class="ct">boolean</text>
+<rect x="800" y="850" width="330" height="74" rx="6" fill="#fff" stroke="#1b4f9c" stroke-width="1.5"/>
+<rect x="800" y="850" width="330" height="30" rx="6" fill="#1b4f9c"/>
+<rect x="800" y="868" width="330" height="12" fill="#1b4f9c"/>
+<text x="810" y="870" class="th">item_open_question</text>
+<rect x="806" y="884" width="23" height="14" rx="3" fill="#333333"/>
+<text x="817.5" y="894" text-anchor="middle" class="bd">PK</text>
+<rect x="832" y="884" width="23" height="14" rx="3" fill="#1b4f9c"/>
+<text x="843.5" y="894" text-anchor="middle" class="bd">FK</text>
+<text x="860" y="895" class="cn">item_version_id</text>
+<text x="1122" y="895" text-anchor="end" class="ct">uuid</text>
+<rect x="801" y="902" width="328" height="22" fill="#f4f6f9"/>
+<text x="860" y="917" class="cn">reference_answer</text>
+<text x="1122" y="917" text-anchor="end" class="ct">text</text>
+<rect x="1170" y="850" width="330" height="206" rx="6" fill="#fff" stroke="#1b4f9c" stroke-width="1.5"/>
+<rect x="1170" y="850" width="330" height="30" rx="6" fill="#1b4f9c"/>
+<rect x="1170" y="868" width="330" height="12" fill="#1b4f9c"/>
+<text x="1180" y="870" class="th">item_coding</text>
+<rect x="1176" y="884" width="23" height="14" rx="3" fill="#333333"/>
+<text x="1187.5" y="894" text-anchor="middle" class="bd">PK</text>
+<rect x="1202" y="884" width="23" height="14" rx="3" fill="#1b4f9c"/>
+<text x="1213.5" y="894" text-anchor="middle" class="bd">FK</text>
+<text x="1230" y="895" class="cn">item_version_id</text>
+<text x="1492" y="895" text-anchor="end" class="ct">uuid</text>
+<rect x="1171" y="902" width="328" height="22" fill="#f4f6f9"/>
+<text x="1230" y="917" class="cn">language</text>
+<text x="1492" y="917" text-anchor="end" class="ct">varchar</text>
+<text x="1230" y="939" class="cn">function_signature</text>
+<text x="1492" y="939" text-anchor="end" class="ct">text</text>
+<rect x="1171" y="946" width="328" height="22" fill="#f4f6f9"/>
+<text x="1230" y="961" class="cn">starter_code</text>
+<text x="1492" y="961" text-anchor="end" class="ct">text</text>
+<text x="1230" y="983" class="cn">unit_tests</text>
+<text x="1492" y="983" text-anchor="end" class="ct">text</text>
+<rect x="1171" y="990" width="328" height="22" fill="#f4f6f9"/>
+<text x="1230" y="1005" class="cn">time_limit_seconds</text>
+<text x="1492" y="1005" text-anchor="end" class="ct">int</text>
+<text x="1230" y="1027" class="cn">memory_limit_mb</text>
+<text x="1492" y="1027" text-anchor="end" class="ct">int</text>
+<rect x="1171" y="1034" width="328" height="22" fill="#f4f6f9"/>
+<text x="1230" y="1049" class="cn">reference_solution</text>
+<text x="1492" y="1049" text-anchor="end" class="ct">text</text>
+<rect x="1540" y="850" width="330" height="162" rx="6" fill="#fff" stroke="#1b4f9c" stroke-width="1.5"/>
+<rect x="1540" y="850" width="330" height="30" rx="6" fill="#1b4f9c"/>
+<rect x="1540" y="868" width="330" height="12" fill="#1b4f9c"/>
+<text x="1550" y="870" class="th">item_system_design</text>
+<rect x="1546" y="884" width="23" height="14" rx="3" fill="#333333"/>
+<text x="1557.5" y="894" text-anchor="middle" class="bd">PK</text>
+<rect x="1572" y="884" width="23" height="14" rx="3" fill="#1b4f9c"/>
+<text x="1583.5" y="894" text-anchor="middle" class="bd">FK</text>
+<text x="1600" y="895" class="cn">item_version_id</text>
+<text x="1862" y="895" text-anchor="end" class="ct">uuid</text>
+<rect x="1541" y="902" width="328" height="22" fill="#f4f6f9"/>
+<text x="1600" y="917" class="cn">scenario</text>
+<text x="1862" y="917" text-anchor="end" class="ct">text</text>
+<text x="1600" y="939" class="cn">functional_requirements</text>
+<text x="1862" y="939" text-anchor="end" class="ct">text[]</text>
+<rect x="1541" y="946" width="328" height="22" fill="#f4f6f9"/>
+<text x="1600" y="961" class="cn">non_functional_requirements</text>
+<text x="1862" y="961" text-anchor="end" class="ct">text[]</text>
+<text x="1600" y="983" class="cn">constraints</text>
+<text x="1862" y="983" text-anchor="end" class="ct">text[]</text>
+<rect x="1541" y="990" width="328" height="22" fill="#f4f6f9"/>
+<text x="1600" y="1005" class="cn">reference_answer</text>
+<text x="1862" y="1005" text-anchor="end" class="ct">text</text>
+<rect x="60" y="1160" width="330" height="184" rx="6" fill="#fff" stroke="#1b4f9c" stroke-width="1.5"/>
+<rect x="60" y="1160" width="330" height="30" rx="6" fill="#1b4f9c"/>
+<rect x="60" y="1178" width="330" height="12" fill="#1b4f9c"/>
+<text x="70" y="1180" class="th">item_debugging</text>
+<rect x="66" y="1194" width="23" height="14" rx="3" fill="#333333"/>
+<text x="77.5" y="1204" text-anchor="middle" class="bd">PK</text>
+<rect x="92" y="1194" width="23" height="14" rx="3" fill="#1b4f9c"/>
+<text x="103.5" y="1204" text-anchor="middle" class="bd">FK</text>
+<text x="120" y="1205" class="cn">item_version_id</text>
+<text x="382" y="1205" text-anchor="end" class="ct">uuid</text>
+<rect x="61" y="1212" width="328" height="22" fill="#f4f6f9"/>
+<text x="120" y="1227" class="cn">language</text>
+<text x="382" y="1227" text-anchor="end" class="ct">varchar</text>
+<text x="120" y="1249" class="cn">code</text>
+<text x="382" y="1249" text-anchor="end" class="ct">text</text>
+<rect x="61" y="1256" width="328" height="22" fill="#f4f6f9"/>
+<text x="120" y="1271" class="cn">symptom_input</text>
+<text x="382" y="1271" text-anchor="end" class="ct">text</text>
+<text x="120" y="1293" class="cn">symptom_expected</text>
+<text x="382" y="1293" text-anchor="end" class="ct">text</text>
+<rect x="61" y="1300" width="328" height="22" fill="#f4f6f9"/>
+<text x="120" y="1315" class="cn">symptom_observed</text>
+<text x="382" y="1315" text-anchor="end" class="ct">text</text>
+<text x="120" y="1337" class="cn">reference_answer</text>
+<text x="382" y="1337" text-anchor="end" class="ct">text</text>
+<rect x="430" y="1160" width="330" height="118" rx="6" fill="#fff" stroke="#1b4f9c" stroke-width="1.5"/>
+<rect x="430" y="1160" width="330" height="30" rx="6" fill="#1b4f9c"/>
+<rect x="430" y="1178" width="330" height="12" fill="#1b4f9c"/>
+<text x="440" y="1180" class="th">item_findings</text>
+<rect x="436" y="1194" width="23" height="14" rx="3" fill="#333333"/>
+<text x="447.5" y="1204" text-anchor="middle" class="bd">PK</text>
+<text x="490" y="1205" class="cn">id</text>
+<text x="752" y="1205" text-anchor="end" class="ct">uuid</text>
+<rect x="431" y="1212" width="328" height="22" fill="#f4f6f9"/>
+<rect x="436" y="1216" width="23" height="14" rx="3" fill="#1b4f9c"/>
+<text x="447.5" y="1226" text-anchor="middle" class="bd">FK</text>
+<text x="490" y="1227" class="cn">item_version_id</text>
+<text x="752" y="1227" text-anchor="end" class="ct">uuid</text>
+<text x="490" y="1249" class="cn">line</text>
+<text x="752" y="1249" text-anchor="end" class="ct">int</text>
+<rect x="431" y="1256" width="328" height="22" fill="#f4f6f9"/>
+<text x="490" y="1271" class="cn">description</text>
+<text x="752" y="1271" text-anchor="end" class="ct">text</text>
+<rect x="800" y="1160" width="330" height="140" rx="6" fill="#fff" stroke="#1b4f9c" stroke-width="1.5"/>
+<rect x="800" y="1160" width="330" height="30" rx="6" fill="#1b4f9c"/>
+<rect x="800" y="1178" width="330" height="12" fill="#1b4f9c"/>
+<text x="810" y="1180" class="th">rubric_criteria</text>
+<rect x="806" y="1194" width="23" height="14" rx="3" fill="#333333"/>
+<text x="817.5" y="1204" text-anchor="middle" class="bd">PK</text>
+<text x="860" y="1205" class="cn">id</text>
+<text x="1122" y="1205" text-anchor="end" class="ct">uuid</text>
+<rect x="801" y="1212" width="328" height="22" fill="#f4f6f9"/>
+<rect x="806" y="1216" width="23" height="14" rx="3" fill="#1b4f9c"/>
+<text x="817.5" y="1226" text-anchor="middle" class="bd">FK</text>
+<text x="860" y="1227" class="cn">item_version_id</text>
+<text x="1122" y="1227" text-anchor="end" class="ct">uuid</text>
+<text x="860" y="1249" class="cn">name</text>
+<text x="1122" y="1249" text-anchor="end" class="ct">varchar</text>
+<rect x="801" y="1256" width="328" height="22" fill="#f4f6f9"/>
+<text x="860" y="1271" class="cn">weight</text>
+<text x="1122" y="1271" text-anchor="end" class="ct">smallint</text>
+<text x="860" y="1293" class="cn">position</text>
+<text x="1122" y="1293" text-anchor="end" class="ct">smallint</text>
+<rect x="1170" y="1160" width="330" height="96" rx="6" fill="#fff" stroke="#1b4f9c" stroke-width="1.5"/>
+<rect x="1170" y="1160" width="330" height="30" rx="6" fill="#1b4f9c"/>
+<rect x="1170" y="1178" width="330" height="12" fill="#1b4f9c"/>
+<text x="1180" y="1180" class="th">rubric_levels</text>
+<rect x="1176" y="1194" width="23" height="14" rx="3" fill="#333333"/>
+<text x="1187.5" y="1204" text-anchor="middle" class="bd">PK</text>
+<rect x="1202" y="1194" width="23" height="14" rx="3" fill="#1b4f9c"/>
+<text x="1213.5" y="1204" text-anchor="middle" class="bd">FK</text>
+<text x="1230" y="1205" class="cn">criterion_id</text>
+<text x="1492" y="1205" text-anchor="end" class="ct">uuid</text>
+<rect x="1171" y="1212" width="328" height="22" fill="#f4f6f9"/>
+<rect x="1176" y="1216" width="23" height="14" rx="3" fill="#333333"/>
+<text x="1187.5" y="1226" text-anchor="middle" class="bd">PK</text>
+<text x="1230" y="1227" class="cn">score</text>
+<text x="1492" y="1227" text-anchor="end" class="ct">smallint</text>
+<text x="1230" y="1249" class="cn">descriptor</text>
+<text x="1492" y="1249" text-anchor="end" class="ct">text</text>
+<rect x="1980" y="920" width="390" height="250" rx="10" fill="#fff" stroke="#bbb"/>
+<text x="1996" y="946" class="bl" fill="#333">Leyenda</text>
+<line x1="1996" y1="974" x2="2046" y2="974" stroke="#1b4f9c" stroke-width="2" marker-end="url(#m-in)"/>
+<text x="2060" y="978" class="lg">FK dentro del mismo schema</text>
+<line x1="1996" y1="1002" x2="2046" y2="1002" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-cat)"/>
+<text x="2060" y="1006" class="lg">FK hacia catalog</text>
+<line x1="1996" y1="1030" x2="2046" y2="1030" stroke="#d9822b" stroke-width="2" marker-end="url(#m-id)"/>
+<text x="2060" y="1034" class="lg">FK hacia identity</text>
+<rect x="1996" y="1054" width="23" height="14" rx="3" fill="#333333"/>
+<text x="2007.5" y="1064" text-anchor="middle" class="bd">PK</text>
+<text x="2060" y="1065" class="lg">clave primaria</text>
+<rect x="1996" y="1080" width="23" height="14" rx="3" fill="#555555"/>
+<text x="2007.5" y="1090" text-anchor="middle" class="bd">FK</text>
+<text x="2060" y="1091" class="lg">clave foránea</text>
+<rect x="1996" y="1106" width="23" height="14" rx="3" fill="#8a8a8a"/>
+<text x="2007.5" y="1116" text-anchor="middle" class="bd">UQ</text>
+<text x="2060" y="1117" class="lg">valor único</text>
+<text x="1996" y="1142" class="lg">El tronco bajo item_versions agrupa las FK</text>
+<text x="1996" y="1160" class="lg">item_version_id de las tablas de abajo.</text>
+</svg></body></html>

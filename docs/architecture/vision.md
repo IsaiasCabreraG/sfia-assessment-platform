@@ -16,14 +16,13 @@
 ### Generación de contenidos
 - **IA genera borradores** + **expertos validan** (modelo híbrido)
 
-### Tutor socrático
-- **Chat interactivo (LLM)**: Diálogo guiado con pistas, preguntas dirigidas, feedback en tiempo real
-
 ### Tipos de ejercicios (must-have)
+- Preguntas cerradas (alternativa única, verdadero o falso)
+- Preguntas de desarrollo
 - Coding challenges (algoritmos, ED, complejidad)
 - System design / arquitectura
-- Debugging / code review
-- Proyectos prácticos (take-home mini-proyectos)
+- Debugging
+- Proyectos prácticos (take-home mini-proyectos): fuera de la primera versión
 - Banco diverso mapeado a skills SFIA
 
 ### Composición de evaluaciones
@@ -60,7 +59,6 @@
 | User personas (4) | ✅ Definidas |
 | SFIA role (taxonomía + perfiles) | ✅ Definido |
 | Content generation (IA + experto) | ✅ Definido |
-| Tutor socrático (chat LLM) | ✅ Definido |
 | Exercise types (4 categorías) | ✅ Definido |
 | Assessment composition (plantillas + editor) | ✅ Definido |
 | Evaluation strategy (por categoría) | 🔄 Pendiente categorizar |
@@ -99,8 +97,8 @@
 
 | Módulo | Responsabilidad principal | Sub-módulos / Notas |
 |---|---|---|
-| **Generación de Contenido** | Generar contenido para métodos de evaluación | • Banco de preguntas<br>• Tutor socrático (chat LLM)<br>• Ejercicios técnicos (coding, system design, debugging, proyectos)<br>• Interactúa constantemente con **Catálogo SFIA**<br>• Interfaz: Portal de Contenido (generación y validación de ítems) |
-| **Catálogo SFIA** | Taxonomía SFIA: skills, niveles, perfiles de rol, mapeo skill↔contenido | Catálogo versionado, validación experto, perfiles predefinidos |
+| **Generación de Contenido** | Generar contenido para métodos de evaluación | • Banco de preguntas<br>• Ejercicios técnicos (coding, system design, debugging)<br>• Interactúa constantemente con **Catálogo SFIA**<br>• Interfaz: Portal de Contenido (generación y validación de ítems) |
+| **Catálogo SFIA** | Taxonomía SFIA: skills, niveles, perfiles de rol | Catálogo versionado, validación experto, perfiles predefinidos |
 | **Constructor de Evaluaciones** | Componer evaluaciones: seleccionar skills, editar preguntas, orden, timer, pesos | Plantillas de perfiles SFIA + editor visual (drag-and-drop) |
 | **Ejecución de Evaluaciones** | Ejecutar evaluación: entregar preguntas una a una, timer, sesión, respuestas | Modo unificado (práctica/oficial), persistencia de intento |
 | **Evaluación Automática** | Corrección automática con límites definidos | Por categoría: tests unitarios, LLM-as-judge con rúbricas, heurísticas; **no cubre todo** |
@@ -113,9 +111,9 @@
 
 | Módulo | Owns (datos) | Expone (API) | Emite (eventos) | Consume (eventos) |
 |---|---|---|---|---|
-| **Catálogo SFIA** | Skills, niveles, perfiles, mapeos skill↔contenido | REST CRUD + queries (skills por nivel, perfiles con skills) | `SkillCreated`, `SkillUpdated`, `ProfileCreated`, `ProfileUpdated`, `MappingChanged` | — |
-| **Generación de Contenido** | Items (preguntas, ejercicios, simulaciones), rúbricas, versionado, estado validación | APIs internas por sub-módulo: banco, tutor, ejercicios (CRUD + búsqueda por skill/nivel/tipo) | `ItemCreated`, `ItemValidated`, `ItemDeprecated`, `RubricPublished` | `SkillCreated`, `ProfileUpdated` (para mapear items) |
-| **Constructor de Evaluaciones** | Plantillas y evaluaciones compuestas (incluye `share_token`) | REST: composición, plantillas, publicar y link compartible; consulta Catálogo, Generación y Analítica desde su backend | `EvaluationComposed`, `TemplatePublished` | `ItemValidated`, `ProfileUpdated` |
+| **Catálogo SFIA** | Skills, niveles, perfiles | REST CRUD + queries (skills por nivel, perfiles con skills) | `SkillCreated`, `SkillUpdated`, `ProfileCreated`, `ProfileUpdated` | — |
+| **Generación de Contenido** | Items (preguntas, ejercicios), rúbricas, versionado, estado (activo/inactivo), puntuaciones de validación | APIs internas por sub-módulo: banco, ejercicios (CRUD + búsqueda por skill/nivel/tipo) | `ItemVersionCreated`, `ItemScored`, `ItemDeactivated` | `SkillCreated`, `ProfileUpdated` (para asociar items a skills) |
+| **Constructor de Evaluaciones** | Plantillas y evaluaciones compuestas (incluye `share_token`) | REST: composición, plantillas, publicar y link compartible; consulta Catálogo, Generación y Analítica desde su backend | `EvaluationComposed`, `TemplatePublished` | `ItemScored`, `ProfileUpdated` |
 | **Ejecución de Evaluaciones** | Sesiones, intentos, respuestas crudas, timer, estado | REST: `POST /sessions`, `GET /sessions/{id}/next-item`, `POST /responses`, `POST /sessions/{id}/finish`, `GET /sessions/{id}` | `SessionStarted`, `ResponseSubmitted`, `SessionCompleted`, `SessionAbandoned` | — (lee `builder.evaluations` por SQL, solo lectura) |
 | **Evaluación Automática** | Resultados, scores, feedback, verdicts | REST: `GET /evaluations/{sessionId}/result` | `EvaluationScored`, `EvaluationFailed` | `SessionCompleted`, `ResponseSubmitted` |
 | **Analítica y Reportes** | Event store (append-only), vistas materializadas, dashboards | REST: `GET /analytics/{candidate\|org\|evaluation}`, WebSocket live dashboards | — | **Todos**: `SessionStarted`, `ResponseSubmitted`, `SessionCompleted`, `EvaluationScored`, `UserRegistered`, `OrgCreated`, etc. |

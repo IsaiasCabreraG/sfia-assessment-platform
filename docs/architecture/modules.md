@@ -6,13 +6,12 @@ Plataforma de evaluación técnica y práctica para ingeniería de software basa
 
 ## 1. Catálogo SFIA
 
-**Responsabilidad**: Fuente de verdad de la taxonomía SFIA (skills, niveles 1-7, perfiles de rol, mapeos skill ↔ contenido).
+**Responsabilidad**: Fuente de verdad de la taxonomía SFIA (skills, niveles 1-7 y perfiles de rol).
 
 **Owns (datos)**:
 - `skills` — código, nombre, descripción, categoría
 - `levels` — nivel 1-7, descripción genérica de responsabilidad
 - `role_profiles` — perfil (ej: "Software Engineer L3"), skills requeridos con nivel mínimo
-- `skill_content_mapping` — skill_id ↔ content_item_id (qué items evalúan qué skill)
 
 **API (REST)**:
 ```
@@ -20,7 +19,6 @@ GET    /skills                    # Lista skills con filtros (categoría, nivel)
 GET    /skills/{id}               # Detalle skill + niveles
 GET    /role-profiles             # Perfiles predefinidos
 GET    /role-profiles/{id}        # Skills de un perfil
-GET    /mappings?skill_id=xxx     # Items de contenido mapeados a skill
 POST   /skills                    # Admin: crear skill
 PUT    /skills/{id}               # Admin: actualizar
 POST   /role-profiles             # Admin: crear perfil
@@ -33,7 +31,6 @@ POST   /role-profiles             # Admin: crear perfil
 | `SkillUpdated` | `skill_id, changes` |
 | `ProfileCreated` | `profile_id, name, skills[]` |
 | `ProfileUpdated` | `profile_id, changes` |
-| `MappingChanged` | `skill_id, content_item_id, action` |
 
 **Consumidores**: Generación de Contenido, Constructor de Evaluaciones (backend)
 
@@ -41,41 +38,38 @@ POST   /role-profiles             # Admin: crear perfil
 
 ## 2. Generación de Contenido
 
-**Responsabilidad**: Crear, versionar y validar items de evaluación (preguntas, ejercicios, simulaciones, rúbricas). Sub-módulos internos por tipo. Su interfaz vive en el **Portal de Contenido** (SPA), que solo llama a Generación de Contenido; este consulta a Catálogo SFIA.
+**Responsabilidad**: Crear, versionar y validar items de evaluación (preguntas, ejercicios, rúbricas). Sub-módulos internos por tipo. Su interfaz vive en el **Portal de Contenido** (SPA), que solo llama a Generación de Contenido; este consulta a Catálogo SFIA.
 
 **Owns (datos)**:
-- `items` — id, tipo (question/coding/system_design/debugging/project/simulation), enunciado, metadatos (skill_id, nivel, dificultad, tags), versión, estado (draft/validated/deprecated)
-- `rubrics` — item_id, criterios[], pesos, umbrales
-- `simulation_scripts` — simulation_id, prompts LLM, flujo socrático *(fuera de esta iteración)*
+- `generation_requests` — pedido de generación o de regeneración: skill, nivel, tipo, cantidad, tiempo estimado, contexto, estado
+- `items` — id, estado (active/inactive), skill_id (una skill por ítem)
+- `item_versions` — item_id, versión, tipo, origen (generated/regenerated/edited), pedido de generación, nivel, tiempo estimado, objetivo de evaluación, enunciado
+- Una tabla por tipo, con una fila por versión: `item_choice_options` (alternativa única), `item_true_false`, `item_open_question`, `item_coding`, `item_system_design`, `item_debugging` e `item_findings`
+- `rubric_criteria`, `rubric_levels` — rúbrica de cada versión, solo en los tipos abiertos (pregunta de desarrollo, system design, debugging)
+- `item_scores` — item_version_id, validator_id, puntuación (0.0 a 5.0)
 - `assets` — archivos adjuntos (S3/bucket)
 
 **APIs internas (REST)**:
 ```
-# Banco de preguntas
-GET    /questions?skill_id=&level=&difficulty=
-POST   /questions
-PUT    /questions/{id}
-POST   /questions/{id}/validate     # Experto validador aprueba (rol `validator`)
+# Generación
+POST   /generation-requests         # Crear ítems de una skill: nivel, tipo, cantidad y tiempo
+POST   /items/{id}/regenerate       # Regenerar con un nuevo contexto (puede cambiar el tipo) → nueva versión
 
-# Tutor socrático (fuera de esta iteración)
-GET    /simulations?skill_id=&level=
-POST   /simulations
-GET    /simulations/{id}/prompt     # Prompt LLM para sesión
-
-# Ejercicios técnicos
-GET    /exercises?type=coding|system_design|debugging|project&skill_id=&level=
-POST   /exercises
-PUT    /exercises/{id}
-GET    /exercises/{id}/tests        # Tests unitarios para auto-eval
+# Banco de ítems
+GET    /items?status=active&skill_id=&role_profile_id=&type=&score=   # Filtrar (activos por defecto)
+GET    /items/{id}                  # Versión vigente: atributos, datos del tipo, rúbrica, promedio y cantidad de puntuaciones
+PUT    /items/{id}                  # Modificar manualmente → nueva versión
+PUT    /items/{id}/status           # Activar o desactivar
+POST   /item-versions/{id}/scores   # Experto validador puntúa de 0.0 a 5.0 (rol `validator`)
+GET    /items/{id}/tests            # Tests unitarios (coding) para auto-eval
 ```
 
 **Eventos que emite**:
 | Evento | Payload clave |
 |---|---|
-| `ItemCreated` | `item_id, type, skill_id, level, version` |
-| `ItemValidated` | `item_id, validator_id, timestamp` |
-| `ItemDeprecated` | `item_id, reason, replaced_by` |
-| `RubricPublished` | `item_id, rubric_version` |
+| `ItemVersionCreated` | `item_id, version, type, origin, skill_id, level` |
+| `ItemScored` | `item_id, version, validator_id, score, timestamp` |
+| `ItemDeactivated` | `item_id, reason, replaced_by` |
 
 **Consumidores**: Constructor de Evaluaciones (backend; busca items), Ejecución (entrega items)
 
@@ -86,7 +80,7 @@ GET    /exercises/{id}/tests        # Tests unitarios para auto-eval
 **Responsabilidad**: Componer evaluaciones completas — seleccionar skills, elegir items, definir pesos, timer, orden. Backend REST. Su interfaz vive en el **Portal de Gestión** (SPA), que solo llama al Constructor; este consulta a Catálogo SFIA, Generación de Contenido y Analítica.
 
 **Owns (datos)**:
-- `evaluations` — skills, items, pesos, timer, orden, estado (draft/published), `share_token`
+- `evaluations` — skills, ítems (por `item_version_id`), pesos, timer, orden, estado (draft/published), `share_token`
 - `templates` — plantillas de evaluación
 
 **Flujo**:
@@ -121,7 +115,7 @@ GET    /evaluations/{id}/reports     # Consulta Analítica
 
 **Owns (datos)**:
 - `sessions` — id, evaluation_id, candidate_id, org_id, status (in_progress/completed/abandoned), started_at, finished_at
-- `attempts` — session_id, item_id, order, started_at, submitted_at, time_spent_ms
+- `attempts` — session_id, item_version_id, order, started_at, submitted_at, time_spent_ms
 - `responses` — attempt_id, payload (código, texto, archivos, clicks), raw_answer
 
 **Lee (solo lectura)**: `evaluations`. La forma de acceso (rol de BD, schemas) está por decidirse. `sessions.evaluation_id` es una referencia lógica.
@@ -132,21 +126,21 @@ REST:
 POST   /sessions                    # Iniciar sesión con {share_token} → {session_id, first_item}
 GET    /sessions/{id}               # Estado sesión
 GET    /sessions/{id}/next-item     # Siguiente item (o null si terminó)
-POST   /responses                   # Enviar respuesta {session_id, item_id, payload}
+POST   /responses                   # Enviar respuesta {session_id, item_version_id, payload}
 POST   /sessions/{id}/finish        # Finalizar anticipadamente
 GET    /sessions/{id}/results       # Redirige a Evaluación Automática
 
 WebSocket (ws://exec/sessions/{id}):
 Server → Client: {type: "timer_tick", remaining_ms}
 Server → Client: {type: "next_item", item}
-Client → Server: {type: "submit_response", item_id, payload}
+Client → Server: {type: "submit_response", item_version_id, payload}
 ```
 
 **Eventos que emite** (tabla `events`):
 | Evento | Payload clave |
 |---|---|
 | `SessionStarted` | `session_id, evaluation_id, candidate_id, org_id, started_at` |
-| `ResponseSubmitted` | `session_id, attempt_id, item_id, time_spent_ms` |
+| `ResponseSubmitted` | `session_id, attempt_id, item_version_id, time_spent_ms` |
 | `SessionCompleted` | `session_id, completed_at, items_answered` |
 | `SessionAbandoned` | `session_id, abandoned_at, last_item` |
 
@@ -159,28 +153,27 @@ Client → Server: {type: "submit_response", item_id, payload}
 **Responsabilidad**: Corrección asíncrona por categoría. No cubre todo — tiene límites definidos.
 
 **Owns (datos)**:
-- `results` — session_id, item_id, score (0-1), verdict (pass/fail/partial), feedback, details (JSON), evaluated_at
+- `results` — session_id, item_version_id, score (0-1), verdict (pass/fail/partial), feedback, details (JSON), evaluated_at
 - `aggregate_scores` — session_id, skill_scores{}, overall_score, percentile, evaluated_at
 
 **Estrategias por tipo**:
 | Tipo | Método |
 |---|---|
-| Preguntas cerradas (MCQ, true/false) | Comparación exacta — sync |
+| Alternativa única y verdadero/falso | Comparación exacta — sync |
 | Coding challenges | Tests unitarios en contenedor aislado — async worker |
-| System design / Debugging / Proyectos | LLM-as-judge con rúbrica (prompt estructurado) — async |
-| Tutor socrático *(fuera de esta iteración)* | LLM evalúa trayectoria + rúbrica conversacional — async |
+| Pregunta de desarrollo / System design / Debugging | LLM-as-judge con rúbrica (prompt estructurado) — async |
 
 **API (REST)**:
 ```
 GET    /evaluations/{sessionId}/result        # Resultado agregado
-GET    /evaluations/{sessionId}/items/{itemId} # Detalle por item
+GET    /evaluations/{sessionId}/items/{itemVersionId} # Detalle por item
 ```
 
 **Eventos que emite**:
 | Evento | Payload clave |
 |---|---|
 | `EvaluationScored` | `session_id, overall_score, skill_scores{}, percentile` |
-| `EvaluationFailed` | `session_id, item_id, error, retryable` |
+| `EvaluationFailed` | `session_id, item_version_id, error, retryable` |
 
 **Consumidores**: Analítica (dashboards), Ejecución (muestra resultado al usuario)
 
@@ -208,7 +201,7 @@ WebSocket (ws://analytics/live):
 Server → Client: {type: "metric_update", metric, value}  # Dashboards live
 ```
 
-**Eventos que consume**: **Todos** (`SessionStarted`, `ResponseSubmitted`, `SessionCompleted`, `EvaluationScored`, `UserRegistered`, `OrgCreated`, `ItemValidated`, etc.)
+**Eventos que consume**: **Todos** (`SessionStarted`, `ResponseSubmitted`, `SessionCompleted`, `EvaluationScored`, `UserRegistered`, `OrgCreated`, `ItemScored`, etc.)
 
 **No emite eventos** (sink final).
 
@@ -222,7 +215,8 @@ Server → Client: {type: "metric_update", metric, value}  # Dashboards live
 - `users` — id, email, name, avatar, google_id, created_at
 - `orgs` — id, name, slug, plan, settings, created_at
 - `memberships` — user_id, org_id, role (admin/recruiter/teacher/student/candidate/validator/viewer), joined_at
-- `tokens` — refresh tokens, access tokens (JWT con claims: org_id, roles, exp)
+- `refresh_tokens` — tokens de refresco (los access tokens son JWT con claims: org_id, roles, exp)
+- `user_roles` — user_id, role. En el Sprint 1 reemplaza a `orgs` y `memberships` mientras la multi-tenancy esté pendiente
 
 **API (REST + OAuth2/OIDC)**:
 ```
@@ -255,11 +249,15 @@ DELETE /orgs/{id}/members/{user_id}      # Expulsar
 
 ## Base de Datos Compartida (PostgreSQL)
 
-PostgreSQL (instancia única). **Pendiente de decisión:** cómo se organiza la base de datos (schemas, qué módulos acceden a cuáles y de qué forma).
+PostgreSQL (instancia única) con **un schema por módulo**. Para el Sprint 1 están definidos `identity` (Identidad y Acceso), `catalog` (Catálogo SFIA), `content` (Generación de Contenido) y `events` (event store). Los schemas de los demás módulos se definen cuando se aborden.
 
-**Patrón de eventos** (sujeto a la decisión anterior):
-- Productores: `INSERT INTO events (type, aggregate_id, payload) VALUES ...`
-- Consumidor Analítica: `SELECT * FROM events WHERE id > last_processed ORDER BY id` (polling) o CDC (Debezium)
+Las FK entre schemas son físicas: `content` depende de `catalog` (`skill_id`, `level`) y de `identity` (`created_by`, `requested_by`, `validator_id`); `catalog` e `identity` no dependen de nadie. El detalle está en `sprint1-db.dbml`, `item-types-dictionary.md` y la Figura 3.
+
+**Pendiente de decisión:** qué rol de BD accede a cada schema y de qué forma (por ejemplo, la lectura de `evaluations` desde Ejecución).
+
+**Patrón de eventos:**
+- Productores: `INSERT INTO events.events (type, aggregate_id, payload) VALUES ...`
+- Consumidor Analítica: `SELECT * FROM events.events WHERE id > last_processed ORDER BY id` (polling) o CDC (Debezium)
 
 ---
 

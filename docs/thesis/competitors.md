@@ -154,8 +154,7 @@ Nuestro proyecto:     Ejercicios prácticos reales → Corrección automática �
 Ninguna herramienta existente:
 1. Evalúa competencias mediante **ejercicios prácticos** de ingeniería de software (código, system design, debugging) mapeados a skills SFIA
 2. Genera contenidos con **modelo híbrido IA + validación experta** estructurado sobre una taxonomía estándar
-3. Integra **tutor socrático** alineado a las mismas competencias que evalúa
-4. Usa **corrección automática diferenciada por tipo de ejercicio** (tests unitarios / LLM-as-judge con rúbricas)
+3. Usa **corrección automática diferenciada por tipo de ejercicio** (tests unitarios / LLM-as-judge con rúbricas)
 
 Fuentes clave: sfia-online.org (Approved Assessment Partners, digital credentials), apmg-international.com, skillstx.com, validateskills.com, bcs.org, hackerrank.com, codesignal.com, codility.com, testgorilla.com, imocha.io, karat.com.
 

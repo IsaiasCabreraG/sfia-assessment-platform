@@ -58,8 +58,8 @@ Diferencias y problemas reales que aparecieron al construir las variantes; son m
 ## Qué no cubre
 
 - No incluye ningún módulo del producto más allá de lo anterior: Constructor, Ejecución, Evaluación Automática,
-  Catálogo SFIA, Analítica, eventos, roles ni el tutor socrático.
-- El acceso a la BD está concentrado en el backend, la organización de la BD en la arquitectura está por decidirse.
+  Catálogo SFIA, Analítica, eventos ni roles.
+- El acceso a la BD está concentrado en el backend, la organización de la BD en la arquitectura (un schema por módulo) no la valida la PoC.
 - El LLM se invoca por la CLI local, con tu sesión: sirve para la PoC, no representa cómo se conectará el producto.
 - Corre en local y sin contenedores: el entorno no es reproducible (las versiones dependen de la máquina).
 

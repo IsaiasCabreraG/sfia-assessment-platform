@@ -13,7 +13,7 @@ Mostrar los contenedores desplegables de la plataforma de evaluación técnica b
 ### Personas
 | Actor | Rol |
 |---|---|
-| Experto validador | Revisa y aprueba los ítems generados |
+| Experto validador | Revisa y puntúa los ítems generados |
 | Reclutador / Empresa | Crea y comparte evaluaciones, revisa resultados, compara candidatos |
 | Docente / Investigador | Crea y comparte evaluaciones, analiza alineación currículo-industria |
 | Estudiante | Practica y rinde evaluaciones para aprender y medir su avance |
@@ -35,15 +35,15 @@ Reclutador y Docente usan el Portal de Gestión y el Portal de Contenido; el Exp
 | Portal de Gestión | SPA (React/Vue) | Interfaz del Constructor visual y de los reportes. Solo llama al Constructor (y a Identidad para el login). Sin persistencia propia |
 | Portal del Postulante | SPA (React/Vue) | Rendir y practicar evaluaciones; ver resultados y progreso propios. Sin persistencia propia |
 | Constructor de Evaluaciones | REST API | Compone evaluaciones y plantillas; al publicar genera un link compartible. Consulta Catálogo, Generación y Analítica |
-| Catálogo SFIA | REST API | Skills, niveles 1-7, perfiles de rol y mapeos skill ↔ item |
-| Generación de Contenido | REST API + Workers IA (Python) | Banco de preguntas y ejercicios técnicos con generación asistida por IA; versionado y validación por experto. Consulta Catálogo SFIA |
+| Catálogo SFIA | REST API | Skills, niveles 1-7 y perfiles de rol |
+| Generación de Contenido | REST API + Workers IA (Python) | Banco de preguntas y ejercicios técnicos con generación asistida por IA; versionado y puntuación por experto. Consulta Catálogo SFIA |
 | Identidad y Acceso | OAuth2 / OIDC | Login con Google (OIDC), organizaciones, roles, tokens JWT, base de multi-tenancy |
 | Analítica y Reportes | REST API + WebSocket | Consume todos los eventos; vistas materializadas, dashboards live, export |
-| Evaluación Automática | Async Workers (Python) | Corrección por tipo: MCQ, tests unitarios en sandbox, LLM-as-judge con rúbrica |
+| Evaluación Automática | Async Workers (Python) | Corrección por tipo: preguntas cerradas, tests unitarios en sandbox, LLM-as-judge con rúbrica |
 | Ejecución de Evaluaciones | REST API + WebSocket | Sesiones, timer real-time, entrega secuencial de items, respuestas crudas |
 
 ### Base de datos
-PostgreSQL en una única instancia. Los schemas, y qué módulos acceden a cuáles y de qué forma, están por decidirse.
+PostgreSQL en una única instancia, con un schema por módulo (los del Sprint 1 están en la Figura 3). Qué módulos acceden a cuáles y de qué forma está por decidirse.
 
 ## Relaciones (leyenda de flechas)
 
@@ -69,8 +69,7 @@ msedge --headless --hide-scrollbars --force-device-scale-factor=2 --window-size=
 
 - Tecnologías definitivas por contenedor (hoy "Node/Go/Python" sin fijar).
 - Proveedor de LLM concreto (hoy genérico).
-- Tutor socrático: fuera de esta iteración, no aparece en esta figura.
 - Organización final de los frontends (hoy tres portales: Contenido, Gestión y Postulante).
 - Quién puede abrir un link compartido (organización, grupo, anónimo).
-- Schemas de la BD y acceso de cada módulo a ellos (hoy por decidirse).
+- Acceso de cada módulo a los schemas de la BD (hoy por decidirse).
 - Si el MVP se implementa como monolito modular en vez de servicios separados; en ese caso esta figura pasaría a representar módulos y no despliegues.

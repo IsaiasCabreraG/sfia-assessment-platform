@@ -37,16 +37,15 @@ Diseñar la arquitectura de software y el proceso de desarrollo de la plataforma
 
 ### OE3 — Construir el módulo de generación y composición de evaluaciones
 
-Construir el software que permita diseñar evaluaciones alineadas al marco SFIA: banco de ítems con generación asistida por IA, flujo de validación experta, simulaciones socráticas y constructor visual de evaluaciones basado en perfiles de skills.
+Construir el software que permita diseñar evaluaciones alineadas al marco SFIA: banco de ítems con generación asistida por IA, flujo de validación experta y constructor visual de evaluaciones basado en perfiles de skills.
 
 **Actividades:**
 - Implementación de autenticación mediante login con Google (base transversal de la plataforma)
-- Implementación del banco de ítems (preguntas, ejercicios técnicos, simulaciones) con versionado y estados (draft/validado/deprecado)
+- Implementación del banco de ítems (preguntas, ejercicios técnicos) con versionado y estados (activo/inactivo)
 - Integración de generación asistida por IA para borradores de preguntas, ejercicios y rúbricas
-- Implementación del flujo de validación experta (experto aprueba/rechaza ítems generados)
-- Implementación de simulaciones socráticas (tutor conversacional guiado por LLM)
+- Implementación del flujo de validación experta (los expertos puntúan de 0.0 a 5.0 los ítems generados)
 - Constructor visual de evaluaciones: plantillas de perfiles SFIA + editor drag-and-drop (skills, pesos, orden, timer)
-- Mapeo de ítems a skills y niveles SFIA
+- Asociación de cada ítem a una skill y a un nivel SFIA
 
 ### OE4 — Construir el módulo de ejecución y corrección de evaluaciones
 
@@ -57,7 +56,7 @@ Construir el software que permita ejecutar evaluaciones y corregirlas: runtime d
 - Modo unificado práctica/oficial (el evaluador decide qué sesión cuenta como oficial)
 - Calificación automática de preguntas cerradas (comparación exacta)
 - Calificación automática de coding challenges mediante tests unitarios en contenedor aislado
-- Calificación automática de respuestas abiertas (system design, debugging, proyectos) mediante LLM-as-judge con rúbricas estructuradas
+- Calificación automática de respuestas abiertas (preguntas de desarrollo, system design, debugging) mediante LLM-as-judge con rúbricas estructuradas
 - Revisión manual de casos fallidos (cola de corrección para ítems que la corrección automática no pudo resolver)
 
 ### OE5 — Validar la plataforma
@@ -76,7 +75,7 @@ Validar la plataforma en tres dimensiones: usabilidad con usuarios reales, cumpl
 ## Notas de coherencia con el formulario
 
 - **OG** = versión corta del resumen (ya en Word): incluye SFIA, IA+expertos, corrección diferenciada.
-- **OE1** consume el estado del arte ya escrito (sección b) y `competitors.md`; produce los requerimientos que **OE2** consume. La validación experta de contenidos (diferenciador ii) vive en **OE3**; el tutor socrático (diferenciador iv) vive en **OE3**; LLM-as-judge (impacto científico) vive en **OE4** y su validación en **OE5**.
+- **OE1** consume el estado del arte ya escrito (sección b) y `competitors.md`; produce los requerimientos que **OE2** consume. La validación experta de contenidos (diferenciador ii) vive en **OE3**; LLM-as-judge (impacto científico) vive en **OE4** y su validación en **OE5**.
 - **Resultados comprometidos del resumen** (4): motor de generación → OE3; constructor visual → OE3; runtime de ejecución → OE4; evaluación automática → OE4.
 - **"Calificación manual"** quedó como "revisión manual de casos fallidos" (coherente con `EvaluationFailed` en la arquitectura y con que la corrección automática "no cubre todo").
 - **GitHub** se usa solo como repositorio y agente de CI/CD (infraestructura de desarrollo, OE2), no como integración del producto. La autenticación del producto es login con Google (OE3).
