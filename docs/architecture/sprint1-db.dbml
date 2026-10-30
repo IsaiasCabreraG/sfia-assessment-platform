@@ -30,6 +30,9 @@ Table catalog.skills {
   name varchar [not null]
   description text
   category varchar
+  subcategory varchar
+  min_level smallint [ref: > catalog.levels.level, not null, note: 'nivel mínimo en que SFIA define la skill']
+  max_level smallint [ref: > catalog.levels.level, not null, note: 'nivel máximo; CHECK min_level <= max_level']
 }
 
 Table catalog.levels {
@@ -40,12 +43,13 @@ Table catalog.levels {
 Table catalog.role_profiles {
   id uuid [pk]
   name varchar [not null]
+  family varchar
 }
 
 Table catalog.role_profile_skills {
   profile_id uuid [ref: > catalog.role_profiles.id]
   skill_id uuid [ref: > catalog.skills.id]
-  min_level smallint [ref: > catalog.levels.level, not null]
+  is_primary boolean [not null, note: 'skill primaria del rol']
   indexes { (profile_id, skill_id) [pk] }
 }
 
@@ -69,6 +73,7 @@ Table content.items {
   status varchar [not null, note: 'active | inactive']
   skill_id uuid [ref: > catalog.skills.id, not null, note: 'una skill por ítem']
   created_by uuid [ref: > identity.users.id, not null]
+  available_to_experts boolean [not null, note: 'false = uso privado (solo su autor); true = visible para validadores']
   created_at timestamptz [not null]
 }
 

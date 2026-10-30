@@ -21,7 +21,7 @@
 </defs>
 <text x="30" y="42" class="ti">Figura 3 — Modelo de datos del Sprint 1</text>
 <text x="30" y="66" class="su">PostgreSQL con un schema por módulo. Las flechas van de la tabla con la FK a la tabla referenciada.</text>
-<rect x="30" y="95" width="1500" height="235" rx="14" fill="#e6f4f4" stroke="#0e8a8a" stroke-width="1.5"/>
+<rect x="30" y="95" width="1500" height="275" rx="14" fill="#e6f4f4" stroke="#0e8a8a" stroke-width="1.5"/>
 <text x="1520" y="119" text-anchor="end" class="bl" fill="#0e8a8a">catalog · Catálogo SFIA</text>
 <rect x="20" y="450" width="1870" height="940" rx="14" fill="#e9f0fa" stroke="#1b4f9c" stroke-width="1.5"/>
 <text x="1870" y="474" text-anchor="end" class="bl" fill="#1b4f9c">content · Generación de Contenido</text>
@@ -33,7 +33,8 @@
 <polyline points="2330,503 2350,503 2350,191 2330,191" fill="none" stroke="#d9822b" stroke-width="2" marker-end="url(#m-id)"/>
 <polyline points="1170,191 1130,191" fill="none" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-cat)"/>
 <polyline points="1230,150 1230,135 300,135 300,150" fill="none" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-cat)"/>
-<polyline points="1330,246 1330,265 700,265 700,224" fill="none" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-cat)"/>
+<polyline points="390,323 410,323 410,200 430,200" fill="none" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-cat)"/>
+<polyline points="390,345 410,345 410,200" fill="none" stroke="#0e8a8a" stroke-width="2"/>
 <polyline points="800,563 780,563 780,541 760,541" fill="none" stroke="#1b4f9c" stroke-width="2" marker-end="url(#m-in)"/>
 <polyline points="800,651 410,651 410,541 390,541" fill="none" stroke="#1b4f9c" stroke-width="2" marker-end="url(#m-in)"/>
 <polyline points="1170,563 1150,563 1150,541 1130,541" fill="none" stroke="#1b4f9c" stroke-width="2" marker-end="url(#m-in)"/>
@@ -48,8 +49,8 @@
 <polyline points="225,1160 225,1076 410,1076 410,800" fill="none" stroke="#1b4f9c" stroke-width="2"/>
 <polyline points="595,1160 595,1090 780,1090 780,800" fill="none" stroke="#1b4f9c" stroke-width="2"/>
 <polyline points="965,1160 965,1104 1150,1104 1150,800" fill="none" stroke="#1b4f9c" stroke-width="2"/>
-<polyline points="120,500 120,290" fill="none" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-cat)"/>
-<polyline points="470,500 470,375 300,375 300,290" fill="none" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-cat)"/>
+<polyline points="120,500 120,356" fill="none" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-cat)"/>
+<polyline points="470,500 470,375 300,375 300,356" fill="none" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-cat)"/>
 <polyline points="160,500 160,360 520,360 520,224" fill="none" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-cat)"/>
 <polyline points="900,500 900,390 620,390 620,224" fill="none" stroke="#0e8a8a" stroke-width="2" marker-end="url(#m-cat)"/>
 <polyline points="260,500 260,405 1905,405 1905,183 2000,183" fill="none" stroke="#d9822b" stroke-width="2" marker-end="url(#m-id)"/>
@@ -124,7 +125,7 @@
 <text x="2322" y="551" text-anchor="end" class="ct">timestamptz</text>
 <text x="2060" y="573" class="cn">revoked_at</text>
 <text x="2322" y="573" text-anchor="end" class="ct">timestamptz</text>
-<rect x="60" y="150" width="330" height="140" rx="6" fill="#fff" stroke="#0e8a8a" stroke-width="1.5"/>
+<rect x="60" y="150" width="330" height="206" rx="6" fill="#fff" stroke="#0e8a8a" stroke-width="1.5"/>
 <rect x="60" y="150" width="330" height="30" rx="6" fill="#0e8a8a"/>
 <rect x="60" y="168" width="330" height="12" fill="#0e8a8a"/>
 <text x="70" y="170" class="th">skills</text>
@@ -144,6 +145,18 @@
 <text x="382" y="261" text-anchor="end" class="ct">text</text>
 <text x="120" y="283" class="cn">category</text>
 <text x="382" y="283" text-anchor="end" class="ct">varchar</text>
+<rect x="61" y="290" width="328" height="22" fill="#f4f6f9"/>
+<text x="120" y="305" class="cn">subcategory</text>
+<text x="382" y="305" text-anchor="end" class="ct">varchar</text>
+<rect x="66" y="316" width="23" height="14" rx="3" fill="#0e8a8a"/>
+<text x="77.5" y="326" text-anchor="middle" class="bd">FK</text>
+<text x="120" y="327" class="cn">min_level</text>
+<text x="382" y="327" text-anchor="end" class="ct">smallint</text>
+<rect x="61" y="334" width="328" height="22" fill="#f4f6f9"/>
+<rect x="66" y="338" width="23" height="14" rx="3" fill="#0e8a8a"/>
+<text x="77.5" y="348" text-anchor="middle" class="bd">FK</text>
+<text x="120" y="349" class="cn">max_level</text>
+<text x="382" y="349" text-anchor="end" class="ct">smallint</text>
 <rect x="430" y="150" width="330" height="74" rx="6" fill="#fff" stroke="#0e8a8a" stroke-width="1.5"/>
 <rect x="430" y="150" width="330" height="30" rx="6" fill="#0e8a8a"/>
 <rect x="430" y="168" width="330" height="12" fill="#0e8a8a"/>
@@ -155,7 +168,7 @@
 <rect x="431" y="202" width="328" height="22" fill="#f4f6f9"/>
 <text x="490" y="217" class="cn">description</text>
 <text x="752" y="217" text-anchor="end" class="ct">text</text>
-<rect x="800" y="150" width="330" height="74" rx="6" fill="#fff" stroke="#0e8a8a" stroke-width="1.5"/>
+<rect x="800" y="150" width="330" height="96" rx="6" fill="#fff" stroke="#0e8a8a" stroke-width="1.5"/>
 <rect x="800" y="150" width="330" height="30" rx="6" fill="#0e8a8a"/>
 <rect x="800" y="168" width="330" height="12" fill="#0e8a8a"/>
 <text x="810" y="170" class="th">role_profiles</text>
@@ -166,6 +179,8 @@
 <rect x="801" y="202" width="328" height="22" fill="#f4f6f9"/>
 <text x="860" y="217" class="cn">name</text>
 <text x="1122" y="217" text-anchor="end" class="ct">varchar</text>
+<text x="860" y="239" class="cn">family</text>
+<text x="1122" y="239" text-anchor="end" class="ct">varchar</text>
 <rect x="1170" y="150" width="330" height="96" rx="6" fill="#fff" stroke="#0e8a8a" stroke-width="1.5"/>
 <rect x="1170" y="150" width="330" height="30" rx="6" fill="#0e8a8a"/>
 <rect x="1170" y="168" width="330" height="12" fill="#0e8a8a"/>
@@ -183,10 +198,8 @@
 <text x="1213.5" y="216" text-anchor="middle" class="bd">FK</text>
 <text x="1230" y="217" class="cn">skill_id</text>
 <text x="1492" y="217" text-anchor="end" class="ct">uuid</text>
-<rect x="1176" y="228" width="23" height="14" rx="3" fill="#0e8a8a"/>
-<text x="1187.5" y="238" text-anchor="middle" class="bd">FK</text>
-<text x="1230" y="239" class="cn">min_level</text>
-<text x="1492" y="239" text-anchor="end" class="ct">smallint</text>
+<text x="1230" y="239" class="cn">is_primary</text>
+<text x="1492" y="239" text-anchor="end" class="ct">boolean</text>
 <rect x="2000" y="690" width="330" height="140" rx="6" fill="#fff" stroke="#7f7f7f" stroke-width="1.5"/>
 <rect x="2000" y="690" width="330" height="30" rx="6" fill="#7f7f7f"/>
 <rect x="2000" y="708" width="330" height="12" fill="#7f7f7f"/>
@@ -242,7 +255,7 @@
 <rect x="61" y="728" width="328" height="22" fill="#f4f6f9"/>
 <text x="120" y="743" class="cn">created_at</text>
 <text x="382" y="743" text-anchor="end" class="ct">timestamptz</text>
-<rect x="430" y="500" width="330" height="140" rx="6" fill="#fff" stroke="#1b4f9c" stroke-width="1.5"/>
+<rect x="430" y="500" width="330" height="162" rx="6" fill="#fff" stroke="#1b4f9c" stroke-width="1.5"/>
 <rect x="430" y="500" width="330" height="30" rx="6" fill="#1b4f9c"/>
 <rect x="430" y="518" width="330" height="12" fill="#1b4f9c"/>
 <text x="440" y="520" class="th">items</text>
@@ -262,8 +275,11 @@
 <text x="447.5" y="610" text-anchor="middle" class="bd">FK</text>
 <text x="490" y="611" class="cn">created_by</text>
 <text x="752" y="611" text-anchor="end" class="ct">uuid</text>
-<text x="490" y="633" class="cn">created_at</text>
-<text x="752" y="633" text-anchor="end" class="ct">timestamptz</text>
+<text x="490" y="633" class="cn">available_to_experts</text>
+<text x="752" y="633" text-anchor="end" class="ct">boolean</text>
+<rect x="431" y="640" width="328" height="22" fill="#f4f6f9"/>
+<text x="490" y="655" class="cn">created_at</text>
+<text x="752" y="655" text-anchor="end" class="ct">timestamptz</text>
 <rect x="800" y="500" width="330" height="272" rx="6" fill="#fff" stroke="#1b4f9c" stroke-width="1.5"/>
 <rect x="800" y="500" width="330" height="30" rx="6" fill="#1b4f9c"/>
 <rect x="800" y="518" width="330" height="12" fill="#1b4f9c"/>

@@ -1,0 +1,183 @@
+{
+  "version": "1.0",
+  "descripcion": "Plantilla del prompt de generación de ítems (HU-04, HU-06). Se lee en content/generation/prompts.py. Cada elemento de `plantilla` es una línea del prompt; las líneas '' son separadores en blanco.",
+  "como_se_arma": [
+    "Se recorre `plantilla` en orden y se reemplazan los {marcadores} por los datos del pedido.",
+    "Una línea '{?nombre}' se reemplaza por la frase `opcionales.nombre` y solo aparece si ese dato existe (contexto, regeneración, feedback).",
+    "{reglas} se toma de `reglas_por_tipo` y {forma_json} de `forma_json_por_tipo`, según el tipo pedido.",
+    "Si la IA devolvió una respuesta inválida, se agrega al final la frase `reintento` con los errores."
+  ],
+  "plantilla": [
+    "Eres un experto en evaluación de competencias de ingeniería de software con el marco SFIA.",
+    "Genera {cantidad} ítem(s) de evaluación de tipo `{tipo}` en español.",
+    "",
+    "Skill SFIA: {skill_codigo} - {skill_nombre}",
+    "Descripción de la skill: {skill_descripcion}",
+    "Nivel de responsabilidad: {nivel} ({nivel_titulo})",
+    "Tiempo estimado por ítem: {minutos} minutos",
+    "{?contexto}",
+    "{?regenerar}",
+    "{?feedback}",
+    "",
+    "Los ítems deben medir la skill al nivel indicado y poder resolverse en el tiempo estimado.",
+    "Reglas del tipo: {reglas}",
+    "",
+    "Responde ÚNICAMENTE con un objeto JSON, sin texto adicional ni bloques de código, con esta forma:",
+    "{forma_json}",
+    "La lista `items` debe tener exactamente {cantidad} elemento(s)."
+  ],
+  "opcionales": {
+    "contexto": "Contexto indicado por el usuario: {contexto}",
+    "regenerar": "Estás regenerando un ítem cuyo enunciado era: {enunciado_anterior}\nNo lo repitas.",
+    "feedback": "Comentario del usuario para esta versión: {feedback}"
+  },
+  "reintento": "Tu respuesta anterior fue rechazada por estos errores; corrígelos: {errores}",
+  "reglas_por_tipo": {
+    "single_choice": "Entre 3 y 5 opciones; exactamente una con is_correct=true; sin opciones repetidas.",
+    "true_false": "El enunciado debe ser una afirmación que sea claramente verdadera o falsa.",
+    "open_question": "Incluye rúbrica: los pesos suman exactamente 100 y cada criterio tiene un descriptor para los puntajes 0, 1, 2 y 3.",
+    "coding": "Los unit_tests deben pasar con reference_solution. starter_code debe contener la función de function_signature.",
+    "system_design": "Al menos un requisito funcional. Incluye rúbrica: los pesos suman exactamente 100 y cada criterio tiene un descriptor para los puntajes 0, 1, 2 y 3.",
+    "debugging": "symptom_observed distinto de symptom_expected; cada hallazgo con line debe apuntar a una línea existente de code (empieza en 1). Incluye rúbrica: los pesos suman exactamente 100 y cada criterio tiene un descriptor para los puntajes 0, 1, 2 y 3."
+  },
+  "forma_json_por_tipo": {
+    "single_choice": {
+      "statement": "Enunciado",
+      "evaluation_goal": "Qué busca evaluar el ítem",
+      "options": [
+        {
+          "text": "Opción",
+          "is_correct": false
+        },
+        {
+          "text": "Opción",
+          "is_correct": true
+        }
+      ]
+    },
+    "true_false": {
+      "statement": "Enunciado",
+      "evaluation_goal": "Qué busca evaluar el ítem",
+      "correct_answer": true
+    },
+    "open_question": {
+      "statement": "Enunciado",
+      "evaluation_goal": "Qué busca evaluar el ítem",
+      "reference_answer": "Puntos esperados de la respuesta",
+      "rubric": [
+        {
+          "name": "Nombre del criterio",
+          "weight": 100,
+          "levels": [
+            {
+              "score": 0,
+              "descriptor": "Qué debe cumplir la respuesta para obtener 0"
+            },
+            {
+              "score": 1,
+              "descriptor": "Qué debe cumplir la respuesta para obtener 1"
+            },
+            {
+              "score": 2,
+              "descriptor": "Qué debe cumplir la respuesta para obtener 2"
+            },
+            {
+              "score": 3,
+              "descriptor": "Qué debe cumplir la respuesta para obtener 3"
+            }
+          ]
+        }
+      ]
+    },
+    "coding": {
+      "statement": "Enunciado",
+      "evaluation_goal": "Qué busca evaluar el ítem",
+      "language": "python",
+      "function_signature": "def nombre(parametros) -> tipo",
+      "starter_code": "def nombre(parametros):\n    pass",
+      "unit_tests": "Tests unitarios ejecutables",
+      "time_limit_seconds": 5,
+      "memory_limit_mb": 128,
+      "reference_solution": "Solución de referencia"
+    },
+    "system_design": {
+      "statement": "Enunciado",
+      "evaluation_goal": "Qué busca evaluar el ítem",
+      "scenario": "Escenario",
+      "functional_requirements": [
+        "..."
+      ],
+      "non_functional_requirements": [
+        "..."
+      ],
+      "constraints": [
+        "..."
+      ],
+      "reference_answer": "Puntos esperados de la respuesta",
+      "rubric": [
+        {
+          "name": "Nombre del criterio",
+          "weight": 100,
+          "levels": [
+            {
+              "score": 0,
+              "descriptor": "Qué debe cumplir la respuesta para obtener 0"
+            },
+            {
+              "score": 1,
+              "descriptor": "Qué debe cumplir la respuesta para obtener 1"
+            },
+            {
+              "score": 2,
+              "descriptor": "Qué debe cumplir la respuesta para obtener 2"
+            },
+            {
+              "score": 3,
+              "descriptor": "Qué debe cumplir la respuesta para obtener 3"
+            }
+          ]
+        }
+      ]
+    },
+    "debugging": {
+      "statement": "Enunciado",
+      "evaluation_goal": "Qué busca evaluar el ítem",
+      "language": "python",
+      "code": "Código con el defecto",
+      "symptom_input": "Entrada que reproduce el fallo",
+      "symptom_expected": "Resultado esperado",
+      "symptom_observed": "Resultado obtenido (distinto del esperado)",
+      "reference_answer": "Corrección de referencia",
+      "findings": [
+        {
+          "line": 1,
+          "description": "Causa esperada del defecto"
+        }
+      ],
+      "rubric": [
+        {
+          "name": "Nombre del criterio",
+          "weight": 100,
+          "levels": [
+            {
+              "score": 0,
+              "descriptor": "Qué debe cumplir la respuesta para obtener 0"
+            },
+            {
+              "score": 1,
+              "descriptor": "Qué debe cumplir la respuesta para obtener 1"
+            },
+            {
+              "score": 2,
+              "descriptor": "Qué debe cumplir la respuesta para obtener 2"
+            },
+            {
+              "score": 3,
+              "descriptor": "Qué debe cumplir la respuesta para obtener 3"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

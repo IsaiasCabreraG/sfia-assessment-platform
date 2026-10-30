@@ -9,7 +9,7 @@
 - Las **preguntas cerradas** son `single_choice` y `true_false`. Se corrigen automáticamente por comparación exacta.
 - Los **tipos abiertos** son `open_question`, `system_design` y `debugging`. Son los únicos que llevan rúbrica. Los demás no la tienen.
 - Todo ítem tiene un campo `evaluation_goal` (qué busca evaluar).
-- Un ítem nuevo nace `active` y sin puntuar.
+- Un ítem nuevo nace `active` y sin puntuar. Al publicarlo, su autor decide si queda disponible para expertos (`available_to_experts`) o de uso privado.
 - Schemas: las tablas de este documento pertenecen al schema `content`. Sus FK físicas apuntan a `catalog.skills`, `catalog.levels` e `identity.users`. En el texto se nombran sin el prefijo del schema.
 - Las **reglas de negocio que la base de datos no cubre** (secciones 2.4 y 3.3, y las de cada tipo) las valida la aplicación antes de guardar. Una versión se guarda con todo su contenido en una única transacción.
 - Notación de la columna **Clave**: `PK` clave primaria, `FK → tabla.columna` clave foránea, `UQ` valor único, `NN` no nulo (si no se indica `NN`, la columna admite nulos).
@@ -25,6 +25,7 @@
 | `status` | varchar | NN | `active` o `inactive` |
 | `skill_id` | uuid | FK → `skills.id`, NN | Skill SFIA que evalúa. No cambia entre versiones |
 | `created_by` | uuid | FK → `users.id`, NN | Quién lo creó |
+| `available_to_experts` | boolean | NN | `true`: los validadores pueden verlo y puntuarlo; `false`: uso privado, solo lo ve su autor |
 | `created_at` | timestamptz | NN | Creación |
 
 ### 2.2 `item_versions` — contenido de cada versión
@@ -75,7 +76,7 @@ Estas reglas las valida la aplicación al guardar. Las restricciones simples (va
 
 ### 2.5 `generation_requests` — pedido de generación o de regeneración
 
-Guarda el contexto con el que la IA generó (HU-04 y HU-06) o regeneró (HU-14) un ítem. Una regeneración crea un pedido nuevo.
+Guarda el contexto con el que la IA generó (HU-04 y HU-06) o regeneró (HU-14) un ítem. Una regeneración crea un pedido nuevo. Los borradores se generan sin guardarse; el pedido se guarda al publicarlos, uno por skill, nivel, tipo y tiempo.
 
 | Columna | Tipo | Clave | Descripción |
 |---|---|---|---|
@@ -84,10 +85,10 @@ Guarda el contexto con el que la IA generó (HU-04 y HU-06) o regeneró (HU-14) 
 | `skill_id` | uuid | FK → `skills.id`, NN | Skill pedida |
 | `level` | smallint | FK → `levels.level`, NN | Nivel de responsabilidad pedido |
 | `item_type` | varchar | NN | Tipo de ítem pedido |
-| `item_count` | int | NN | Cantidad de ítems pedida (1 en una regeneración) |
+| `item_count` | int | NN | Cantidad de ítems publicados con este pedido (1 en una regeneración) |
 | `estimated_minutes` | int | NN | Tiempo estimado pedido |
 | `context` | text | | Texto de contexto indicado por el usuario. Se usa al regenerar un ítem |
-| `status` | varchar | NN | Estado del pedido |
+| `status` | varchar | NN | Estado del pedido. Se guarda `completed`: los pedidos que la IA no pudo resolver no se guardan |
 | `created_at` | timestamptz | NN | Creación |
 
 **Ejemplo**
@@ -158,9 +159,9 @@ La clave primaria es `(criterion_id, score)`: cada criterio tiene un único desc
 
 **`items`**
 
-| id | status | skill_id | created_by | created_at |
-|---|---|---|---|---|
-| i1 | active | PROG | u1 | 2026-10-22 10:00 |
+| id | status | skill_id | created_by | available_to_experts | created_at |
+|---|---|---|---|---|---|
+| i1 | active | PROG | u1 | true | 2026-10-22 10:00 |
 
 **`item_versions`** (fila `v1`)
 
@@ -207,9 +208,9 @@ Ninguna además de las comunes (sección 2.4).
 
 **`items`**
 
-| id | status | skill_id | created_by | created_at |
-|---|---|---|---|---|
-| i2 | active | TEST | u1 | 2026-10-22 10:05 |
+| id | status | skill_id | created_by | available_to_experts | created_at |
+|---|---|---|---|---|---|
+| i2 | active | TEST | u1 | true | 2026-10-22 10:05 |
 
 **`item_versions`** (fila `v2`)
 
@@ -255,9 +256,9 @@ Además usa `rubric_criteria` y `rubric_levels` (sección 3).
 
 **`items`**
 
-| id | status | skill_id | created_by | created_at |
-|---|---|---|---|---|
-| i3 | active | TEST | u1 | 2026-10-22 10:10 |
+| id | status | skill_id | created_by | available_to_experts | created_at |
+|---|---|---|---|---|---|
+| i3 | active | TEST | u1 | true | 2026-10-22 10:10 |
 
 **`item_versions`** (fila `v3`)
 
@@ -336,9 +337,9 @@ Además usa `rubric_criteria` y `rubric_levels` (sección 3).
 
 **`items`**
 
-| id | status | skill_id | created_by | created_at |
-|---|---|---|---|---|
-| i4 | active | PROG | u1 | 2026-10-22 10:15 |
+| id | status | skill_id | created_by | available_to_experts | created_at |
+|---|---|---|---|---|---|
+| i4 | active | PROG | u1 | true | 2026-10-22 10:15 |
 
 **`item_versions`** (fila `v4`)
 
@@ -396,9 +397,9 @@ Además usa `rubric_criteria` y `rubric_levels` (sección 3).
 
 **`items`**
 
-| id | status | skill_id | created_by | created_at |
-|---|---|---|---|---|
-| i5 | active | ARCH | u1 | 2026-10-22 10:20 |
+| id | status | skill_id | created_by | available_to_experts | created_at |
+|---|---|---|---|---|---|
+| i5 | active | ARCH | u1 | true | 2026-10-22 10:20 |
 
 **`item_versions`** (fila `v5`)
 
@@ -492,9 +493,9 @@ Además usa `rubric_criteria` y `rubric_levels` (sección 3).
 
 **`items`**
 
-| id | status | skill_id | created_by | created_at |
-|---|---|---|---|---|
-| i6 | active | PROG | u1 | 2026-10-22 10:25 |
+| id | status | skill_id | created_by | available_to_experts | created_at |
+|---|---|---|---|---|---|
+| i6 | active | PROG | u1 | true | 2026-10-22 10:25 |
 
 **`item_versions`** (fila `v6`)
 

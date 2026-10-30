@@ -1,0 +1,798 @@
+role_name,skill_code,is_primary
+Accessibility practitioners,ACIN,true
+Accessibility practitioners,ETDL,false
+Accessibility practitioners,HCEV,false
+Accessibility practitioners,METL,false
+Accessibility practitioners,NFTS,true
+Accessibility practitioners,QUAS,true
+Accessibility practitioners,REQM,false
+Accessibility practitioners,TECH,true
+Accessibility practitioners,UNAN,false
+Accessibility practitioners,USEV,true
+Agile change agents,BUSA,true
+Agile change agents,CIPM,false
+Agile change agents,CNSL,true
+Agile change agents,EEXP,true
+Agile change agents,ETDL,true
+Agile change agents,INOV,true
+Agile change agents,KNOW,false
+Agile change agents,MEAS,true
+Agile change agents,METL,false
+Agile change agents,OCDV,true
+Agile change agents,OCEN,false
+Agile change agents,OFCL,true
+Agile change agents,ORDI,true
+Agile change agents,RLMT,true
+Agile product management,ARCH,false
+Agile product management,BPRE,true
+Agile product management,BURM,false
+Agile product management,BUSA,true
+Agile product management,CEXP,true
+Agile product management,DEMG,true
+Agile product management,DEMM,false
+Agile product management,DEPL,false
+Agile product management,FEAS,true
+Agile product management,INOV,true
+Agile product management,ISCO,false
+Agile product management,MEAS,true
+Agile product management,MRCH,false
+Agile product management,PROD,true
+Agile product management,RELM,false
+Agile product management,REQM,true
+Agile product management,RLMT,true
+Agile product management,SALE,false
+Agile product management,URCH,false
+Application development practitioners,ASUP,false
+Application development practitioners,DEPL,true
+Application development practitioners,NFTS,false
+Application development practitioners,PROG,true
+Application development practitioners,RELM,true
+Application development practitioners,REQM,true
+Application development practitioners,SINT,false
+Application development practitioners,TEST,true
+Application platform management practitioners,ASUP,true
+Application platform management practitioners,CFMG,false
+Application platform management practitioners,DEMM,false
+Application platform management practitioners,DEPL,true
+Application platform management practitioners,DLMG,true
+Application platform management practitioners,EMRG,false
+Application platform management practitioners,ITCM,false
+Application platform management practitioners,METL,false
+Application platform management practitioners,RELM,true
+Application platform management practitioners,RLMT,true
+Application platform management practitioners,SLEN,false
+Application platform management practitioners,SLMO,false
+Application platform management practitioners,SUPP,true
+Application support practitioners,ASUP,true
+Application support practitioners,CFMG,false
+Application support practitioners,CHMG,true
+Application support practitioners,PBMG,true
+Application support practitioners,RLMT,false
+Application support practitioners,USUP,true
+Architecture practice management,DEMM,false
+Architecture practice management,EEXP,true
+Architecture practice management,KNOW,true
+Architecture practice management,LEDA,false
+Architecture practice management,OCDV,true
+Architecture practice management,PDSV,true
+Architecture practice management,PEMT,true
+Architecture practice management,QUMG,false
+Architecture practice management,RESC,true
+Architecture practice management,RLMT,true
+Architecture practice management,SUPP,false
+Architecture practice management,TMCR,false
+Bid management practitioners,BIDM,true
+Bid management practitioners,DEMG,false
+Bid management practitioners,INCA,true
+Bid management practitioners,PRMG,false
+Bid management practitioners,QUMG,false
+Bid management practitioners,RLMT,true
+Business analysis practice management,DEMM,false
+Business analysis practice management,EEXP,true
+Business analysis practice management,KNOW,true
+Business analysis practice management,LEDA,false
+Business analysis practice management,OCDV,true
+Business analysis practice management,PDSV,true
+Business analysis practice management,PEMT,true
+Business analysis practice management,QUMG,false
+Business analysis practice management,RESC,true
+Business analysis practice management,RLMT,true
+Business analysis practice management,SUPP,false
+Business analysis practice management,TMCR,false
+Business analysis practitioners,BENM,false
+Business analysis practitioners,BPRE,true
+Business analysis practitioners,BPTS,true
+Business analysis practitioners,BSMO,true
+Business analysis practitioners,BUSA,true
+Business analysis practitioners,CIPM,false
+Business analysis practitioners,CNSL,false
+Business analysis practitioners,DEMM,false
+Business analysis practitioners,DTAN,true
+Business analysis practitioners,FEAS,true
+Business analysis practitioners,INOV,false
+Business analysis practitioners,ITSP,false
+Business analysis practitioners,METL,true
+Business analysis practitioners,OCDV,false
+Business analysis practitioners,PROD,false
+Business analysis practitioners,REQM,true
+Business analysis practitioners,RLMT,true
+Business analysis practitioners,STPL,false
+Business analysis practitioners,UNAN,false
+Change management practitioners,BENM,true
+Change management practitioners,BUSA,false
+Change management practitioners,CIPM,true
+Change management practitioners,CNSL,false
+Change management practitioners,JADN,false
+Change management practitioners,METL,false
+Change management practitioners,OCDV,true
+Change management practitioners,OCEN,true
+Change management practitioners,OFCL,true
+Change management practitioners,ORDI,false
+Change management practitioners,RLMT,true
+Chief Data Officer,AIDE,false
+Chief Data Officer,BURM,false
+Chief Data Officer,DAAN,true
+Chief Data Officer,DATM,true
+Chief Data Officer,GOVN,true
+Chief Data Officer,INOV,false
+Chief Data Officer,ISCO,true
+Chief Data Officer,ITMG,false
+Chief Data Officer,METL,false
+Chief Data Officer,OCDV,false
+Chief Data Officer,PEDP,false
+Chief Data Officer,RLMT,false
+Chief Data Officer,STPL,true
+Chief Information Officer,BURM,false
+Chief Information Officer,DEMM,false
+Chief Information Officer,DLMG,false
+Chief Information Officer,FMIT,false
+Chief Information Officer,GOVN,true
+Chief Information Officer,IRMG,true
+Chief Information Officer,ISCO,true
+Chief Information Officer,ITMG,true
+Chief Information Officer,ITSP,true
+Chief Information Officer,OCDV,false
+Chief Information Officer,QUMG,false
+Chief Information Officer,RLMT,true
+Chief Information Officer,SLEN,false
+Chief Information Officer,SLMO,true
+Chief Information Officer,STPL,true
+Chief Information Officer,SUPP,false
+Chief Information Security Officer,BURM,true
+Chief Information Security Officer,GOVN,true
+Chief Information Security Officer,IAMT,false
+Chief Information Security Officer,INAS,true
+Chief Information Security Officer,IRMG,true
+Chief Information Security Officer,ISCO,false
+Chief Information Security Officer,MEAS,false
+Chief Information Security Officer,OCDV,false
+Chief Information Security Officer,RLMT,false
+Chief Information Security Officer,SCAD,false
+Chief Information Security Officer,SCTY,true
+Chief Information Security Officer,STPL,false
+Chief Technology Officer,BURM,false
+Chief Technology Officer,DLMG,true
+Chief Technology Officer,EMRG,true
+Chief Technology Officer,FMIT,false
+Chief Technology Officer,GOVN,true
+Chief Technology Officer,INOV,false
+Chief Technology Officer,ISCO,false
+Chief Technology Officer,ITMG,false
+Chief Technology Officer,ITSP,true
+Chief Technology Officer,OCDV,false
+Chief Technology Officer,RLMT,false
+Chief Technology Officer,STPL,true
+Chief Technology Officer,SUPP,false
+Chief Technology Officer,TECH,true
+Computational science practitioners,DAAN,false
+Computational science practitioners,DATS,false
+Computational science practitioners,DTAN,false
+Computational science practitioners,HPCC,true
+Computational science practitioners,MLNG,false
+Computational science practitioners,NUAN,true
+Computational science practitioners,PRMG,false
+Computational science practitioners,RSCH,true
+Computational science practitioners,SCMO,true
+Computational science practitioners,VISL,false
+Content design practitioners,ICPM,true
+Content design practitioners,INCA,true
+Content design practitioners,METL,false
+Content design practitioners,RLMT,false
+Content design practitioners,UNAN,true
+Data analytics practitioners,BINT,true
+Data analytics practitioners,BUSA,false
+Data analytics practitioners,DAAN,true
+Data analytics practitioners,DATM,true
+Data analytics practitioners,ICPM,false
+Data analytics practitioners,INCA,false
+Data analytics practitioners,REQM,true
+Data analytics practitioners,RLMT,false
+Data analytics practitioners,VISL,true
+Data architecture practitioners,ARCH,true
+Data architecture practitioners,BUSA,false
+Data architecture practitioners,CNSL,false
+Data architecture practitioners,DATM,true
+Data architecture practitioners,DBDS,true
+Data architecture practitioners,DTAN,true
+Data architecture practitioners,EMRG,false
+Data architecture practitioners,ITSP,false
+Data architecture practitioners,METL,false
+Data architecture practitioners,REQM,true
+Data architecture practitioners,RLMT,true
+Data architecture practitioners,SCTY,false
+Data architecture practitioners,STPL,true
+Data architecture practitioners,TECH,false
+Data engineering practitioners,ARCH,false
+Data engineering practitioners,DATM,true
+Data engineering practitioners,DBDS,true
+Data engineering practitioners,DENG,true
+Data engineering practitioners,DTAN,true
+Data engineering practitioners,NFTS,true
+Data engineering practitioners,PROG,true
+Data engineering practitioners,REQM,true
+Data engineering practitioners,SINT,true
+Data engineering practitioners,SWDN,false
+Data engineering practitioners,TEST,true
+Data governance practitioners,AUDT,false
+Data governance practitioners,BURM,true
+Data governance practitioners,DATM,true
+Data governance practitioners,GOVN,true
+Data governance practitioners,IRMG,true
+Data governance practitioners,MEAS,false
+Data governance practitioners,METL,false
+Data governance practitioners,PEDP,true
+Data governance practitioners,QUAS,false
+Data governance practitioners,QUMG,false
+Data governance practitioners,RLMT,false
+Data operations practitioners,CFMG,true
+Data operations practitioners,CHMG,true
+Data operations practitioners,DBAD,true
+Data operations practitioners,DEPL,true
+Data operations practitioners,ITMG,false
+Data operations practitioners,ITOP,true
+Data operations practitioners,NFTS,false
+Data operations practitioners,PBMG,false
+Data operations practitioners,RELM,true
+Data operations practitioners,SINT,true
+Data operations practitioners,TEST,false
+Data operations practitioners,USUP,false
+Data science practitioners,AIDE,true
+Data science practitioners,DAAN,true
+Data science practitioners,DATM,true
+Data science practitioners,DATS,true
+Data science practitioners,DENG,false
+Data science practitioners,DTAN,true
+Data science practitioners,EMRG,false
+Data science practitioners,INOV,false
+Data science practitioners,ISCO,false
+Data science practitioners,MEAS,false
+Data science practitioners,METL,false
+Data science practitioners,MLNG,true
+Data science practitioners,PROG,true
+Data science practitioners,RSCH,false
+Data science practitioners,VISL,true
+Delivery management practitioners,CIPM,true
+Delivery management practitioners,DEMG,true
+Delivery management practitioners,DEMM,false
+Delivery management practitioners,FMIT,true
+Delivery management practitioners,MEAS,false
+Delivery management practitioners,METL,false
+Delivery management practitioners,OCDV,false
+Delivery management practitioners,OFCL,true
+Delivery management practitioners,PROF,true
+Delivery management practitioners,RELM,false
+Delivery management practitioners,RLMT,true
+Delivery management practitioners,SUPP,false
+DevOps automation engineer,CFMG,true
+DevOps automation engineer,DEPL,true
+DevOps automation engineer,NFTS,false
+DevOps automation engineer,PROG,true
+DevOps automation engineer,RELM,false
+DevOps automation engineer,REQM,false
+DevOps automation engineer,SINT,true
+DevOps automation engineer,SLEN,true
+DevOps automation engineer,SWDN,false
+DevOps automation engineer,TEST,false
+DevOps practice management,DEMM,false
+DevOps practice management,DLMG,true
+DevOps practice management,EEXP,false
+DevOps practice management,ITMG,true
+DevOps practice management,KNOW,false
+DevOps practice management,LEDA,false
+DevOps practice management,MEAS,false
+DevOps practice management,OCDV,true
+DevOps practice management,PDSV,false
+DevOps practice management,PEMT,false
+DevOps practice management,PROD,true
+DevOps practice management,QUAS,false
+DevOps practice management,QUMG,true
+DevOps practice management,RESC,false
+DevOps practice management,RLMT,true
+DevOps practice management,SLEN,true
+DevOps practice management,TMCR,false
+Digital marketing practitioners,BRMG,true
+Digital marketing practitioners,CELO,true
+Digital marketing practitioners,CEXP,true
+Digital marketing practitioners,DAAN,false
+Digital marketing practitioners,DIGM,true
+Digital marketing practitioners,ICPM,false
+Digital marketing practitioners,INCA,false
+Digital marketing practitioners,MKCM,true
+Digital marketing practitioners,MKTG,true
+Digital marketing practitioners,MRCH,true
+Digital marketing practitioners,PROD,true
+Enterprise architecture practitioners,BPRE,true
+Enterprise architecture practitioners,BSMO,false
+Enterprise architecture practitioners,BUSA,true
+Enterprise architecture practitioners,CNSL,false
+Enterprise architecture practitioners,DATM,true
+Enterprise architecture practitioners,DEMM,false
+Enterprise architecture practitioners,DTAN,true
+Enterprise architecture practitioners,EMRG,false
+Enterprise architecture practitioners,FEAS,false
+Enterprise architecture practitioners,IFDN,true
+Enterprise architecture practitioners,INOV,false
+Enterprise architecture practitioners,ISCO,false
+Enterprise architecture practitioners,ITSP,true
+Enterprise architecture practitioners,METL,true
+Enterprise architecture practitioners,NTDS,true
+Enterprise architecture practitioners,OCDV,false
+Enterprise architecture practitioners,REQM,true
+Enterprise architecture practitioners,RLMT,false
+Enterprise architecture practitioners,SCTY,false
+Enterprise architecture practitioners,STPL,true
+Graphic design and visual communication practitioners,GRDN,true
+Graphic design and visual communication practitioners,ICPM,true
+Graphic design and visual communication practitioners,METL,true
+Graphic design and visual communication practitioners,REQM,false
+Graphic design and visual communication practitioners,UNAN,true
+Graphic design and visual communication practitioners,USEV,false
+Graphic design and visual communication practitioners,VISL,false
+IT Service designer,ARCH,false
+IT Service designer,AVMT,true
+IT Service designer,BENM,false
+IT Service designer,BPRE,true
+IT Service designer,BSMO,false
+IT Service designer,BUSA,false
+IT Service designer,CPMG,true
+IT Service designer,REQM,true
+IT Service designer,SCMG,true
+IT Service designer,SLMO,true
+Incident management practitioners,BINT,false
+Incident management practitioners,COPL,false
+Incident management practitioners,DGFS,true
+Incident management practitioners,METL,false
+Incident management practitioners,RLMT,false
+Incident management practitioners,SCAD,true
+Incident management practitioners,SCTY,false
+Incident management practitioners,SUPP,false
+Incident management practitioners,TEST,false
+Incident management practitioners,USUP,true
+Infrastructure engineers,CFMG,false
+Infrastructure engineers,DCMA,false
+Infrastructure engineers,DESN,false
+Infrastructure engineers,HSIN,true
+Infrastructure engineers,IFDN,true
+Infrastructure engineers,ITOP,true
+Infrastructure engineers,NFTS,true
+Infrastructure engineers,NTAS,true
+Infrastructure engineers,NTDS,true
+Infrastructure engineers,SINT,true
+Infrastructure engineers,STMG,true
+Infrastructure engineers,SYSP,true
+Infrastructure engineers,TEST,true
+Infrastructure operations practitioners,ASMG,true
+Infrastructure operations practitioners,AVMT,false
+Infrastructure operations practitioners,CFMG,true
+Infrastructure operations practitioners,CHMG,true
+Infrastructure operations practitioners,COPL,true
+Infrastructure operations practitioners,DCMA,false
+Infrastructure operations practitioners,HSIN,false
+Infrastructure operations practitioners,ITMG,false
+Infrastructure operations practitioners,ITOP,true
+Infrastructure operations practitioners,MEAS,false
+Infrastructure operations practitioners,NTAS,false
+Infrastructure operations practitioners,PBMG,false
+Infrastructure operations practitioners,SLMO,true
+Infrastructure operations practitioners,SUPP,false
+Infrastructure platform management practitioners,COPL,false
+Infrastructure platform management practitioners,DCMA,false
+Infrastructure platform management practitioners,DEMM,true
+Infrastructure platform management practitioners,IFDN,false
+Infrastructure platform management practitioners,ITCM,true
+Infrastructure platform management practitioners,ITMG,true
+Infrastructure platform management practitioners,ITOP,true
+Infrastructure platform management practitioners,SLEN,false
+Infrastructure platform management practitioners,SLMO,true
+Infrastructure platform management practitioners,SUPP,true
+Interaction design practitioners,CEXP,false
+Interaction design practitioners,DAAN,false
+Interaction design practitioners,HCEV,true
+Interaction design practitioners,METL,false
+Interaction design practitioners,REQM,false
+Interaction design practitioners,UNAN,true
+Interaction design practitioners,USEV,true
+Interaction design practitioners,VISL,false
+Learning & development (L&D) practitioners,ETDL,true
+Learning & development (L&D) practitioners,ETMG,true
+Learning & development (L&D) practitioners,ICPM,false
+Learning & development (L&D) practitioners,INCA,false
+Learning & development (L&D) practitioners,MEAS,false
+Learning & development (L&D) practitioners,METL,false
+Learning & development (L&D) practitioners,TMCR,true
+Machine learning engineering practitioners,AIDE,false
+Machine learning engineering practitioners,ASUP,true
+Machine learning engineering practitioners,CFMG,false
+Machine learning engineering practitioners,DATM,false
+Machine learning engineering practitioners,DENG,true
+Machine learning engineering practitioners,DEPL,false
+Machine learning engineering practitioners,EMRG,false
+Machine learning engineering practitioners,METL,false
+Machine learning engineering practitioners,MLNG,true
+Machine learning engineering practitioners,NFTS,true
+Machine learning engineering practitioners,PROG,true
+Machine learning engineering practitioners,SINT,false
+Machine learning engineering practitioners,TECH,false
+Machine learning engineering practitioners,TEST,true
+Network architecture practitioners,DESN,true
+Network architecture practitioners,EMRG,true
+Network architecture practitioners,IFDN,true
+Network architecture practitioners,NFTS,false
+Network architecture practitioners,NTAS,false
+Network architecture practitioners,NTDS,true
+Network architecture practitioners,PBMG,false
+Network architecture practitioners,RLMT,false
+Network architecture practitioners,SCTY,false
+Network architecture practitioners,SINT,false
+Network architecture practitioners,TECH,true
+Network architecture practitioners,TEST,false
+Organisation design practitioners,CIPM,false
+Organisation design practitioners,JADN,true
+Organisation design practitioners,LEDA,false
+Organisation design practitioners,OCEN,false
+Organisation design practitioners,OFCL,true
+Organisation design practitioners,ORDI,true
+Organisation design practitioners,RLMT,false
+Organisation design practitioners,WFPL,false
+Penetration testing practitioners,DGFS,false
+Penetration testing practitioners,DLMG,false
+Penetration testing practitioners,METL,false
+Penetration testing practitioners,NFTS,true
+Penetration testing practitioners,PENT,true
+Penetration testing practitioners,PRTS,false
+Penetration testing practitioners,QUAS,true
+Penetration testing practitioners,SLEN,false
+Penetration testing practitioners,TEST,true
+Penetration testing practitioners,USEV,false
+Performance analysis practitioners,AIDE,false
+Performance analysis practitioners,BINT,true
+Performance analysis practitioners,DAAN,true
+Performance analysis practitioners,DEMG,false
+Performance analysis practitioners,MEAS,true
+Performance analysis practitioners,METL,false
+Performance analysis practitioners,QUAS,false
+Performance analysis practitioners,VISL,true
+Platform engineer,CFMG,true
+Platform engineer,CHMG,false
+Platform engineer,DBAD,false
+Platform engineer,DEPL,true
+Platform engineer,IFDN,true
+Platform engineer,ITOP,true
+Platform engineer,RELM,false
+Platform engineer,SINT,true
+Platform engineer,SLEN,false
+Platform engineer,VUAS,false
+Product management practitioners,BENM,false
+Product management practitioners,CEXP,false
+Product management practitioners,DEMG,false
+Product management practitioners,DEMM,false
+Product management practitioners,FEAS,true
+Product management practitioners,FIAN,false
+Product management practitioners,MEAS,true
+Product management practitioners,PROD,true
+Product management practitioners,REQM,true
+Product management practitioners,RLMT,true
+Project delivery practice management,DEMM,false
+Project delivery practice management,EEXP,true
+Project delivery practice management,KNOW,true
+Project delivery practice management,LEDA,false
+Project delivery practice management,OCDV,true
+Project delivery practice management,PDSV,true
+Project delivery practice management,PEMT,true
+Project delivery practice management,QUMG,false
+Project delivery practice management,RESC,true
+Project delivery practice management,RLMT,true
+Project delivery practice management,SUPP,false
+Project delivery practice management,TMCR,false
+Project delivery practitioners,BENM,true
+Project delivery practitioners,CIPM,false
+Project delivery practitioners,DEMG,true
+Project delivery practitioners,DEMM,false
+Project delivery practitioners,FMIT,false
+Project delivery practitioners,INVA,false
+Project delivery practitioners,ISCO,false
+Project delivery practitioners,MEAS,false
+Project delivery practitioners,METL,false
+Project delivery practitioners,PGMG,true
+Project delivery practitioners,POMG,true
+Project delivery practitioners,PRMG,true
+Project delivery practitioners,PROF,true
+Project delivery practitioners,RLMT,true
+Resource management practitioners,BINT,false
+Resource management practitioners,DAAN,false
+Resource management practitioners,ITCM,false
+Resource management practitioners,JADN,false
+Resource management practitioners,LEDA,false
+Resource management practitioners,RESC,true
+Resource management practitioners,RLMT,true
+Resource management practitioners,SUPP,false
+Resource management practitioners,WFPL,true
+Sales and sales support practitioners,BINT,false
+Sales and sales support practitioners,CSMG,false
+Sales and sales support practitioners,DAAN,false
+Sales and sales support practitioners,RLMT,true
+Sales and sales support practitioners,SALE,true
+Sales and sales support practitioners,SSUP,true
+Security architecture practitioners,ARCH,true
+Security architecture practitioners,BURM,false
+Security architecture practitioners,DESN,false
+Security architecture practitioners,EMRG,true
+Security architecture practitioners,INAS,false
+Security architecture practitioners,NTDS,false
+Security architecture practitioners,REQM,false
+Security architecture practitioners,RLMT,false
+Security architecture practitioners,SCTY,true
+Security architecture practitioners,STPL,true
+Security architecture practitioners,TECH,true
+Security architecture practitioners,VUAS,false
+"Security leadership, strategy and management",BURM,true
+"Security leadership, strategy and management",GOVN,true
+"Security leadership, strategy and management",INAS,true
+"Security leadership, strategy and management",IRMG,true
+"Security leadership, strategy and management",MEAS,false
+"Security leadership, strategy and management",OCDV,false
+"Security leadership, strategy and management",RLMT,true
+"Security leadership, strategy and management",SCTY,true
+"Security leadership, strategy and management",STPL,false
+Security operations,ASMG,true
+Security operations,BURM,false
+Security operations,DCMA,false
+Security operations,HSIN,false
+Security operations,IAMT,true
+Security operations,ITMG,true
+Security operations,ITOP,true
+Security operations,KNOW,false
+Security operations,MEAS,false
+Security operations,NTAS,true
+Security operations,PBMG,false
+Security operations,PENT,false
+Security operations,PORT,false
+Security operations,RLMT,false
+Security operations,SCAD,true
+Security operations,SCTY,true
+Security operations,SUPP,true
+Security operations,SYSP,true
+Security operations,TECH,false
+Security operations,USUP,true
+"Security risk management, audit and compliance",AUDT,true
+"Security risk management, audit and compliance",BURM,true
+"Security risk management, audit and compliance",CNSL,false
+"Security risk management, audit and compliance",INAS,true
+"Security risk management, audit and compliance",MEAS,false
+"Security risk management, audit and compliance",PEDP,true
+"Security risk management, audit and compliance",PRTS,true
+"Security risk management, audit and compliance",TEST,true
+Service desk practitioners,CSMG,true
+Service desk practitioners,IAMT,false
+Service desk practitioners,KNOW,true
+Service desk practitioners,MEAS,false
+Service desk practitioners,METL,false
+Service desk practitioners,PBMG,true
+Service desk practitioners,QUMG,false
+Service desk practitioners,RLMT,true
+Service desk practitioners,SLMO,false
+Service desk practitioners,SUPP,false
+Service desk practitioners,USUP,true
+Service experience design practitioners,BPRE,false
+Service experience design practitioners,BSMO,false
+Service experience design practitioners,BUSA,false
+Service experience design practitioners,CEXP,true
+Service experience design practitioners,FEAS,true
+Service experience design practitioners,HCEV,true
+Service experience design practitioners,PROD,false
+Service experience design practitioners,REQM,false
+Service experience design practitioners,UNAN,true
+Service experience design practitioners,URCH,false
+Service experience design practitioners,USEV,true
+Service introduction practitioners,CHMG,true
+Service introduction practitioners,CIPM,false
+Service introduction practitioners,KNOW,false
+Service introduction practitioners,QUMG,false
+Service introduction practitioners,RELM,false
+Service introduction practitioners,RLMT,true
+Service introduction practitioners,SCMG,false
+Service introduction practitioners,SEAC,true
+Service introduction practitioners,SLMO,true
+Service introduction practitioners,SUPP,false
+Service management architecture practitioners,AVMT,true
+Service management architecture practitioners,CPMG,true
+Service management architecture practitioners,DAAN,false
+Service management architecture practitioners,DEMM,false
+Service management architecture practitioners,EMRG,false
+Service management architecture practitioners,METL,false
+Service management architecture practitioners,POMG,true
+Service management architecture practitioners,REQM,true
+Service management architecture practitioners,RLMT,true
+Service management architecture practitioners,SLMO,true
+Service management architecture practitioners,STPL,true
+Service operations practitioners,ASMG,true
+Service operations practitioners,ASUP,false
+Service operations practitioners,BINT,false
+Service operations practitioners,BUSA,false
+Service operations practitioners,CFMG,true
+Service operations practitioners,CHMG,true
+Service operations practitioners,COPL,false
+Service operations practitioners,IAMT,true
+Service operations practitioners,METL,false
+Service operations practitioners,PBMG,true
+Service operations practitioners,RLMT,true
+Service operations practitioners,SCAD,true
+Service operations practitioners,SLMO,true
+Service operations practitioners,SUPP,true
+Service ownership practitioners,BENM,false
+Service ownership practitioners,BINT,false
+Service ownership practitioners,BUDF,true
+Service ownership practitioners,DEMM,false
+Service ownership practitioners,FMIT,true
+Service ownership practitioners,MEAS,true
+Service ownership practitioners,QUMG,false
+Service ownership practitioners,RLMT,true
+Service ownership practitioners,SEAC,true
+Service ownership practitioners,SLMO,true
+Service ownership practitioners,SUPP,false
+Site reliability engineer (SRE),CHMG,false
+Site reliability engineer (SRE),COPL,false
+Site reliability engineer (SRE),DAAN,false
+Site reliability engineer (SRE),DEPL,false
+Site reliability engineer (SRE),ITOP,true
+Site reliability engineer (SRE),MEAS,false
+Site reliability engineer (SRE),NFTS,true
+Site reliability engineer (SRE),PBMG,true
+Site reliability engineer (SRE),SLEN,false
+Site reliability engineer (SRE),SLMO,false
+Site reliability engineer (SRE),USUP,true
+Software engineering practice management,DEMM,false
+Software engineering practice management,DLMG,true
+Software engineering practice management,EEXP,false
+Software engineering practice management,KNOW,false
+Software engineering practice management,LEDA,false
+Software engineering practice management,MEAS,false
+Software engineering practice management,OCDV,true
+Software engineering practice management,PDSV,false
+Software engineering practice management,PEMT,false
+Software engineering practice management,PRMG,true
+Software engineering practice management,QUAS,false
+Software engineering practice management,QUMG,true
+Software engineering practice management,RESC,false
+Software engineering practice management,RLMT,false
+Software engineering practice management,SFAS,true
+Software engineering practice management,TMCR,false
+Software engineering practitioners,ASUP,false
+Software engineering practitioners,CFMG,true
+Software engineering practitioners,DESN,false
+Software engineering practitioners,MEAS,false
+Software engineering practitioners,METL,false
+Software engineering practitioners,NFTS,false
+Software engineering practitioners,PROG,true
+Software engineering practitioners,QUAS,false
+Software engineering practitioners,REQM,true
+Software engineering practitioners,RESD,true
+Software engineering practitioners,SFEN,true
+Software engineering practitioners,SINT,true
+Software engineering practitioners,SWDN,true
+Software engineering practitioners,TEST,true
+Solution architecture practitioners,ARCH,true
+Solution architecture practitioners,BPRE,false
+Solution architecture practitioners,BSMO,false
+Solution architecture practitioners,BUSA,false
+Solution architecture practitioners,CNSL,false
+Solution architecture practitioners,DATM,true
+Solution architecture practitioners,DBDS,true
+Solution architecture practitioners,DEMM,false
+Solution architecture practitioners,DESN,true
+Solution architecture practitioners,DTAN,true
+Solution architecture practitioners,EMRG,false
+Solution architecture practitioners,FEAS,false
+Solution architecture practitioners,IFDN,true
+Solution architecture practitioners,METL,true
+Solution architecture practitioners,NTDS,true
+Solution architecture practitioners,REQM,true
+Solution architecture practitioners,RLMT,false
+Solution architecture practitioners,SCTY,false
+Solution architecture practitioners,SWDN,false
+Solution architecture practitioners,TECH,true
+Teaching practitioners,ETDL,false
+Teaching practitioners,METL,false
+Teaching practitioners,RSCH,false
+Teaching practitioners,SUBF,true
+Teaching practitioners,TEAC,true
+Teaching practitioners,TECH,false
+Teaching practitioners,TMCR,false
+Technical architecture practitioners,ARCH,false
+Technical architecture practitioners,DESN,true
+Technical architecture practitioners,EMRG,false
+Technical architecture practitioners,FEAS,false
+Technical architecture practitioners,IFDN,true
+Technical architecture practitioners,METL,false
+Technical architecture practitioners,REQM,true
+Technical architecture practitioners,SORC,false
+Technical architecture practitioners,STPL,false
+Technical architecture practitioners,SWDN,false
+Technical architecture practitioners,TECH,true
+Technical writing practitioners,ACIN,false
+Technical writing practitioners,ICPM,true
+Technical writing practitioners,INCA,true
+Technical writing practitioners,IRMG,false
+Technical writing practitioners,KNOW,false
+Technical writing practitioners,TMCR,false
+Technology finance practitioners,BENM,false
+Technology finance practitioners,BINT,false
+Technology finance practitioners,BUDF,true
+Technology finance practitioners,COMG,true
+Technology finance practitioners,DEMM,false
+Technology finance practitioners,FIAN,true
+Technology finance practitioners,FMIT,true
+Technology finance practitioners,INVA,true
+Technology finance practitioners,MEAS,false
+Technology finance practitioners,RLMT,true
+Technology procurement practitioners,BENM,false
+Technology procurement practitioners,FIAN,false
+Technology procurement practitioners,INVA,false
+Technology procurement practitioners,ITCM,true
+Technology procurement practitioners,SORC,true
+Technology procurement practitioners,SUPP,true
+Testing practice management,DLMG,true
+Testing practice management,EEXP,true
+Testing practice management,KNOW,true
+Testing practice management,OCDV,true
+Testing practice management,PDSV,true
+Testing practice management,PEMT,true
+Testing practice management,RESC,true
+Testing practice management,RLMT,true
+Testing practitioners,BPTS,false
+Testing practitioners,BURM,false
+Testing practitioners,METL,true
+Testing practitioners,NFTS,true
+Testing practitioners,PENT,false
+Testing practitioners,PROG,false
+Testing practitioners,PRTS,true
+Testing practitioners,QUAS,true
+Testing practitioners,SEAC,false
+Testing practitioners,TECH,false
+Testing practitioners,TEST,true
+Testing practitioners,USEV,true
+User experience practitioners,CEXP,true
+User experience practitioners,GRDN,true
+User experience practitioners,HCEV,true
+User experience practitioners,INCA,true
+User experience practitioners,METL,false
+User experience practitioners,REQM,false
+User experience practitioners,UNAN,true
+User experience practitioners,USEV,true
+User research practitioners,CNSL,false
+User research practitioners,METL,false
+User research practitioners,MRCH,false
+User research practitioners,UNAN,true
+User research practitioners,URCH,true
+User research practitioners,USEV,true
+Vulnerability analysis practitioners,AUDT,false
+Vulnerability analysis practitioners,BURM,false
+Vulnerability analysis practitioners,INCA,false
+Vulnerability analysis practitioners,MEAS,true
+Vulnerability analysis practitioners,PENT,true
+Vulnerability analysis practitioners,SCTY,false
+Vulnerability analysis practitioners,VUAS,true
+Workforce planning practitioners,BINT,true
+Workforce planning practitioners,BUSA,true
+Workforce planning practitioners,RLMT,true
+Workforce planning practitioners,WFPL,true

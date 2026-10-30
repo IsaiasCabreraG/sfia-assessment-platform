@@ -13,6 +13,7 @@
 | Versión | Fecha      | Autor          | Descripción     |
 | ------- | ---------- | -------------- | --------------- |
 | 0.1     | 18/10/2026 | Isaias Cabrera | Versión inicial |
+| 0.2     | 28/10/2026 | Isaias Cabrera | Se agregan RF-27 a RF-31 (revisión de borradores antes de publicar); se ajustan RF-01, RF-02, RF-06 y RF-07 |
 
 ---
 
@@ -93,13 +94,13 @@ Impactos declarados en `summary.md`: menor costo y tiempo en selección, mayor e
 
 | ID    | Actor              | Módulo         | Descripción                                                                                                                                                       |
 | ----- | ------------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| RF-01 | Usuario            | Autenticación  | El usuario puede iniciar sesión con su cuenta de Google (OIDC). |
-| RF-02 | Sistema            | Catálogo SFIA  | El sistema ofrece el catálogo SFIA: skills, niveles 1-7 y perfiles de rol predefinidos.                                                                           |
+| RF-01 | Usuario            | Autenticación  | El usuario puede iniciar sesión con su cuenta de Google (OIDC) y mantener su sesión sin volver a entrar mientras la usa. |
+| RF-02 | Sistema            | Catálogo SFIA  | El sistema ofrece el catálogo SFIA (skills con sus niveles mínimo y máximo, niveles 1-7 y perfiles de rol predefinidos) y el portal remite a su sitio oficial.                                                                           |
 | RF-03 | Sistema            | Banco de ítems | El sistema asocia cada ítem a una skill y a un nivel de responsabilidad SFIA.                                                                                     |
 | RF-04 | Sistema            | Banco de ítems | El sistema genera con IA borradores de preguntas, ejercicios y rúbricas.                                                                                          |
 | RF-05 | Validador          | Banco de ítems | El validador puede puntuar de 0.0 a 5.0 los ítems generados por IA (0.0 mala, 2.5 media, 5.0 buena pregunta). Un mismo ítem puede ser puntuado por distintos validadores. |
-| RF-06 | Docente/Reclutador | Banco de ítems | El docente/reclutador puede crear ítems de una skill específica, indicando por cada skill el tiempo estimado, la cantidad de ítems y el nivel de responsabilidad. |
-| RF-07 | Validador          | Banco de ítems | El validador puede filtrar los ítems activos por skill, rol y puntuación, distinguiendo los ítems sin puntuar de los que tienen puntuación 0.0.                    |
+| RF-06 | Docente/Reclutador | Banco de ítems | El docente/reclutador puede generar ítems de una o varias skills, indicando por cada skill el nivel de responsabilidad y, por cada tipo de ítem, la cantidad y el tiempo estimado de cada ítem, y un contexto opcional por skill. |
+| RF-07 | Validador          | Banco de ítems | El validador puede filtrar los ítems activos y disponibles para expertos por skill, rol (a través de las skills del perfil), nivel de responsabilidad y puntuación, distinguiendo los ítems sin puntuar de los que tienen puntuación 0.0.                    |
 | RF-08 | Validador          | Banco de ítems | El validador puede ver los atributos de un ítem: la skill a la que apunta, su rúbrica, el tiempo estimado, la respuesta correcta y el enunciado.                  |
 | RF-09 | Sistema            | Banco de ítems | El sistema maneja los estados activo e inactivo de los ítems.                                                                                                     |
 | RF-10 | Sistema            | Banco de ítems | El sistema soporta los tipos alternativa única, verdadero o falso, pregunta de desarrollo, coding challenge, system design y debugging.                           |
@@ -119,6 +120,11 @@ Impactos declarados en `summary.md`: menor costo y tiempo en selección, mayor e
 | RF-24 | Sistema            | Reportes       | El sistema genera reportes con puntaje final, desglose por skill SFIA (radar, gaps), proceso (tiempo, intentos, patrones) y benchmarking (percentiles).           |
 | RF-25 | Docente/Reclutador | Banco de ítems | El docente/reclutador puede ver el promedio de las puntuaciones de un ítem y la cantidad de puntuaciones que recibió.                                             |
 | RF-26 | Sistema            | Banco de ítems | El sistema crea una nueva versión del ítem al regenerarlo con un nuevo contexto o modificarlo a mano, y registra su origen; las puntuaciones quedan solo en la versión anterior. |
+| RF-27 | Docente/Reclutador | Banco de ítems | El docente/reclutador puede revisar los borradores generados por la IA antes de publicarlos; no se guardan hasta que los publica. |
+| RF-28 | Docente/Reclutador | Banco de ítems | El docente/reclutador puede modificar un borrador antes de publicarlo. |
+| RF-29 | Docente/Reclutador | Banco de ítems | El docente/reclutador puede regenerar un borrador antes de publicarlo, con un comentario opcional para la IA. |
+| RF-30 | Docente/Reclutador | Banco de ítems | El docente/reclutador puede descartar y restaurar borradores antes de publicarlos. |
+| RF-31 | Docente/Reclutador | Banco de ítems | El docente/reclutador puede publicar los borradores revisados y elegir si quedan disponibles para expertos o de uso privado. |
 
 ### 6.2 Requisitos no funcionales
 

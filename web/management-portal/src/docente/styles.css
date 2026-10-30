@@ -1,0 +1,2 @@
+.menu-busqueda { flex: 1; min-width: 12rem; }
+button.nivel-celda:disabled { cursor: not-allowed; opacity: .45; }

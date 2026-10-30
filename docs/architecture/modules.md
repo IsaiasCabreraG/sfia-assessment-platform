@@ -9,9 +9,9 @@ Plataforma de evaluación técnica y práctica para ingeniería de software basa
 **Responsabilidad**: Fuente de verdad de la taxonomía SFIA (skills, niveles 1-7 y perfiles de rol).
 
 **Owns (datos)**:
-- `skills` — código, nombre, descripción, categoría
+- `skills` — código, nombre, descripción, categoría, subcategoría, nivel mínimo y máximo en que SFIA la define
 - `levels` — nivel 1-7, descripción genérica de responsabilidad
-- `role_profiles` — perfil (ej: "Software Engineer L3"), skills requeridos con nivel mínimo
+- `role_profiles` — perfil (ej: "Software Engineer L3") con su familia y sus skills (marcando las primarias)
 
 **API (REST)**:
 ```
@@ -42,7 +42,7 @@ POST   /role-profiles             # Admin: crear perfil
 
 **Owns (datos)**:
 - `generation_requests` — pedido de generación o de regeneración: skill, nivel, tipo, cantidad, tiempo estimado, contexto, estado
-- `items` — id, estado (active/inactive), skill_id (una skill por ítem)
+- `items` — id, estado (active/inactive), skill_id (una skill por ítem), disponibilidad para expertos (uso privado o visible para validadores)
 - `item_versions` — item_id, versión, tipo, origen (generated/regenerated/edited), pedido de generación, nivel, tiempo estimado, objetivo de evaluación, enunciado
 - Una tabla por tipo, con una fila por versión: `item_choice_options` (alternativa única), `item_true_false`, `item_open_question`, `item_coding`, `item_system_design`, `item_debugging` e `item_findings`
 - `rubric_criteria`, `rubric_levels` — rúbrica de cada versión, solo en los tipos abiertos (pregunta de desarrollo, system design, debugging)
@@ -52,7 +52,8 @@ POST   /role-profiles             # Admin: crear perfil
 **APIs internas (REST)**:
 ```
 # Generación
-POST   /generation-requests         # Crear ítems de una skill: nivel, tipo, cantidad y tiempo
+POST   /drafts                      # Generar borradores (no se guardan): skill, nivel, tipo, cantidad, tiempo y contexto; también regenera un borrador con comentario
+POST   /items/publish               # Publicar los borradores revisados: versión 1, activos y sin puntuar; elige si quedan disponibles para expertos
 POST   /items/{id}/regenerate       # Regenerar con un nuevo contexto (puede cambiar el tipo) → nueva versión
 
 # Banco de ítems
@@ -215,7 +216,7 @@ Server → Client: {type: "metric_update", metric, value}  # Dashboards live
 - `users` — id, email, name, avatar, google_id, created_at
 - `orgs` — id, name, slug, plan, settings, created_at
 - `memberships` — user_id, org_id, role (admin/recruiter/teacher/student/candidate/validator/viewer), joined_at
-- `refresh_tokens` — tokens de refresco (los access tokens son JWT con claims: org_id, roles, exp)
+- `refresh_tokens` — tokens de refresco: opacos, se guardan con hash, duran 7 días y sirven una sola vez (cada renovación entrega uno nuevo). Los access tokens son JWT de 1 hora con claims: org_id, roles, exp
 - `user_roles` — user_id, role. En el Sprint 1 reemplaza a `orgs` y `memberships` mientras la multi-tenancy esté pendiente
 
 **API (REST + OAuth2/OIDC)**:
@@ -267,7 +268,7 @@ Las FK entre schemas son físicas: `content` depende de `catalog` (`skill_id`, `
 |---|---|
 | **Google (OIDC)** | Login de usuarios (OAuth2/OpenID Connect) |
 | **SFIA Reference** | Carga inicial taxonomía oficial (import periódico) |
-| **Proveedor de LLM** | API de modelo de lenguaje (genérico, por definir). La usan Generación de Contenido (borradores de ítems y rúbricas) y Evaluación Automática (LLM-as-judge) |
+| **Proveedor de LLM** | API de modelo de lenguaje. En el Sprint 1 es Groq, a través del módulo `llm` (la CLI `claude -p` queda como alternativa). La usan Generación de Contenido (borradores de ítems y rúbricas) y Evaluación Automática (LLM-as-judge) |
 
 GitHub no es un sistema externo del producto: se usa solo como repositorio y CI/CD del desarrollo de la tesis (ver `docs/thesis/objectives.md`). La integración de repos/PRs para ejercicios tipo proyecto queda fuera de la primera versión.
 

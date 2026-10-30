@@ -21,6 +21,8 @@
 **Criterios de aceptación:**
 - Existe la opción de iniciar sesión con Google (OIDC).
 - Tras autenticarme con Google, accedo a la plataforma con mi cuenta.
+- Mientras uso la plataforma, mi sesión se renueva sola; si paso 7 días sin usarla, debo iniciar sesión de nuevo.
+- Al cerrar sesión, mi sesión deja de poder renovarse.
 
 ## 2. Catálogo SFIA
 
@@ -28,14 +30,28 @@
 
 **Requisito:** RF-02
 
-**Como** docente/reclutador, **quiero** consultar el catálogo SFIA, **para** elegir las skills, los niveles y el perfil de rol que quiero evaluar.
+**Como** docente/reclutador, **quiero** acceder al catálogo SFIA y elegir con él las skills, los niveles y el perfil de rol que quiero evaluar, **para** generar ítems alineados con SFIA.
 
 **Criterios de aceptación:**
-- El catálogo muestra las skills SFIA.
-- El catálogo muestra los niveles de responsabilidad 1 a 7.
-- El catálogo ofrece perfiles de rol predefinidos.
+- Hay un botón que lleva al sitio oficial de SFIA.
+- Al generar ítems puedo elegir una skill del catálogo, su nivel de responsabilidad (1 a 7) y partir de un perfil de rol predefinido que carga las skills del rol.
+- Cada skill conserva el nivel mínimo y máximo en que SFIA la define.
 
 ## 3. Banco de ítems
+
+**Flujo en los portales**
+
+| Pantalla | Qué hace el usuario | HU |
+|---|---|---|
+| Acceso (ambos portales) | Inicia sesión con Google | HU-01 |
+| Docente › barra superior › "Catálogo SFIA ↗" | Abre el sitio oficial de SFIA | HU-02 |
+| Docente › Generar ítems › Paso 1 "Qué evaluar" | Elige rol SFIA, skills (en un menú con buscador), nivel, contexto de cada skill, tipos de ítem, cantidad y tiempo por ítem | HU-02, HU-06, HU-10 |
+| Docente › Generar ítems › Paso 2 "Resumen" | Revisa el resumen y pulsa "Generar" | HU-04, HU-06 |
+| Docente › Generar ítems › Paso 3 "Revisa los borradores" | Edita, regenera o descarta cada borrador | HU-27 a HU-30 |
+| Docente › Generar ítems › pie del Paso 3 | Elige la disponibilidad y pulsa "Publicar N preguntas" | HU-31 |
+| Docente › Banco de ítems | Filtra, ve el detalle y activa o desactiva ítems | HU-03, HU-08, HU-09, HU-25 |
+| Validador › lista de ítems | Filtra por skill, rol y puntuación | HU-07 |
+| Validador › detalle del ítem | Ve los atributos y pone su puntuación | HU-05, HU-08, HU-25 |
 
 ### HU-03 Asociar ítems a una skill y un nivel SFIA
 
@@ -74,12 +90,13 @@
 
 **Requisito:** RF-06
 
-**Como** docente/reclutador, **quiero** crear ítems de una skill específica indicando el tiempo estimado, la cantidad de ítems y el nivel de responsabilidad, **para** obtener ítems a la medida de lo que necesito evaluar.
+**Como** docente/reclutador, **quiero** crear ítems de una o varias skills indicando el nivel de responsabilidad y, por cada tipo de ítem, la cantidad y el tiempo estimado de cada ítem, **para** obtener ítems a la medida de lo que necesito evaluar.
 
 **Criterios de aceptación:**
-- Puedo elegir una skill.
-- Para esa skill indico el tiempo estimado, la cantidad de ítems y el nivel de responsabilidad.
-- Se crean los ítems de acuerdo con lo indicado.
+- Puedo elegir una skill, o añadir varias en una misma solicitud o partir de un rol SFIA.
+- Para cada skill indico el nivel de responsabilidad y, por cada tipo de ítem, la cantidad y el tiempo estimado de cada ítem.
+- Se generan borradores de acuerdo con lo indicado.
+- Para cada skill puedo indicar, de forma opcional, un contexto (empresa, cargo o curso) que se usa solo en sus ítems.
 
 ### HU-07 Filtrar ítems por revisar
 
@@ -88,8 +105,9 @@
 **Como** validador, **quiero** filtrar los ítems activos por skill, rol y puntuación, **para** encontrar rápido los que debo revisar.
 
 **Criterios de aceptación:**
-- Solo se listan los ítems activos.
-- Puedo filtrar por skill.
+- Solo se listan los ítems activos y disponibles para expertos.
+- Puedo filtrar por skill, eligiéndola en un menú agrupado por categoría y subcategoría, con buscador.
+- Puedo filtrar por nivel de responsabilidad.
 - Puedo filtrar por rol.
 - Puedo filtrar por puntuación.
 - Puedo distinguir los ítems sin puntuar de los que tienen puntuación 0.0.
@@ -146,7 +164,7 @@
 **Criterios de aceptación:**
 - Veo el promedio de las puntuaciones de 0.0 a 5.0 del ítem.
 - Veo la cantidad de puntuaciones que recibió el ítem.
-- Un ítem sin puntuar se distingue de uno con promedio 0.0.
+- Un ítem sin puntuar no muestra puntaje; uno con promedio 0.0 sí lo muestra.
 - Un ítem sin puntuar igual puede mostrarse y usarse si está activo.
 
 ### HU-26 Versionar un ítem al modificarlo o regenerarlo
@@ -163,7 +181,78 @@
 - La nueva versión parte sin puntuar.
 - Cada versión registra su origen: generada, regenerada o modificada manualmente.
 
+### HU-27 Revisar los borradores antes de publicarlos
+
+**Requisito:** RF-27
+
+**Dónde:** Portal Docente/Reclutador › Generar ítems › Paso 3 "Revisa los borradores", que aparece al terminar de generar.
+
+**Como** docente/reclutador, **quiero** revisar los borradores generados por la IA antes de publicarlos, **para** decidir qué ítems entran al banco.
+
+**Criterios de aceptación:**
+- Los borradores se muestran en pantalla con su enunciado, skill, nivel, tipo y tiempo estimado.
+- Los borradores no se guardan en el banco hasta que los publico.
+- Si la IA no resuelve un pedido, veo el motivo y puedo seguir con los demás.
+- Mi trabajo sin publicar se conserva en el navegador si recargo la página o vuelvo a iniciar sesión.
+
+### HU-28 Modificar un borrador antes de publicarlo
+
+**Requisito:** RF-28
+
+**Dónde:** Portal Docente/Reclutador › Generar ítems › Paso 3 › botón "Editar" de cada borrador.
+
+**Como** docente/reclutador, **quiero** modificar un borrador antes de publicarlo, **para** ajustarlo sin esperar a armar una evaluación.
+
+**Criterios de aceptación:**
+- Puedo editar el enunciado, lo que evalúa, el tiempo estimado, la respuesta correcta o de referencia y la rúbrica.
+- Se publica lo que edité.
+- Lo editado debe cumplir las mismas reglas que lo generado por la IA (por ejemplo, los pesos de la rúbrica suman 100); si no las cumple, no se publica nada y veo el motivo.
+- Lo publicado queda como versión 1 del ítem.
+
+### HU-29 Regenerar un borrador antes de publicarlo
+
+**Requisito:** RF-29
+
+**Dónde:** Portal Docente/Reclutador › Generar ítems › Paso 3 › botón "Regenerar" de cada borrador.
+
+**Como** docente/reclutador, **quiero** regenerar un borrador con un comentario opcional, **para** obtener otra versión sin repetir todo el pedido.
+
+**Criterios de aceptación:**
+- Puedo pedir otra versión de un borrador, con un comentario opcional para la IA.
+- La IA recibe el enunciado anterior para no repetirlo.
+- El nuevo borrador reemplaza al anterior y no se guarda nada en el banco.
+
+### HU-30 Descartar y restaurar borradores
+
+**Requisito:** RF-30
+
+**Dónde:** Portal Docente/Reclutador › Generar ítems › Paso 3 › botones "Descartar" y "Restaurar" de cada borrador.
+
+**Como** docente/reclutador, **quiero** descartar los borradores que no sirven y deshacer un descarte, **para** publicar solo los que me convencen sin perder uno por error.
+
+**Criterios de aceptación:**
+- Puedo descartar un borrador y no se publica.
+- Puedo restaurar un borrador descartado.
+- El botón de publicar cuenta solo los borradores no descartados.
+
+### HU-31 Publicar los borradores y elegir su disponibilidad
+
+**Requisito:** RF-31
+
+**Dónde:** Portal Docente/Reclutador › Generar ítems › pie del Paso 3 (casilla y botón "Publicar N preguntas"), y después la pantalla "Publicación lista".
+
+**Como** docente/reclutador, **quiero** publicar los borradores revisados y elegir si quedan disponibles para los expertos, **para** decidir qué comparto con los validadores y qué guardo solo para mí.
+
+**Criterios de aceptación:**
+- Publicar guarda los borradores no descartados como ítems activos y sin puntuar.
+- Si marco "disponible para expertos", los validadores ven los ítems; si no, son de uso privado y solo los ve su autor.
+- Tras publicar, la pantalla se bloquea y puedo generar más preguntas.
+- En el banco, cada ítem muestra si es público (disponible para expertos) o privado.
+- Si algún borrador no cumple las reglas, no se publica ninguno.
+
 ## 4. Constructor de evaluaciones
+
+> HU-13 y HU-14 se aplican a ítems ya publicados en el banco, al armar una evaluación, y crean una versión nueva (HU-26). Modificar y regenerar un borrador antes de publicarlo se describe en HU-28 y HU-29.
 
 ### HU-11 Armar una evaluación
 

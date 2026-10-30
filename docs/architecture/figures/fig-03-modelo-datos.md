@@ -23,7 +23,7 @@ Mostrar las tablas de la base de datos que necesita el Sprint 1 (login, catálog
 
 | Capa | Tabla | Contenido |
 |---|---|---|
-| Identidad | `items` | Estado (activo/inactivo), skill y autor. No cambia entre versiones |
+| Identidad | `items` | Estado (activo/inactivo), skill, autor y disponibilidad para expertos. No cambia entre versiones |
 | Versión | `item_versions` | Tipo, número de versión, origen (`generated`, `regenerated`, `edited`), pedido de generación, nivel, tiempo, objetivo y enunciado |
 | Extensión | tabla según el tipo | Datos propios del tipo. Cada versión tiene su fila en la tabla de su tipo |
 | Rúbrica | `rubric_criteria`, `rubric_levels` | Criterios con peso y descriptores de 0 a 3. Solo en tipos abiertos (`open_question`, `system_design`, `debugging`) |

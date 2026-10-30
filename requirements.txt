@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+psycopg[binary,pool]
+python-dotenv
+pyjwt
+authlib
+itsdangerous
+httpx
+pytest
