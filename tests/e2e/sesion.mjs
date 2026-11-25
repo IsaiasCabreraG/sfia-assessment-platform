@@ -53,7 +53,7 @@ async function conBorradorEditado(s, texto) {
   await page.getByRole("button", { name: "Editar" }).click();
   await page.getByLabel("Enunciado").fill(texto);
   await page.getByRole("button", { name: "Cerrar edición" }).click();
-  await page.getByText(texto).waitFor();
+  await page.locator(".panel-borrador").getByText(texto).waitFor();
   return page;
 }
 
@@ -110,7 +110,7 @@ try {
   await page.route("**/auth/refresh", (r) => r.abort());
   await page.getByRole("button", { name: "Publicar 1 pregunta" }).click();
   await page.getByText(/No se pudo renovar tu sesión/).waitFor();
-  await page.getByText("Borrador que no debe perderse (red)").waitFor();
+  await page.locator(".panel-borrador").getByText("Borrador que no debe perderse (red)").waitFor();
   g = await guardado(page);
   if (!g.a || !g.r) throw new Error("se borraron los tokens por un simple fallo de red");
   await page.unroute("**/auth/refresh");
@@ -128,7 +128,7 @@ try {
   await page.evaluate((x) => { localStorage.setItem("sprint1_token_docente", x.access); localStorage.setItem("sprint1_refresh_docente", x.refresh); }, sesiones.reentrada);
   await page.reload();  // equivale a volver de Google con una sesión nueva
   await page.getByText(/Recuperamos tu trabajo sin publicar/).waitFor();
-  await page.getByText("Borrador que sobrevive al login").waitFor();
+  await page.locator(".panel-borrador").getByText("Borrador que sobrevive al login").waitFor();
   await page.getByRole("button", { name: "Publicar 1 pregunta" }).click();
   await page.getByText("Se publicaron 1 pregunta(s)").waitFor();
   await page.getByRole("button", { name: "Generar más preguntas" }).click();

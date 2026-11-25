@@ -13,7 +13,12 @@ def con_cli(monkeypatch):
 def test_ask_devuelve_la_salida_de_la_cli(llm_client, docente, monkeypatch, con_cli):
     monkeypatch.setenv("LLM_CLI_COMMAND", "cat")  # `cat` devuelve el prompt tal cual
     r = llm_client.post("/ask", json={"prompt": "hola"}, headers=docente["headers"])
-    assert r.status_code == 200 and r.json() == {"answer": "hola"}
+    datos = r.json()
+    assert r.status_code == 200 and datos["answer"] == "hola"
+    # la CLI no informa modelo, tokens ni parámetros: quedan en «--»
+    assert datos["provider"] == "cli" and datos["model"] == "--" and isinstance(datos["duration_ms"], int)
+    assert datos["usage"] == {"prompt_tokens": "--", "completion_tokens": "--"}
+    assert datos["parameters"] == {"temperature": "--", "reasoning_effort": "--", "max_tokens": "--"}
 
 
 def test_cli_inexistente_es_502(llm_client, docente, monkeypatch, con_cli):
@@ -84,7 +89,7 @@ def preguntar(llm_client, docente, prompt="¿hola?"):
 def test_groq_envia_el_pedido_con_la_clave_el_modelo_y_el_prompt(llm_client, docente, groq):
     groq.respuestas = [ok("¡hola!")]
     r = preguntar(llm_client, docente, "Dime hola")
-    assert r.status_code == 200 and r.json() == {"answer": "¡hola!"}
+    assert r.status_code == 200 and r.json()["answer"] == "¡hola!"
     llamada = groq.llamadas[0]
     assert llamada["url"] == "https://api.groq.com/openai/v1/chat/completions"
     assert llamada["headers"]["Authorization"] == "Bearer clave-de-prueba"
@@ -173,3 +178,19 @@ def test_el_modelo_por_defecto_es_uno_disponible_en_groq(llm_client, docente, gr
     groq.respuestas = [ok()]
     preguntar(llm_client, docente)
     assert groq.llamadas[0]["json"]["model"] == "openai/gpt-oss-120b"
+
+
+def test_groq_informa_modelo_tokens_y_parametros_de_la_llamada(llm_client, docente, groq, monkeypatch):
+    monkeypatch.setenv("LLM_REASONING_EFFORT", "low")
+    groq.respuestas = [Respuesta(200, {"model": "modelo-real", "usage": {"prompt_tokens": 12, "completion_tokens": 34},
+                                       "choices": [{"message": {"content": "hola"}, "finish_reason": "stop"}]})]
+    datos = preguntar(llm_client, docente).json()
+    assert datos["provider"] == "groq" and datos["model"] == "modelo-real" and isinstance(datos["duration_ms"], int)
+    assert datos["usage"] == {"prompt_tokens": 12, "completion_tokens": 34}
+    assert datos["parameters"] == {"temperature": 0.6, "reasoning_effort": "low", "max_tokens": 4096}
+
+
+def test_groq_sin_tokens_en_su_respuesta_deja_el_dato_en_guiones(llm_client, docente, groq):
+    groq.respuestas = [ok("hola")]  # esta respuesta no trae `usage` ni `model`
+    datos = preguntar(llm_client, docente).json()
+    assert datos["model"] == "modelo-de-prueba" and datos["usage"] == {"prompt_tokens": "--", "completion_tokens": "--"}

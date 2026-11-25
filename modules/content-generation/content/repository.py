@@ -87,6 +87,24 @@ def insert_content(cur, version_id, item_type: str, c) -> None:
                             "VALUES (%s, %s, %s)", (criterion_id, lvl.score, lvl.descriptor))
 
 
+# ---------- Distribución de las respuestas correctas del banco (HU-04-2 y HU-04-7) ----------
+
+
+def correct_position_counts(cur) -> list[int]:
+    """Cuántas alternativas únicas del banco tienen su correcta en A, B, C y D (todas las versiones)."""
+    cur.execute("SELECT position, count(*)::int AS n FROM content.item_choice_options "
+                "WHERE is_correct AND position BETWEEN 1 AND 4 GROUP BY position")
+    por_posicion = {r["position"]: r["n"] for r in cur.fetchall()}
+    return [por_posicion.get(p, 0) for p in (1, 2, 3, 4)]
+
+
+def true_false_counts(cur) -> list[int]:
+    """Cuántos verdadero o falso del banco tienen como correcta [falso, verdadero]."""
+    cur.execute("SELECT correct_answer, count(*)::int AS n FROM content.item_true_false GROUP BY correct_answer")
+    por_respuesta = {r["correct_answer"]: r["n"] for r in cur.fetchall()}
+    return [por_respuesta.get(False, 0), por_respuesta.get(True, 0)]
+
+
 # ---------- Listado con filtros (HU-07) y puntuación promedio (HU-25) ----------
 
 _LIST_SQL = """

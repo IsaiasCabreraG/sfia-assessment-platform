@@ -133,6 +133,7 @@ La clave primaria es `(criterion_id, score)`: cada criterio tiene un único desc
 3. Los pesos de los criterios de una versión suman exactamente 100.
 4. Cada criterio tiene exactamente cuatro descriptores, uno por cada puntaje 0, 1, 2 y 3.
 5. Los nombres de los criterios no se repiten dentro de una versión, y sus posiciones son consecutivas desde 1.
+6. Desde el refinamiento del Sprint 1, lo que publica la plataforma tiene al menos 4 criterios y sus pesos suman 100. Los 2 primeros son fijos según el tipo, con descriptores estáticos definidos en `config/criterios-fijos.json` (pregunta de desarrollo: «Precisión conceptual» y «Claridad y estructura»; system design: «Cumplimiento de requisitos funcionales y no funcionales» y «Justificación de decisiones y trade-offs»; debugging: «Identificación de la causa raíz» y «Corrección propuesta»). Lo que genera la IA tiene exactamente 4 criterios de peso 25: los fijos más 2 que escribe la IA según el problema. Quien revisa o edita puede agregar más criterios, pero no modificar los fijos. Los ítems anteriores conservan su rúbrica.
 
 ## 4. `single_choice` — Alternativa única
 
@@ -287,26 +288,31 @@ Además usa `rubric_criteria` y `rubric_levels` (sección 3).
 
 | id | item_version_id | name | weight | position |
 |---|---|---|---|---|
-| c1 | v3 | Precisión conceptual | 50 | 1 |
-| c2 | v3 | Criterio de uso | 30 | 2 |
-| c3 | v3 | Claridad de la redacción | 20 | 3 |
+| c1 | v3 | Precisión conceptual | 25 | 1 |
+| c2 | v3 | Claridad y estructura | 25 | 2 |
+| c3 | v3 | Criterio de uso | 25 | 3 |
+| c4 | v3 | Uso de ejemplos | 25 | 4 |
 
 **`rubric_levels`**
 
 | criterion_id | score | descriptor |
 |---|---|---|
-| c1 | 0 | Confunde ambos conceptos o no los define. |
-| c1 | 1 | Define uno de los conceptos correctamente. |
-| c1 | 2 | Define ambos conceptos correctamente. |
-| c1 | 3 | Define ambos conceptos y explica qué se aísla y qué se integra. |
-| c2 | 0 | No indica cuándo usar cada una. |
-| c2 | 1 | Indica el uso de una de ellas. |
-| c2 | 2 | Indica cuándo usar cada una. |
-| c2 | 3 | Indica cuándo usar cada una y los costos de cada elección. |
-| c3 | 0 | Texto incomprensible o desorganizado. |
-| c3 | 1 | Se entiende, pero con ambigüedades. |
-| c3 | 2 | Redacción clara y ordenada. |
-| c3 | 3 | Redacción clara, ordenada y con ejemplos. |
+| c1 | 0 | Los conceptos son incorrectos o no aparecen. |
+| c1 | 1 | Menciona los conceptos principales con errores o imprecisiones importantes. |
+| c1 | 2 | Explica correctamente los conceptos principales. |
+| c1 | 3 | Explica con precisión todos los conceptos relevantes y sus relaciones. |
+| c2 | 0 | La respuesta es incomprensible o está desorganizada. |
+| c2 | 1 | Se entiende, pero con ambigüedades o sin un orden claro. |
+| c2 | 2 | Redacción clara y ordenada. |
+| c2 | 3 | Redacción clara, bien estructurada y fácil de seguir de principio a fin. |
+| c3 | 0 | No indica cuándo usar cada una. |
+| c3 | 1 | Indica el uso de una de ellas. |
+| c3 | 2 | Indica cuándo usar cada una. |
+| c3 | 3 | Indica cuándo usar cada una y los costos de cada elección. |
+| c4 | 0 | No ilustra los conceptos. |
+| c4 | 1 | Menciona un ejemplo genérico. |
+| c4 | 2 | Ilustra con un ejemplo pertinente. |
+| c4 | 3 | Ilustra cada concepto con un ejemplo pertinente. |
 
 ## 7. `coding` — Coding challenge
 
@@ -432,26 +438,31 @@ Además usa `rubric_criteria` y `rubric_levels` (sección 3).
 
 | id | item_version_id | name | weight | position |
 |---|---|---|---|---|
-| c4 | v5 | Requisitos y estimación de carga | 25 | 1 |
-| c5 | v5 | Diseño de componentes y datos | 40 | 2 |
-| c6 | v5 | Escalabilidad y trade-offs | 35 | 3 |
+| c5 | v5 | Cumplimiento de requisitos funcionales y no funcionales | 25 | 1 |
+| c6 | v5 | Justificación de decisiones y trade-offs | 25 | 2 |
+| c7 | v5 | Diseño de componentes y datos | 25 | 3 |
+| c8 | v5 | Escalabilidad | 25 | 4 |
 
 **`rubric_levels`**
 
 | criterion_id | score | descriptor |
 |---|---|---|
-| c4 | 0 | No identifica requisitos ni estima la carga. |
-| c4 | 1 | Lista requisitos sin cuantificar la carga. |
-| c4 | 2 | Cuantifica la carga y cubre los requisitos principales. |
-| c4 | 3 | Cuantifica la carga, cubre todos los requisitos y deriva decisiones de ellos. |
-| c5 | 0 | No propone componentes ni modelo de datos. |
-| c5 | 1 | Propone componentes sin definir la API ni el modelo de datos. |
-| c5 | 2 | Define API, modelo de datos y generación de claves. |
-| c5 | 3 | Define API, modelo de datos y generación de claves, y evita colisiones. |
-| c6 | 0 | No aborda escalabilidad ni alternativas. |
-| c6 | 1 | Menciona caché o réplicas sin justificar. |
-| c6 | 2 | Aplica caché y replicación con justificación. |
-| c6 | 3 | Aplica caché, replicación y particionado, y compara alternativas. |
+| c5 | 0 | No identifica los requisitos del problema. |
+| c5 | 1 | Cubre algunos requisitos funcionales y omite los no funcionales. |
+| c5 | 2 | Cubre los requisitos funcionales y los no funcionales principales. |
+| c5 | 3 | Cubre todos los requisitos funcionales y no funcionales y deriva decisiones de diseño de ellos. |
+| c6 | 0 | No justifica sus decisiones. |
+| c6 | 1 | Justifica algunas decisiones sin considerar alternativas. |
+| c6 | 2 | Justifica sus decisiones principales señalando sus costos. |
+| c6 | 3 | Justifica todas sus decisiones y compara alternativas con sus trade-offs. |
+| c7 | 0 | No propone componentes ni modelo de datos. |
+| c7 | 1 | Propone componentes sin definir la API ni el modelo de datos. |
+| c7 | 2 | Define API, modelo de datos y generación de claves. |
+| c7 | 3 | Define API, modelo de datos y generación de claves, y evita colisiones. |
+| c8 | 0 | No aborda la escalabilidad. |
+| c8 | 1 | Menciona caché o réplicas sin justificar. |
+| c8 | 2 | Aplica caché y replicación con justificación. |
+| c8 | 3 | Aplica caché, replicación y particionado ante el crecimiento de la carga. |
 
 ## 9. `debugging` — Depuración
 
@@ -535,23 +546,28 @@ Además usa `rubric_criteria` y `rubric_levels` (sección 3).
 
 | id | item_version_id | name | weight | position |
 |---|---|---|---|---|
-| c7 | v6 | Diagnóstico de la causa | 50 | 1 |
-| c8 | v6 | Corrección propuesta | 30 | 2 |
-| c9 | v6 | Casos borde | 20 | 3 |
+| c9 | v6 | Identificación de la causa raíz | 25 | 1 |
+| c10 | v6 | Corrección propuesta | 25 | 2 |
+| c11 | v6 | Casos borde | 25 | 3 |
+| c12 | v6 | Prevención de regresiones | 25 | 4 |
 
 **`rubric_levels`**
 
 | criterion_id | score | descriptor |
 |---|---|---|
-| c7 | 0 | No identifica la causa. |
-| c7 | 1 | Señala la zona del error sin la causa exacta. |
-| c7 | 2 | Identifica la causa exacta. |
-| c7 | 3 | Identifica la causa exacta y explica por qué produce el síntoma. |
-| c8 | 0 | No propone corrección o es incorrecta. |
-| c8 | 1 | La corrección resuelve el caso del síntoma pero introduce otros errores. |
-| c8 | 2 | La corrección es correcta. |
-| c8 | 3 | La corrección es correcta y mínima. |
-| c9 | 0 | No considera casos borde. |
-| c9 | 1 | Menciona casos borde sin tratarlos. |
-| c9 | 2 | Trata la lista vacía. |
-| c9 | 3 | Trata la lista vacía y otros casos borde relevantes. |
+| c9 | 0 | No identifica la causa del fallo. |
+| c9 | 1 | Señala la zona del error sin la causa exacta. |
+| c9 | 2 | Identifica la causa exacta. |
+| c9 | 3 | Identifica la causa exacta y explica por qué produce el síntoma. |
+| c10 | 0 | No propone corrección o es incorrecta. |
+| c10 | 1 | La corrección resuelve el síntoma pero introduce otros errores. |
+| c10 | 2 | La corrección es correcta. |
+| c10 | 3 | La corrección es correcta, mínima y no rompe otros casos. |
+| c11 | 0 | No considera casos borde. |
+| c11 | 1 | Menciona casos borde sin tratarlos. |
+| c11 | 2 | Trata la lista vacía. |
+| c11 | 3 | Trata la lista vacía y otros casos borde relevantes. |
+| c12 | 0 | No propone cómo evitar que el error vuelva. |
+| c12 | 1 | Menciona probar el caso del síntoma. |
+| c12 | 2 | Propone una prueba que cubre el caso del síntoma. |
+| c12 | 3 | Propone pruebas que cubren el síntoma y los casos borde. |

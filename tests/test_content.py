@@ -46,7 +46,7 @@ def test_el_prompt_lleva_skill_nivel_tiempo_cantidad_y_contexto(content_client, 
 # ---------- Validación y fallos de la IA ----------
 
 def test_respuesta_invalida_se_reintenta_una_vez(content_client, docente, skill_ids, fake_llm):
-    fake_llm.respuestas = ["esto no es json", "```json\n" + llm_answer("true_false", 1) + "\n```"]
+    fake_llm.respuestas = ["esto no es json", llm_answer("true_false", 1, bloque=True)]
     r = _generar(content_client, docente, skill_ids[0]["id"], "true_false")
     assert r.status_code == 201 and len(fake_llm.prompts) == 2 and "rechazada" in fake_llm.prompts[1]
 
@@ -101,7 +101,8 @@ def _crear(content_client, docente, skill_id, item_type, fake_llm):
 def test_detalle_de_alternativa_unica_muestra_la_correcta(content_client, docente, validador, skill_ids, fake_llm):
     item_id = _crear(content_client, docente, skill_ids[0]["id"], "single_choice", fake_llm)
     d = content_client.get(f"/items/{item_id}", headers=validador["headers"]).json()
-    assert [o["is_correct"] for o in d["content"]["options"]] == [False, True, False]
+    opciones = d["content"]["options"]
+    assert len(opciones) == 4 and sum(o["is_correct"] for o in opciones) == 1
     assert d["rubric"] is None and d["statement"] and d["estimated_minutes"] == 10
 
 
@@ -149,19 +150,19 @@ def test_el_validador_no_cambia_el_estado(content_client, docente, validador, sk
 def test_puntuar_promedio_y_cantidad(content_client, docente, validador, skill_ids, fake_llm):
     item_id = _crear(content_client, docente, skill_ids[0]["id"], "true_false", fake_llm)
     otro = make_user(["validator"])
-    r = content_client.put(f"/items/{item_id}/score", json={"score": 0.0}, headers=validador["headers"])
-    assert r.status_code == 200 and r.json()["count"] == 1 and float(r.json()["average"]) == 0.0  # 0.0 ≠ sin puntuar
-    content_client.put(f"/items/{item_id}/score", json={"score": 4.5}, headers=otro["headers"])
+    r = content_client.put(f"/items/{item_id}/score", json={"score": 1}, headers=validador["headers"])
+    assert r.status_code == 200 and r.json()["count"] == 1 and float(r.json()["average"]) == 1.0  # 1 estrella ≠ sin puntuar
+    content_client.put(f"/items/{item_id}/score", json={"score": 4}, headers=otro["headers"])
     d = content_client.get(f"/items/{item_id}", headers=docente["headers"]).json()
-    assert d["score"]["count"] == 2 and float(d["score"]["average"]) == 2.3  # promedio de 0.0 y 4.5
+    assert d["score"]["count"] == 2 and float(d["score"]["average"]) == 2.5  # promedio de 1 y 4
     # volver a puntuar reemplaza, no suma
-    content_client.put(f"/items/{item_id}/score", json={"score": 5.0}, headers=validador["headers"])
+    content_client.put(f"/items/{item_id}/score", json={"score": 5}, headers=validador["headers"])
     d = content_client.get(f"/items/{item_id}", headers=validador["headers"]).json()
-    assert d["score"]["count"] == 2 and float(d["my_score"]) == 5.0
+    assert d["score"]["count"] == 2 and d["my_score"] == 5
 
 
-@pytest.mark.parametrize("valor", [-0.1, 5.1, 2.55])
-def test_puntuacion_fuera_de_rango_o_con_dos_decimales(content_client, docente, validador, skill_ids, fake_llm, valor):
+@pytest.mark.parametrize("valor", [0, 6, -1, 4.5, 2.55])
+def test_puntuacion_fuera_de_rango_o_no_entera(content_client, docente, validador, skill_ids, fake_llm, valor):
     item_id = _crear(content_client, docente, skill_ids[0]["id"], "true_false", fake_llm)
     assert content_client.put(f"/items/{item_id}/score", json={"score": valor},
                               headers=validador["headers"]).status_code == 400
@@ -177,7 +178,7 @@ def test_solo_validador_puntua(content_client, docente, skill_ids, fake_llm):
 def test_filtros_por_skill_puntuacion_y_sin_puntuar(content_client, docente, validador, skill_ids, fake_llm):
     a = _crear(content_client, docente, skill_ids[0]["id"], "true_false", fake_llm)
     b = _crear(content_client, docente, skill_ids[1]["id"], "true_false", fake_llm)
-    content_client.put(f"/items/{a}/score", json={"score": 0.0}, headers=validador["headers"])
+    content_client.put(f"/items/{a}/score", json={"score": 1}, headers=validador["headers"])
     h = validador["headers"]
 
     def ids(**params):
@@ -186,8 +187,8 @@ def test_filtros_por_skill_puntuacion_y_sin_puntuar(content_client, docente, val
     assert {a, b} <= ids(limit=200) and a in ids(skill_id=str(skill_ids[0]["id"])) and b not in ids(skill_id=str(skill_ids[0]["id"]))
     assert a in ids(scored="scored", limit=200) and b not in ids(scored="scored", limit=200)
     assert b in ids(scored="unscored", limit=200) and a not in ids(scored="unscored", limit=200)
-    assert a in ids(min_score=0, max_score=1, limit=200) and a not in ids(min_score=1, limit=200)  # 0.0 es puntuado
-    assert b not in ids(min_score=0, limit=200)  # un ítem sin puntuar no entra en un filtro por puntaje
+    assert a in ids(min_score=1, max_score=1, limit=200) and a not in ids(min_score=2, limit=200)  # 1 estrella es puntuado
+    assert b not in ids(min_score=1, limit=200)  # un ítem sin puntuar no entra en un filtro por puntaje
 
 
 def test_filtro_por_rol_se_resuelve_por_las_skills_del_perfil(content_client, docente, validador, skill_ids, fake_llm):

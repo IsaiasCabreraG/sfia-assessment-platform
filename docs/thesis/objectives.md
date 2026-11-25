@@ -43,7 +43,7 @@ Construir el software que permita diseñar evaluaciones alineadas al marco SFIA:
 - Implementación de autenticación mediante login con Google (base transversal de la plataforma)
 - Implementación del banco de ítems (preguntas, ejercicios técnicos) con versionado y estados (activo/inactivo)
 - Integración de generación asistida por IA para borradores de preguntas, ejercicios y rúbricas
-- Implementación del flujo de validación experta (los expertos puntúan de 0.0 a 5.0 los ítems generados)
+- Implementación del flujo de validación experta (los expertos puntúan de 1 a 5 estrellas los ítems generados)
 - Constructor visual de evaluaciones: plantillas de perfiles SFIA + editor drag-and-drop (skills, pesos, orden, timer)
 - Asociación de cada ítem a una skill y a un nivel SFIA
 

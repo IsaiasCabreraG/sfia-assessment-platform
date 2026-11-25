@@ -1,6 +1,7 @@
 """Endpoints HTTP de identity (HU-01): login con Google, callback y datos del usuario."""
 from urllib.parse import urlencode
 
+import httpx
 from authlib.integrations.starlette_client import OAuthError
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
@@ -35,6 +36,9 @@ async def callback(request: Request, conn=Depends(get_conn)):
         token = await oauth.google.authorize_access_token(request)
     except OAuthError as e:
         raise HTTPException(status_code=400, detail=f"Error de Google: {e.error}")
+    except httpx.HTTPError:  # la red falló al hablar con Google (tiempo agotado, conexión caída…)
+        raise HTTPException(status_code=502, detail="No se pudo contactar a Google para completar el inicio de sesión. "
+                                                     "Vuelve a intentarlo desde el portal.")
     with conn.cursor() as cur:
         _, access_token, refresh_token = service.login_with_google(cur, dict(token["userinfo"]))
     portal = request.session.pop("portal", "docente")

@@ -26,6 +26,8 @@ class DraftRequest(BaseModel):
     context: str | None = None
     feedback: str | None = None            # al regenerar un borrador
     previous_statement: str | None = None  # enunciado del borrador que se regenera
+    correct_position: int | None = None    # al regenerar una alternativa única: posición (1 a 4) de su correcta
+    correct_answer: bool | None = None     # al regenerar un verdadero o falso: su respuesta correcta
 
 
 class PublishGroup(BaseModel):
@@ -100,6 +102,6 @@ def set_status(item_id: UUID, body: StatusBody, _: AuthUser = Depends(docente), 
 
 @router.put("/items/{item_id}/score")
 def score_item(item_id: UUID, body: ScoreBody, user: AuthUser = Depends(validador), conn=Depends(get_conn)):
-    """HU-05: el validador puntúa (0.0 a 5.0) la versión vigente del ítem."""
+    """HU-05: el validador puntúa (1 a 5 estrellas enteras) la versión vigente del ítem."""
     with conn.cursor() as cur:
         return service.score_item(cur, user, item_id, body.score)

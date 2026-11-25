@@ -44,7 +44,7 @@ export interface ItemSummary {
   level: number;
   estimated_minutes: number;
   statement: string;
-  average_score: number | null; // null = sin puntuar (distinto de 0.0)
+  average_score: number | null; // null = sin puntuar (se muestra como estrella tachada)
   scores_count: number;
 }
 
@@ -96,6 +96,7 @@ export interface Draft {
   id: string;
   skill_id: string;
   skill_label: string;
+  skill_color?: string; // color de la categoría SFIA de la skill (nivel y tipo se ven con color)
   level: number;
   item_type: string;
   minutes: number;

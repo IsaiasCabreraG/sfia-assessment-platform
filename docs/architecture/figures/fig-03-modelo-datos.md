@@ -27,7 +27,7 @@ Mostrar las tablas de la base de datos que necesita el Sprint 1 (login, catálog
 | Versión | `item_versions` | Tipo, número de versión, origen (`generated`, `regenerated`, `edited`), pedido de generación, nivel, tiempo, objetivo y enunciado |
 | Extensión | tabla según el tipo | Datos propios del tipo. Cada versión tiene su fila en la tabla de su tipo |
 | Rúbrica | `rubric_criteria`, `rubric_levels` | Criterios con peso y descriptores de 0 a 3. Solo en tipos abiertos (`open_question`, `system_design`, `debugging`) |
-| Puntuación | `item_scores` | Puntuación de 0.0 a 5.0 de un validador sobre una versión |
+| Puntuación | `item_scores` | Puntuación de 1 a 5 estrellas enteras de un validador sobre una versión |
 | Contexto | `generation_requests` | Pedido de generación o de regeneración, con su contexto |
 
 ## Relaciones (leyenda de flechas)

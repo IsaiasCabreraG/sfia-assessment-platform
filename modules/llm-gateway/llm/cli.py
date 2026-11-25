@@ -6,9 +6,11 @@ import tempfile
 from shared.config import env
 from shared.errors import BadGateway
 
+from llm.respuesta import Respuesta
 
-def run_cli(prompt: str) -> str:
-    """Envía `prompt` por stdin a la CLI y devuelve su salida.
+
+def run_cli(prompt: str) -> Respuesta:
+    """Envía `prompt` por stdin a la CLI y devuelve su salida (la CLI no informa modelo, tokens ni parámetros: quedan en «--»).
 
     Sin shell (evita inyección de comandos), con timeout y desde una carpeta neutra: si la CLI se
     lanza dentro de un proyecto, hereda su CLAUDE.md y su memoria y contamina las respuestas.
@@ -24,4 +26,4 @@ def run_cli(prompt: str) -> str:
         raise BadGateway(f"CLI del LLM no encontrada: {command[0]}")
     if result.returncode != 0:
         raise BadGateway(result.stderr.strip() or "La CLI del LLM falló")
-    return result.stdout.strip()
+    return Respuesta(texto=result.stdout.strip())

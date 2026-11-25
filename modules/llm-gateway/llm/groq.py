@@ -11,6 +11,8 @@ import httpx
 from shared.config import env
 from shared.errors import BadGateway
 
+from llm.respuesta import SIN_DATO, Respuesta
+
 MODELO_POR_DEFECTO = "openai/gpt-oss-120b"
 MAX_REINTENTOS_429 = 2   # veces que se espera y se vuelve a intentar tras un 429
 ESPERA_MAXIMA = 30       # segundos máximos que se espera entre reintentos
@@ -32,8 +34,8 @@ def _espera(r: httpx.Response) -> float:
         return 5.0
 
 
-def run_groq(prompt: str) -> str:
-    """Envía `prompt` al modelo de `LLM_MODEL` y devuelve su respuesta.
+def run_groq(prompt: str) -> Respuesta:
+    """Envía `prompt` al modelo de `LLM_MODEL` y devuelve su respuesta, con el modelo, los tokens y los parámetros usados.
 
     Errores (todos `BadGateway`, con un mensaje que explica qué hacer): falta la clave, clave rechazada,
     límite de uso agotado, respuesta cortada por el límite de tokens, tiempo agotado o servidor caído.
@@ -76,14 +78,21 @@ def run_groq(prompt: str) -> str:
     if r.status_code != 200:
         raise BadGateway(f"Groq respondió {r.status_code}: {_mensaje_de_error(r)}")
 
-    opcion = r.json()["choices"][0]
+    datos = r.json()
+    opcion = datos["choices"][0]
     if opcion.get("finish_reason") == "length":
         raise BadGateway("La respuesta de la IA se cortó por el límite de tokens (LLM_MAX_TOKENS): "
                          "pide menos ítems por pedido o sube el límite")
     texto = (opcion.get("message") or {}).get("content")
     if not texto:
         raise BadGateway("Groq devolvió una respuesta vacía")
-    return texto.strip()
+    uso = datos.get("usage") or {}
+    return Respuesta(
+        texto=texto.strip(),
+        modelo=datos.get("model") or cuerpo["model"],
+        uso={"prompt_tokens": uso.get("prompt_tokens", SIN_DATO), "completion_tokens": uso.get("completion_tokens", SIN_DATO)},
+        parametros={"temperature": cuerpo["temperature"], "reasoning_effort": cuerpo.get("reasoning_effort", SIN_DATO),
+                    "max_tokens": cuerpo["max_completion_tokens"]})
 
 
 def listar_modelos() -> list[dict]:

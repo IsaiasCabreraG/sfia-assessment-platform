@@ -92,6 +92,8 @@ Al iniciar sesión se entregan dos tokens: un **access token** (JWT, dura 1 hora
 │   ├─ run_all.sh            Levanta todo lo que falte (módulos y portales) en una sola terminal
 │   ├─ lib.sh                Funciones comunes (entorno virtual, .env y PYTHONPATH)
 │   ├─ run_python.sh         Ejecuta un script Python con el entorno del proyecto
+│   ├─ reporte_log_ia.sh     Genera (y con --abrir abre) el reporte del log de IA (solo desarrollo)
+│   ├─ ver_log_ia.py         Genera el visor HTML del log de IA (lo usa reporte_log_ia.sh)
 │   └─ logs/                 Logs de run_all.sh (no se sube a git)
 ├─ modules/
 │   ├─ shared/shared/        Código común a los cuatro módulos
@@ -101,6 +103,8 @@ Al iniciar sesión se entregan dos tokens: un **access token** (JWT, dura 1 hora
 │   └─ content-generation/content/   Módulo de contenido (ítems)
 │       ├─ generation/       Todo lo relacionado con pedirle ítems a la IA (incluye prompt.json)
 │       └─ types.py          Los seis tipos de ítem
+├─ config/
+│   └─ criterios-fijos.json  Criterios fijos de la rúbrica de cada tipo abierto, con sus 4 descriptores (los leen el backend y el portal)
 ├─ db/
 │   ├─ schema.sql            Crea schemas y tablas
 │   ├─ setup.sh              Crea rol y BD, aplica schema.sql y carga el catálogo
@@ -126,7 +130,7 @@ Cada recorrido lista los pasos **en orden**, con el archivo y la función que se
 4. **`login`** (`identity/routes.py`): comprueba que el portal sea `docente` o `validador`, guarda el portal en la sesión de la petición y llama a `oauth.google.authorize_redirect(...)`. El cliente de Google lo configura **`build_oauth`** (`identity/google.py`). El usuario es enviado a `accounts.google.com`.
 5. El usuario se autentica en Google. Google redirige a `http://localhost:8001/auth/callback`.
 6. **`callback`** (`identity/routes.py`):
-   - Canjea el código por el perfil del usuario (`authorize_access_token`).
+   - Canjea el código por el perfil del usuario (`authorize_access_token`). Si Google rechaza el código responde 400 (`OAuthError`); si la red falla al hablar con Google (tiempo agotado o conexión caída, `httpx.HTTPError`) responde **502** con el mensaje «No se pudo contactar a Google… Vuelve a intentarlo desde el portal» en lugar de un error interno. El código de Google es de un solo uso: hay que empezar el login de nuevo.
    - Llama a **`login_with_google`** (`identity/service.py`):
      1. Exige `email_verified` (si no, `BadRequest`).
      2. `repository.find_by_google_id`: si el usuario ya existe, `repository.update_profile` refresca su nombre y foto.
@@ -164,8 +168,8 @@ El access token dura 1 hora. Nadie se entera de que venció hasta la siguiente a
 **En el portal** (`/docente/` › *Generar ítems*), todo en `web/src/docente/`:
 
 1. **`GenerateView`** (`GenerateView.tsx`) se monta. Un efecto intenta **recuperar trabajo sin publicar** desde `localStorage` (ver 3.5). Otro carga skills, niveles y perfiles de rol con `api(...)` contra `catalog` (ver 3.9).
-2. **Paso 1 «Qué evaluar»** (`StepEvaluar.tsx`): el usuario elige un rol SFIA (opcional) o añade skills con *+ Añadir skill…*, que abre el menú de `SkillPicker` (`shared/SkillPicker.tsx`: skills por categoría y subcategoría, con buscador). Cada skill es un **recuadro** (`Box`): nivel (celdas de color de `shared/Niveles.tsx`; solo se pueden elegir los niveles de la skill), **contexto opcional de esa skill** y, por cada tipo de ejercicio marcado, la **cantidad** y los **minutos por ítem**. `nuevoBox` crea un recuadro; si se elige un rol, `cargarPerfil` trae las skills del perfil (`GET /role-profiles/{id}`) y se crea un recuadro por cada una.
-3. **Paso 2 «Resumen»** (`GenerateView.tsx`): un resumen de cada recuadro (`resumenBox`), con su contexto. Al pulsar **Generar** se ejecuta `generar(grupos)`.
+2. **Paso 1 «Qué evaluar»** (`StepEvaluar.tsx`): el usuario añade skills con *+ Añadir skill…*, que abre el menú de `SkillPicker` (`shared/SkillPicker.tsx`: skills por categoría y subcategoría, con buscador). Cada skill es un **recuadro** (`Box`) que muestra su nombre (no se cambia desde ahí: se quita y se añade otra), el nivel junto a él, (nivel con celdas de color de `shared/Niveles.tsx`; solo se pueden elegir los niveles de la skill), **contexto para la skill** (opcional) y, por cada tipo de ejercicio marcado, la **cantidad** y los **minutos por ítem**. `nuevoBox` crea un recuadro. También puede añadir varias a la vez con *+ Añadir skills de un rol…*, que abre `RolPicker` (`docente/RolPicker.tsx`): las 21 familias de roles como acordeón y, al elegir un rol, `cargarPerfil` trae sus skills (`GET /role-profiles/{id}`), que se muestran separadas en **core** y **related**, **ninguna marcada de antemano**. Solo se añaden (un recuadro cada una) las que el usuario marca; no se guarda de qué rol salieron, así que se pueden sumar skills de un rol y luego de otro. Cada skill es una tarjeta con borde que se rellena con el color de su categoría al elegirla (sin casillas con tick). Las que ya están en el formulario aparecen rellenas con tono suave, con el aviso «ya está en el formulario», y no se pueden quitar desde ahí. **«Siguiente»** solo se activa si hay al menos una skill y todas tienen algún tipo marcado; si no, `GenerateView` muestra al lado del botón el motivo («Marca al menos un tipo de ítem en: PROG») y el recuadro afectado lo repite.
+3. **Paso 2 «Resumen»** (`GenerateView.tsx`): un resumen de cada recuadro (`ResumenCompacto`): la skill con el color de su categoría, su nivel y, por cada tipo, su icono, la cantidad y los minutos, más su contexto. Al pulsar **Generar** se ejecuta `generar(grupos)`.
 4. `grupos` es una lista con un elemento por cada combinación *(recuadro, tipo)*. `generar` lanza hasta 3 pedidos en paralelo (`SIMULTANEAS`). Cada uno ejecuta **`pedir(g)`**, que hace `POST /drafts` con `{skill_id, level, item_type, item_count, estimated_minutes, context}`.
 
 **En el backend** (`content`, puerto 8004):
@@ -174,28 +178,33 @@ El access token dura 1 hora. Nadie se entera de que venció hasta la siguiente a
 6. **`generate_drafts`** (`content/service.py`):
    1. `_check_request`: la skill existe (`repository.get_skill`), el nivel es 1–7 (`repository.get_level_title`), el tipo es válido, el tiempo es mayor que 0 y la skill tiene descripción (el prompt la necesita; si falta, `BadRequest`).
    2. Valida que la cantidad esté entre 1 y 10 (`MAX_ITEMS_PER_REQUEST`).
-   3. **`_ask_for_items`** repite hasta `MAX_ATTEMPTS` (2) veces:
-      - `build_prompt` (`content/generation/prompts.py`) arma el prompt leyendo el texto de `content/generation/prompt.json` (ver 4.6.1): skill con su descripción completa, nivel, tiempo, contexto de la skill, reglas del tipo y la forma exacta del JSON esperado.
+   3. **`_elegir_objetivos`** (solo alternativa única y verdadero o falso; HU-04-2 y HU-04-7): consulta cuántas correctas hay en cada opción de todo el banco (`repository.correct_position_counts` y `true_false_counts`) y sortea la correcta de cada ítem nuevo (`balance.elegir_objetivos`), con más probabilidad para las opciones menos usadas. Al regenerar un borrador se conserva la que tenía (`correct_position` o `correct_answer`).
+   4. **`_ask_for_items`** repite hasta `MAX_ATTEMPTS` (2) veces:
+      - `build_prompt` (`content/generation/prompts.py`) arma el prompt leyendo el texto de `content/generation/prompt.json` (ver 4.6.1): skill con su descripción completa, nivel, tiempo, contexto de la skill, reglas del tipo, la correcta pedida para cada ítem, los criterios fijos de la rúbrica con sus descriptores (tipos abiertos) y la forma exacta del JSON esperado.
       - `ask_llm` (`content/generation/llm_client.py`) hace `POST http://localhost:8003/ask`, reenviando el mismo JWT del usuario.
       - En el módulo `llm`, **`ask`** (`llm/routes.py`) llama a **`generate`** (`llm/provider.py`), que elige el proveedor según `LLM_PROVIDER`: **`run_groq`** (`llm/groq.py`) hace `POST https://api.groq.com/openai/v1/chat/completions` con la clave y el modelo del `.env`, o **`run_cli`** (`llm/cli.py`) lanza `claude -p` como subproceso.
       - `extract_json` (`content/generation/parser.py`) saca el objeto JSON del texto (tolera ```` ```json ````).
       - Se comprueba que lleguen exactamente los ítems pedidos.
       - `validate_items` (`content/generation/schemas.py`) valida cada ítem contra las reglas de su tipo (ver 9).
+      - Alternativa única y verdadero o falso: `check_objetivos` (`content/generation/checks.py`) comprueba que la correcta sea la pedida y, en alternativa única, `check_opciones_posicionales` que una opción que dependa de otras («todas las anteriores», «A y B») esté solo en la última posición.
       - Si falla la validación, se reintenta una vez agregando al prompt el error anterior. Si falla el módulo `llm`, **no** se reintenta.
-   4. Devuelve los borradores (`model_dump`). **No se guarda nada en la BD.** Si la IA no logra ítems válidos, lanza `BadGateway` (502) con el motivo.
+      - Tipos abiertos (HU-04-4): son **dos pasos**. El primero pide los ítems con solo 2 criterios propios de rúbrica y sin la respuesta de referencia: `check_rubrica_ia` exige exactamente 2 criterios de peso 25 con nombres distintos de los fijos y `con_criterios_fijos` (`content/generation/rubric.py`) les agrega los criterios fijos del tipo, con sus 4 descriptores, de `config/criterios-fijos.json`; se valida todo lo demás. El segundo, con `build_reference_prompt`, pide en una sola llamada la respuesta de referencia de todos los ítems a partir de su enunciado y su rúbrica; cada paso tiene sus propios reintentos.
+   5. Devuelve los borradores (`model_dump`). **No se guarda nada en la BD.** Si la IA no logra ítems válidos, lanza `BadGateway` (502) con el motivo.
 7. El portal arma la lista de borradores **en el orden de los recuadros** (no en el orden en que terminan los pedidos) y pasa al Paso 3. Los pedidos que fallaron se muestran como errores sin impedir seguir con los demás.
 
 ### 3.4 Revisar, editar, regenerar y descartar borradores (HU-27 a HU-30)
 
-Todo ocurre en `ReviewView.tsx` y `DraftEditor.tsx`, **sin llamar a la BD**:
+Todo ocurre en `ReviewView.tsx`, `shared/VistaItem.tsx` y `DraftEditor.tsx`, **sin llamar a la BD**. La pantalla tiene la lista de borradores a la izquierda y, a la derecha, el borrador elegido completo, con **editar, regenerar y descartar como iconos** arriba:
 
 | Acción | Función | Qué hace |
 |---|---|---|
-| Ver | `ReviewView` | Lista cada borrador con skill, tipo, nivel, tiempo y enunciado |
+| Ver | `ReviewView` y `VistaItem` | La lista muestra cada borrador con el icono de su tipo, la skill, el nivel con el color de su categoría, el tiempo y el enunciado. El elegido se ve completo, sin entrar a editar, separado en **«Lo que verá quien rinda»** (marco azul; cada dato con su título: enunciado, alternativas, código…) y **«Solo para el docente/reclutador»** (marco punteado: qué evalúa, respuesta correcta o de referencia y la rúbrica como matriz de criterios por niveles) |
+| Saber en cuál voy | encabezado fijo del panel | «Borrador N de M», siempre visible, con flechas para pasar al anterior o al siguiente |
 | Cambiar el tiempo | campo «Tiempo (min)» en `ReviewView` | Cada borrador tiene su propio tiempo estimado |
-| Editar | `DraftEditor` | Muestra los campos del tipo (opciones, firma, tests, escenario, rúbrica…). Cada cambio actualiza el borrador en pantalla |
-| Regenerar | `regenerar(d)` en `ReviewView` | `POST /drafts` con `item_count = 1`, el contexto con que se generó el borrador (`d.context`), un comentario opcional (`feedback`) y el enunciado anterior (`previous_statement`). El resultado **reemplaza** el contenido del borrador |
-| Descartar / Restaurar | `cambiar(id, { discarded })` | Marca el borrador; el descartado se ve en gris y no se publica |
+| Editar | icono ✏ y `DraftEditor` | Cambia la vista por los campos del tipo (opciones, firma, tests, escenario, rúbrica…), **en el mismo orden que la vista**: enunciado, lo que verá quien rinda, «qué evalúa», lo que solo ve el docente y la rúbrica. Cada cambio actualiza el borrador en pantalla |
+| Regenerar | `regenerar(d)` en `ReviewView` | `POST /drafts` con `item_count = 1`, el contexto con que se generó el borrador (`d.context`), un comentario opcional (`feedback`) y el enunciado anterior (`previous_statement`) y la correcta que tenía (`correct_position` o `correct_answer`). El icono abre, **debajo del borrador**, una caja con el comentario para la IA y el botón «Regenerar este borrador». El resultado **reemplaza** el contenido del borrador |
+| Descartar / Restaurar | icono 🗑 / ↩ y `cambiar(id, { discarded })` | Marca el borrador; el descartado se ve en gris y no se publica |
+| Volver (HU-30-2) | botón «Volver» y `alVolver` de `GenerateView` | Pide confirmación; luego **descarta los borradores generados** (`drafts` y `fallos` quedan vacíos) y regresa al Paso 2 **conservando los recuadros** (skills, nivel, contexto y tipos) para generar otra tanda |
 
 El botón **«Publicar N preguntas»** cuenta solo los no descartados.
 
@@ -228,10 +237,10 @@ Lo hace `ItemBrowser` (`shared/ItemBrowser.tsx`), que usan los dos portales con 
 1. En la pantalla, la skill se elige con `SkillPicker` (con la opción «Todas las skills») y hay un desplegable de **nivel de responsabilidad** (los niveles salen de `GET /levels` de `catalog`). `ItemBrowser` arma la consulta con `consulta(...)` (`shared/api.ts`) y llama a `api`.
 2. **`list_items`** (`content/routes.py`) → **`list_items`** (`content/service.py`):
    - Si el usuario **no** tiene rol `teacher_recruiter`, fuerza `status = active` y solo ve los ítems **disponibles para expertos**.
-   - Valida `status`, `scored`, `item_type` y el rango de `min_score` / `max_score`.
+   - Valida `status`, `scored`, `item_type` y el rango de `min_score` / `max_score` (de 1 a 5).
    - Llama a `repository.list_items` con la consulta `_LIST_SQL`, que une el ítem con su **versión vigente** y con el **promedio y la cantidad de puntuaciones** (`round(avg(score), 1)` y `count(*)`).
-3. Los filtros que ofrece el SQL: skill, **rol** (a través de las skills del perfil en `catalog.role_profile_skills`), tipo, nivel, sin puntuar / puntuados y rango de promedio. Un ítem **sin puntuar** tiene promedio `NULL` y cantidad 0, distinto de un promedio 0.0.
-4. El resultado es `{ total, items }`, con paginación de 20 en el portal. En cada fila, la puntuación (`Puntuacion`: ★ y promedio) va a la altura del nombre de la skill y **solo aparece si el ítem fue puntuado**; en el portal docente la fila lleva además la etiqueta «público» o «privado».
+3. Los filtros que ofrece el SQL: skill, **rol** (a través de las skills del perfil en `catalog.role_profile_skills`), tipo, nivel, sin puntuar / puntuados y rango de promedio. Un ítem **sin puntuar** tiene promedio `NULL` y cantidad 0, distinto de cualquier promedio (el mínimo es 1).
+4. El resultado es `{ total, items }`, con paginación de 20 en el portal. En cada fila, la puntuación (`Puntuacion`: cinco estrellas y promedio) va a la altura del nombre de la skill; **si el ítem no fue puntuado muestra una estrella tachada**; en el portal docente la fila lleva además la etiqueta «público» o «privado».
 
 **Detalle** (`GET /items/{id}`): `get_item` → `service.item_detail` → `_get_visible_item` (aplica la misma regla de visibilidad) → `repository.get_type_content` (contenido del tipo, incluida la respuesta correcta o de referencia), `repository.get_rubric` (solo tipos abiertos), `repository.get_score_summary` (promedio y cantidad) y `repository.get_my_score`. En el portal lo dibuja `ItemDetail`.
 
@@ -241,7 +250,7 @@ Lo hace `ItemBrowser` (`shared/ItemBrowser.tsx`), que usan los dos portales con 
 
 1. En el Portal Validador, `ScoreForm` (`validador/ScoreForm.tsx`) envía `PUT /items/{id}/score` con `{score}`.
 2. **`score_item`** (`content/routes.py`) exige rol `validator` y llama a **`score_item`** (`content/service.py`):
-   - Rechaza lo que no esté entre 0.0 y 5.0 **con un decimal** (por ejemplo, 5.1 o 2.55 → 400).
+   - Rechaza lo que no sea un **entero de 1 a 5** (por ejemplo, 0, 6 o 4.5 → 400).
    - `_get_visible_item`: el validador solo puede puntuar lo que puede ver.
    - `repository.upsert_score`: un validador tiene **una** puntuación por versión; si vuelve a puntuar, **reemplaza** la anterior.
    - `emit_event` registra `ItemScored` y se devuelve el nuevo promedio y la cantidad.
@@ -293,7 +302,7 @@ bash tools/run_python.sh modules/identity/identity/grant_role.py correo@x.com te
 | Archivo | Función | Qué hace |
 |---|---|---|
 | `main.py` | — | Crea la app, agrega el middleware de sesión (guarda el `state` de OIDC y el portal de destino) y registra las rutas |
-| `google.py` | `build_oauth()` | Configura el cliente OIDC de Google (Authlib) con el id y el secreto del `.env` |
+| `google.py` | `build_oauth()` | Configura el cliente OIDC de Google (Authlib) con el id y el secreto del `.env`, y 15 segundos de margen para conectarse |
 | `routes.py` | `login(request, portal)` | `GET /auth/login`: guarda el portal y redirige a Google |
 | | `callback(request, conn)` | `GET /auth/callback`: registra al usuario y redirige al portal con los tokens en el fragmento |
 | | `refresh(body, conn)` | `POST /auth/refresh`: cambia un refresh token por un par nuevo |
@@ -328,8 +337,9 @@ bash tools/run_python.sh modules/identity/identity/grant_role.py correo@x.com te
 | Archivo | Función | Qué hace |
 |---|---|---|
 | `main.py` | — | Crea la app y registra las rutas |
-| `routes.py` | `ask(req)` | `POST /ask`: recibe `{prompt}` y devuelve `{answer}` |
-| `provider.py` | `generate(prompt)` | Elige el proveedor según `LLM_PROVIDER` (`groq` o `cli`; por defecto `cli`) y le pasa el prompt. Si el nombre no existe, `BadGateway` |
+| `routes.py` | `ask(req)` | `POST /ask`: recibe `{prompt}` y devuelve `{answer}` más los datos de la llamada: `provider`, `model`, `duration_ms`, `usage` (tokens) y `parameters` (temperatura, esfuerzo de razonamiento y máximo de tokens). Lo que un proveedor no informa se devuelve como `--` |
+| `provider.py` | `generate(prompt)` | Elige el proveedor según `LLM_PROVIDER` (`groq` o `cli`; por defecto `cli`) y le pasa el prompt. Devuelve una `Respuesta` con el nombre del proveedor y la duración medida. Si el nombre no existe, `BadGateway` |
+| `respuesta.py` | `Respuesta`, `SIN_DATO` | Lo que devuelve un proveedor: texto, modelo, tokens y parámetros; cada campo no informado vale `--` |
 | `groq.py` | `run_groq(prompt)` | Llama a la API de Groq (compatible con OpenAI) con `GROQ_API_KEY`, `LLM_MODEL`, `LLM_MAX_TOKENS` y `LLM_TEMPERATURE`. Ante un 429 espera lo que indique `retry-after` (máximo 30 s) y reintenta hasta 2 veces. Traduce cada fallo a un `BadGateway` con un mensaje accionable: falta la clave, clave rechazada, límite de uso agotado, respuesta cortada por tokens, tiempo agotado o servidor caído |
 | | `listar_modelos()` | `GET /models`: los modelos que la cuenta puede usar (para elegir `LLM_MODEL`) |
 | | `_espera`, `_mensaje_de_error` | Calculan la espera del reintento y extraen el mensaje de error que devuelve Groq |
@@ -352,9 +362,11 @@ bash tools/run_python.sh modules/identity/identity/grant_role.py correo@x.com te
 | | `get_item` | `GET /items/{id}`: detalle |
 | | `set_status` | `PATCH /items/{id}/status`: activa o desactiva (solo `teacher_recruiter`) |
 | | `score_item` | `PUT /items/{id}/score`: puntúa (solo `validator`) |
-| `service.py` | `generate_drafts(...)` | Genera borradores con la IA, sin guardar; también regenera uno con comentario |
+| `service.py` | `generate_drafts(...)` | Genera borradores con la IA, sin guardar; también regenera uno con comentario, conservando su correcta |
 | | `_check_request(...)` | Valida skill (que exista y tenga descripción), nivel, tipo y tiempo estimado |
-| | `_ask_for_items(...)` | Pide ítems a la IA hasta 2 veces y valida la respuesta |
+| | `_elegir_objetivos(...)` | Elige la respuesta correcta de cada ítem nuevo para balancear el banco (alternativa única y verdadero o falso) |
+| | `_ask(...)` | Llama a la IA hasta 2 veces: arma el prompt, interpreta la respuesta y reintenta con el error anterior |
+| | `_ask_for_items(...)` | Pide los ítems a la IA y valida la respuesta; los tipos abiertos van en dos pasos (ítem con rúbrica y luego respuesta de referencia) |
 | | `publish_items(cur, user, available_to_experts, groups)` | Valida todo y luego guarda pedidos, ítems y versiones en una transacción |
 | | `list_items(...)` | Lista con filtros y reglas de visibilidad |
 | | `item_detail(cur, user, item_id)` | Atributos completos de la versión vigente, rúbrica y puntuación |
@@ -362,6 +374,7 @@ bash tools/run_python.sh modules/identity/identity/grant_role.py correo@x.com te
 | | `set_status(...)` | Cambia el estado; registra `ItemDeactivated` al desactivar |
 | | `score_item(...)` | Registra o reemplaza la puntuación del validador |
 | `repository.py` | `insert_generation_request`, `insert_item`, `insert_version`, `insert_content` | Escriben el pedido, el ítem, su versión y el contenido propio del tipo (opciones, hallazgos, rúbrica) |
+| | `correct_position_counts`, `true_false_counts` | Cuántas correctas hay en A, B, C y D, y cuántos verdadero y falso, en todo el banco (para balancear la generación) |
 | | `list_items(cur, filters)` | Ejecuta `_LIST_SQL` (versión vigente + promedio + filtros) |
 | | `get_item_with_current_version` | Ítem con su versión más reciente |
 | | `get_type_content(cur, version_id, item_type)` | Contenido propio del tipo, incluidas respuestas correctas o de referencia |
@@ -375,11 +388,16 @@ bash tools/run_python.sh modules/identity/identity/grant_role.py correo@x.com te
 |---|---|---|
 | `prompt.json` | — | **El texto del prompt** (plantilla, frases opcionales, reglas y forma del JSON de cada tipo). Se edita aquí, sin tocar Python (ver 4.6.1) |
 | `prompts.py` | `_cargar()` | Lee `prompt.json` al arrancar y comprueba que tenga todas sus claves y que reglas y formas cubran los mismos tipos |
-| | `build_prompt(...)` | Recorre la plantilla y reemplaza los marcadores por los datos del pedido. Exige que la skill tenga descripción (se envía completa, sin recortar). Si hay `previous_error`, `feedback` o `previous_statement`, agrega sus frases |
+| | `build_prompt(...)` | Recorre la plantilla y reemplaza los marcadores por los datos del pedido. Exige que la skill tenga descripción (se envía completa, sin recortar). Si hay `previous_error`, `feedback`, `previous_statement` u `objetivos`, agrega sus frases. En los tipos abiertos muestra los criterios fijos con sus descriptores (para que la IA no los repita), arma el ejemplo con los 2 criterios propios y, con `sin_referencia`, pide el ítem sin su respuesta de referencia |
+| | `build_reference_prompt(...)` | Prompt del segundo paso de los tipos abiertos: la IA escribe la respuesta de referencia de cada ítem a partir de su rúbrica |
+| `rubric.py` | `CRITERIOS_FIJOS`, `nombres_fijos`, `con_criterios_fijos` | Lee `config/criterios-fijos.json` (los 2 criterios fijos de cada tipo abierto, con peso 25 y sus 4 descriptores; también lo lee el portal) y le agrega los fijos a la rúbrica que escribió la IA |
+| `balance.py` | `elegir_objetivos(conteos, cantidad)` | Sortea a qué opción apuntar con cada ítem nuevo, con más probabilidad para las menos usadas del banco |
+| `checks.py` | `check_objetivos`, `check_opciones_posicionales`, `check_rubrica_ia` | Comprobaciones al generar con la IA (no al editar): la correcta es la pedida, las opciones que dependen de otras van al final y la IA escribe exactamente 2 criterios de rúbrica de peso 25 |
 | `parser.py` | `extract_json(text)` | Saca el objeto JSON `{"items": [...]}` de la respuesta (tolera bloques ```` ```json ````). Lanza `ValueError` si no es válido |
-| `llm_client.py` | `ask_llm(prompt, authorization)` | `POST` al módulo `llm` reenviando el JWT; traduce los fallos a `BadGateway` |
+| `llm_client.py` | `ask_llm(prompt, authorization)` | `POST` al módulo `llm` reenviando el JWT; traduce los fallos a `BadGateway`. Devuelve un `TextoIA`: un `str` con los datos de la llamada en `.meta` |
+| `ai_log.py` | `registrar(...)`, `activo()` | Log de las llamadas a la IA, solo para desarrollo (ver 4.6.2) |
 | `schemas.py` | `RubricLevel`, `RubricCriterion` | Un criterio debe tener exactamente un descriptor para los puntajes 0, 1, 2 y 3 |
-| | `_WithRubric` | Base de los tipos abiertos: al menos un criterio, **los pesos suman 100** y los nombres no se repiten |
+| | `_WithRubric` | Base de los tipos abiertos: **al menos 4 criterios**, pesos que suman 100, nombres no repetidos y los 2 criterios fijos del tipo (la IA genera exactamente 4 de peso 25; quien edita puede agregar más) |
 | | `SingleChoice`, `TrueFalse`, `OpenQuestion`, `Coding`, `SystemDesign`, `Debugging` | Un modelo por tipo con sus reglas (ver 9) |
 | | `validate_items(item_type, raw_items)` | Valida cada ítem contra el modelo de su tipo. Lanza `ValueError` con el detalle de cada error |
 
@@ -390,13 +408,29 @@ Hay **una sola plantilla** para todos los pedidos; lo que cambia entre pedidos s
 | Clave de `prompt.json` | Qué contiene |
 |---|---|
 | `plantilla` | Las líneas del prompt, en orden. Los `{marcadores}` se reemplazan por los datos del pedido: `{cantidad}`, `{tipo}`, `{skill_codigo}`, `{skill_nombre}`, `{skill_descripcion}`, `{nivel}`, `{nivel_titulo}`, `{minutos}`, `{reglas}`, `{forma_json}` |
-| `opcionales` | Frases que solo aparecen si existe el dato: `contexto` (contexto de la skill), `regenerar` (enunciado anterior; al regenerar un borrador) y `feedback` (comentario del usuario). En la plantilla se llaman con `{?nombre}` |
+| `opcionales` | Frases que solo aparecen si existe el dato: `contexto` (contexto de la skill), `regenerar` (enunciado anterior; al regenerar un borrador), `feedback` (comentario del usuario), `objetivos` (la correcta de cada ítem), `criterios` (criterios fijos de la rúbrica; tipos abiertos) y `sin_referencia` (primer paso de los tipos abiertos). En la plantilla se llaman con `{?nombre}` |
+| `plantilla_referencia`, `forma_json_referencia` | Prompt y forma del JSON del segundo paso de los tipos abiertos (la respuesta de referencia de cada ítem) |
 | `reintento` | Frase que se agrega al final cuando la IA devolvió una respuesta inválida, con los errores |
 | `reglas_por_tipo` | Reglas de cada uno de los seis tipos (p. ej. «exactamente una opción correcta») |
 | `forma_json_por_tipo` | Ejemplo del JSON que debe devolver la IA, por tipo |
 | `version`, `descripcion`, `como_se_arma` | Documentación del propio archivo |
 
 Para ver exactamente qué se envía: `bash tools/run_python.sh -c "from content.generation.prompts import build_prompt; print(build_prompt(skill={'code':'PROG','name':'Programming','description':'...'}, level=3, level_title='Apply', item_type='coding', count=2, estimated_minutes=25, context=None))"` desde la raíz del proyecto.
+
+#### 4.6.2 Log de las llamadas a la IA (solo desarrollo)
+
+Sirve para **probar qué modelo usar y revisar a mano la calidad de las respuestas** al ajustar el prompt. Está **apagado por defecto y en producción debe quedar apagado**. Los prompts incluyen el contexto que escribe el docente, por eso `logs/` está en `.gitignore`.
+
+| Qué | Cómo |
+|---|---|
+| Activarlo | `LOG_IA=1` en el `.env` (y reiniciar `content`). `LOG_IA_ETIQUETA` pone un nombre al experimento (por ejemplo `gpt-oss-vs-llama`) para agrupar corridas; `LOG_IA_DIR` cambia la carpeta (por defecto `logs/ia/`) |
+| Qué guarda | Una línea JSON por **intento** (cada reintento es otra línea) en `logs/ia/AAAA-MM-DD.jsonl`: fecha, etiqueta, pedido (id que une los intentos y pasos de una misma generación), skill, nivel, tipo, cantidad, minutos, respuestas correctas pedidas, paso (`completo`, o `items` y `referencias` en los tipos abiertos), intento, **prompt completo**, **respuesta cruda**, si fue válida y por qué se rechazó, versión del prompt (`prompt.json`) y su huella, y los datos de la llamada que informa el módulo `llm` (proveedor, modelo, parámetros, tokens y duración; lo que no informa va como `--`) |
+| Qué no guarda | El token del usuario ni ninguna cabecera |
+| Dónde se engancha | `_ask` de `content/service.py` anota cada intento con `ai_log.registrar`. Un fallo al escribir el log nunca interrumpe la generación |
+| Verlo | `bash tools/reporte_log_ia.sh` (con `--abrir`, además lo abre en el navegador) genera `logs/ia/visor.html` (solo lectura) con `tools/ver_log_ia.py`: tabla filtrable por etiqueta, modelo, tipo, paso y validez; al elegir un intento muestra el prompt, la respuesta, el motivo del rechazo y las respuestas de otros modelos para **el mismo caso** (skill, nivel, tipo, cantidad, paso y versión del prompt) |
+| Quitarlo en producción | Dejar `LOG_IA=0` (o sin definir): no se escribe nada. Para eliminarlo del código basta borrar `ai_log.py`, `tools/ver_log_ia.py`, `tools/reporte_log_ia.sh` y las llamadas a `ai_log.registrar` en `_ask` |
+
+La anotación de las respuestas (de acuerdo o en desacuerdo, por ítem) queda para más adelante, separada del log.
 
 ### 4.7 Scripts de operación
 
@@ -406,6 +440,8 @@ Para ver exactamente qué se envía: `bash tools/run_python.sh -c "from content.
 | `tools/run_all.sh` | Levanta los cuatro módulos y los portales que no estén corriendo (detecta por puerto), espera a que respondan, muestra su estado y el log en vivo, y con `Ctrl+C` detiene solo lo que inició. `--reiniciar` y `--detener` cierran lo que escuche en esos puertos. Los puertos se pueden cambiar con `PORT_IDENTITY`, `PORT_CATALOG`, `PORT_LLM`, `PORT_CONTENT` y `PORT_WEB` (para pruebas) |
 | `tools/lib.sh` | `preparar_entorno`: crea el entorno virtual `sprint1` (virtualenvwrapper) e instala las dependencias si cambió `requirements.txt`. `cargar_env`: carga `.env`. `exportar_pythonpath`: pone en `PYTHONPATH` la raíz y las carpetas de los cinco módulos |
 | `tools/run_python.sh` | Ejecuta un script Python con el entorno y `PYTHONPATH` correctos |
+| `tools/reporte_log_ia.sh` | `bash tools/reporte_log_ia.sh [--abrir] [--carpeta ruta]`: genera el reporte del log de IA con `ver_log_ia.py` y, con `--abrir`, lo abre en el navegador (ver 4.6.2) |
+| `tools/ver_log_ia.py` | Genera el visor HTML del log de IA a partir de `logs/ia/*.jsonl` (ver 4.6.2) |
 | `db/setup.sh` | Crea el rol y la BD (necesita `sudo`), aplica `schema.sql` y carga el catálogo |
 
 ### 4.8 `db/` (base de datos)
@@ -418,6 +454,7 @@ Para ver exactamente qué se envía: `bash tools/run_python.sh -c "from content.
 | `data/role_profiles.csv` | 72 perfiles de rol con su familia |
 | `data/role_profile_skills.csv` | 797 relaciones perfil–skill, con la marca de skill primaria |
 | `migrations/001_*.sql` | Pasos aplicados a una BD ya creada: mover `min_level` a la skill y agregar `max_level` |
+| `migrations/002_puntuacion_estrellas.sql` | Pasa `item_scores.score` a `smallint` de 1 a 5, redondeando las puntuaciones existentes |
 
 ### 4.9 Configuración (`.env`)
 
@@ -466,14 +503,20 @@ Para ver exactamente qué se envía: `bash tools/run_python.sh -c "from content.
 | `api.ts` | `api(portal, url, opciones)` | Llama al backend con el JWT. Si responde 401, renueva la sesión y repite la llamada una vez (ver 3.2). Convierte los errores en `ApiError` |
 | | `consulta(params)` | Arma `?a=1&b=2` omitiendo los valores vacíos |
 | `LoginGate.tsx` | `LoginGate` | Pantalla de acceso de un portal: decide entre *cargando*, *sin sesión*, *no autorizado*, *sesión vieja* y el portal en sí |
-| `ItemBrowser.tsx` | `ItemBrowser` | Banco de ítems: filtros (skill con `SkillPicker`, nivel de responsabilidad, tipo, puntuación…), lista paginada y detalle. En el modo docente cada ítem lleva la etiqueta «público» o «privado». Recibe `modo` (qué filtros ofrece) y `acciones` (botones propios de cada portal) |
+| `ItemBrowser.tsx` | `ItemBrowser` | Banco de ítems: filtros (skill con `SkillPicker`, nivel de responsabilidad, tipo, puntuación y rango de promedio con `RangoEstrellas`…), lista paginada y detalle. Cada fila muestra el tipo con un icono (`IconoTipo`) y el nivel con el color de la categoría de la skill (`NivelChip`) en lugar de texto. En el modo docente cada ítem lleva la etiqueta «público» o «privado». Recibe `modo` (qué filtros ofrece) y `acciones` (botones propios de cada portal) |
 | `SkillPicker.tsx` | `SkillPicker` | Menú para elegir una skill: categorías colapsables con sus subcategorías, buscador por código o nombre y, si se pasa `alLimpiar`, una opción «Todas las skills». Lo usan el Paso 1 (añadir y cambiar skill) y el filtro del banco |
 | `Niveles.tsx` | `Niveles` | Los 7 niveles SFIA como celdas con el color de la categoría; con `alElegir` son botones y solo se pueden elegir los del rango de la skill |
+| | `NivelChip` | Un solo nivel como celda con el color de la categoría, para listas compactas (banco y revisión) |
+| `IconoTipo.tsx` | `IconoTipo`, `COLOR_TIPO` | Icono (`tipo-<tipo>.svg`) y color de cada uno de los seis tipos de ítem; el título del icono es el nombre del tipo |
+| `Ayuda.tsx` | `Ayuda` | Texto subrayado con puntos que muestra una explicación o ejemplo al pasar el cursor o al enfocarlo con el teclado |
+| `Estrellas.tsx` | `Icono` | Dibuja un `.svg` de `public/icons/` (tipos de ítem, acciones y estrellas) con el color del texto (máscara CSS) |
+| | `Estrellas`, `SelectorEstrellas` | Cinco estrellas con el promedio redondeado, y el selector de 1 a 5 estrellas del validador |
+| `RangoEstrellas.tsx` | `RangoEstrellas` | Barra con dos puntos (mínimo y máximo, de 1 a 5) para filtrar por promedio |
 | `categorias.ts` | `colorDe`, `agruparSkills` | Color de cada categoría SFIA y agrupado de las skills por categoría y subcategoría |
-| `ItemDetail.tsx` | `ItemDetail` | Muestra todos los atributos de un ítem |
+| `ItemDetail.tsx` | `ItemDetail` | Muestra los atributos de un ítem: cabecera con skill, nivel, tiempo y puntuación, y el contenido con `VistaItem` (el banco del docente y el portal del experto se ven igual que un borrador; el marco interno se titula «Solo para el docente/reclutador») |
+| `VistaItem.tsx` | `VistaItem`, `Rubrica` | Un ítem completo, separado en lo que verá quien rinda (marco azul, con el título de cada dato) y lo que solo ve el docente/reclutador (marco punteado), con la rúbrica como matriz. Lo usan la revisión de borradores, el banco y el portal del experto |
 | | `ContenidoDelTipo` | La parte que cambia según el tipo (opciones, firma, escenario, síntoma…) |
-| | `Rubrica`, `Campo`, `Codigo` | Piezas de presentación |
-| | `Puntuacion` | Muestra ★ con el promedio y la cantidad; si el ítem no tiene puntuaciones no muestra nada |
+| | `Puntuacion` | Muestra cinco estrellas con el promedio y la cantidad; si el ítem no tiene puntuaciones muestra una estrella tachada |
 | | `NOMBRE_TIPO` | Nombre legible de cada tipo |
 
 ### 5.3 `src/docente/` (Portal Docente/Reclutador)
@@ -485,22 +528,24 @@ Para ver exactamente qué se envía: `bash tools/run_python.sh -c "from content.
 | | `pedir(g)` | Un pedido `POST /drafts` para un grupo (recuadro × tipo) |
 | | `generar(lista)` | Lanza los pedidos en paralelo (3 a la vez) y arma la lista de borradores y de fallos |
 | | `reiniciar`, `olvidarTrabajo` | Empezar de cero y borrar el trabajo guardado |
-| `StepEvaluar.tsx` | `StepEvaluar` | Paso 1: rol SFIA, recuadros por skill (nivel, contexto, tipos, cantidad y minutos por ítem). `MINUTOS_POR_TIPO` define los minutos que se proponen para cada tipo |
-| | `nuevoBox`, `resumenBox`, `ajustarContador` | Crea un recuadro; lo resume en una línea; evita claves repetidas al recuperar trabajo guardado |
-| `ReviewView.tsx` | `ReviewView` | Paso 3: tarjetas de borradores y pie de publicación |
+| `StepEvaluar.tsx` | `StepEvaluar` | Paso 1: añadir skills (una a una o desde un rol), recuadros por skill (nivel, contexto, tipos, cantidad y minutos por ítem). `MINUTOS_POR_TIPO` define los minutos que se proponen para cada tipo. Los tipos se listan con su icono; «Cantidad» y «Tiempo (min)» son títulos de columna que aparecen una sola vez, y esos títulos y cada tipo muestran al pasar el cursor una explicación con un ejemplo (`Ayuda`; textos en `DESCRIPCION_TIPO`, `TEXTO_CANTIDAD` y `TEXTO_MINUTOS` de `tipos.ts`). La skill y su nivel de responsabilidad van en la misma fila y el paso ocupa el ancho de la plataforma (como el resumen, la pantalla «Generando…» y «Publicación lista»: todas las secciones de página completa usan la clase `pagina`; solo el acceso con Google es angosto). Un recuadro minimizado (`ResumenCompacto`) muestra el nivel y, por cada tipo, su icono, la cantidad y los minutos; si no tiene ningún tipo marcado lo dice en rojo |
+| `RolPicker.tsx` | `RolPicker`, `nombreFamilia` | Ventana para elegir un rol por familia, ver sus skills core y related y añadir las elegidas al formulario (tarjetas que se rellenan con el color de la categoría). `nombreFamilia` convierte «AGILE DELIVERY ROLE FAMILY» en «Agile delivery» |
+| | `nuevoBox`, `ResumenCompacto`, `ajustarContador` | Crea un recuadro; lo resume (minimizado y en el Paso 2); evita claves repetidas al recuperar trabajo guardado |
+| `ReviewView.tsx` | `ReviewView` | Paso 3: lista de borradores a la izquierda, el elegido completo a la derecha (encabezado fijo «Borrador N de M» con editar, regenerar y descartar como iconos), botón «Volver» y pie de publicación |
 | | `regenerar(d)` | Regenera un borrador con comentario opcional |
 | | `publicar()` | Agrupa y envía los borradores a `POST /items/publish` |
 | | `limpiar(c)` | Quita lo que el usuario dejó vacío antes de publicar |
-| `DraftEditor.tsx` | `DraftEditor` | Formulario de edición según el tipo del borrador |
+| `DraftEditor.tsx` | `DraftEditor` | Formulario de edición según el tipo del borrador. En la rúbrica, los criterios fijos del tipo están bloqueados y los demás se pueden editar, quitar (si quedan al menos 4) y agregar |
 | | `Opciones`, `Hallazgos`, `Rubrica`, `Lineas`, `Texto`, `Numero` | Campos reutilizables; la rúbrica muestra la suma de pesos y avisa si no es 100 |
-| `tipos.ts` | `OPEN_TYPES` | Tipos que llevan rúbrica |
+| `tipos.ts` | `OPEN_TYPES`, `CRITERIOS_FIJOS` | Tipos que llevan rúbrica y sus criterios fijos con sus 4 descriptores, importados de `config/criterios-fijos.json` (el mismo archivo que lee el backend) |
+| | `DESCRIPCION_TIPO`, `TEXTO_CANTIDAD`, `TEXTO_MINUTOS` | Textos de la ayuda al pasar el cursor del formulario de generación |
 
 ### 5.4 `src/validador/` (Portal Validador)
 
 | Archivo | Componente | Qué hace |
 |---|---|---|
 | `App.tsx` | `App` | Muestra `ItemBrowser` en modo validador (con filtro por rol) y le agrega el formulario de puntuación |
-| `ScoreForm.tsx` | `ScoreForm` | Campo de 0.0 a 5.0 con un decimal y botón *Puntuar* / *Actualizar puntuación* |
+| `ScoreForm.tsx` | `ScoreForm` | Selector de 1 a 5 estrellas y botón *Puntuar* / *Actualizar puntuación* |
 
 ### 5.5 Estado de un portal en el navegador
 
@@ -550,8 +595,10 @@ Se ejecutan con `bash tools/run_python.sh -m pytest`. Usan la BD real y reemplaz
 | `tests/test_identity.py` | Login, roles y lista blanca |
 | `tests/test_refresh.py` | Renovación, rotación, vencimiento y cierre de sesión |
 | `tests/test_catalog.py` | Skills, niveles, perfiles y niveles mínimo/máximo |
+| `tests/test_refinamiento_generacion.py` | Refinamiento de la generación: balanceo de correctas, posición exigida, regenerar, opciones que dependen de otras, dos pasos en los tipos abiertos, rúbrica de 4 criterios con los fijos del archivo `config/criterios-fijos.json` y criterios agregados a mano |
 | `tests/test_content.py` | Generación, validaciones, edición antes de publicar, visibilidad, filtros, estado y puntuación, y la plantilla del prompt (`prompt.json`: descripción completa, frases opcionales y los seis tipos) |
-| `tests/test_llm.py` | El módulo `llm`: la CLI y Groq (con respuestas simuladas: clave, errores, reintentos con `retry-after`, respuesta cortada y tiempo agotado) |
+| `tests/test_llm.py` | El módulo `llm`: la CLI y Groq (con respuestas simuladas: clave, errores, reintentos con `retry-after`, respuesta cortada y tiempo agotado) y los datos de la llamada que devuelve `/ask` (modelo, tokens y parámetros, o `--` si el proveedor no los informa) |
+| `tests/test_log_ia.py` | El log de IA: apagado por defecto, una línea por intento y por paso, reintentos con su error, datos de la llamada, que no guarde el token y que un fallo del log no rompa la generación |
 
 **Pruebas de navegador** (`tests/e2e/`, con Playwright y Chromium):
 
@@ -624,16 +671,16 @@ Un ítem de **uso privado** solo lo ve su autor; otro docente tampoco lo ve.
 ### Reglas que valida `schemas.py` (lo generado y lo editado)
 
 - Todos los textos obligatorios tienen contenido.
-- **Alternativa única:** al menos 2 opciones, exactamente 1 correcta, sin repetidas.
+- **Alternativa única:** al menos 2 opciones, exactamente 1 correcta, sin repetidas. Solo al generar con la IA se exige además que sean 4 opciones, que la correcta esté en la posición pedida y que una opción que dependa de otras («todas las anteriores», «A y B») vaya únicamente en la última posición; lo que edita el docente no se limita por esto.
 - **Coding:** límites de tiempo y memoria mayores que 0; si hay código inicial, debe contener la función de la firma.
 - **System design:** al menos un requisito funcional.
 - **Debugging:** al menos un hallazgo; lo observado distinto de lo esperado; cada línea indicada existe en el código.
-- **Tipos abiertos (desarrollo, system design, debugging):** rúbrica con al menos un criterio, **pesos que suman 100**, nombres no repetidos y un descriptor para cada puntaje 0, 1, 2 y 3.
+- **Tipos abiertos (desarrollo, system design, debugging):** rúbrica de **al menos 4 criterios**, con los 2 criterios fijos del tipo, **pesos que suman 100**, nombres no repetidos y un descriptor para cada puntaje 0, 1, 2 y 3. Lo que genera la IA tiene exactamente 4 criterios de peso 25 (2 fijos y 2 propios); quien revisa o edita puede agregar más.
 
 ### Puntuación
 
-- De 0.0 a 5.0 con **un decimal**. Un validador tiene **una** puntuación por versión (si vuelve a puntuar, la reemplaza).
-- El promedio se redondea a un decimal. **Sin puntuar** (promedio vacío y cantidad 0) es distinto de **0.0**: el portal no muestra puntaje en el primer caso y muestra ★ 0.0 en el segundo.
+- De 1 a 5 estrellas **enteras** (no hay medias estrellas). Un validador tiene **una** puntuación por versión (si vuelve a puntuar, la reemplaza).
+- El promedio se redondea a un decimal. **Sin puntuar** (promedio vacío y cantidad 0) es distinto de cualquier promedio: el portal muestra una estrella tachada en el primer caso y las estrellas con el promedio en el segundo.
 
 ### Límites conocidos
 

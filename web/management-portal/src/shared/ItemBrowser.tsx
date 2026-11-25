@@ -7,7 +7,11 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { api, consulta } from "./api";
 import type { Portal } from "./auth";
 import { CATALOG_URL, CONTENT_URL } from "./config";
+import { colorDe } from "./categorias";
+import { IconoTipo } from "./IconoTipo";
 import { ItemDetail, NOMBRE_TIPO, Puntuacion } from "./ItemDetail";
+import { NivelChip } from "./Niveles";
+import { RangoEstrellas } from "./RangoEstrellas";
 import { SkillPicker } from "./SkillPicker";
 import type { ItemDetailData, ItemSummary, Level, RoleProfile, Skill } from "./types";
 
@@ -100,14 +104,11 @@ export function ItemBrowser({ portal, modo, acciones, version = 0 }: Props) {
             <option value="scored">Puntuados</option>
           </select>
         </label>
-        <label>Promedio mín.
-          <input type="number" min="0" max="5" step="0.1" value={filtros.min_score}
-                 onChange={(e) => cambiar("min_score", e.target.value)} />
-        </label>
-        <label>Promedio máx.
-          <input type="number" min="0" max="5" step="0.1" value={filtros.max_score}
-                 onChange={(e) => cambiar("max_score", e.target.value)} />
-        </label>
+        <RangoEstrellas min={Number(filtros.min_score) || 1} max={Number(filtros.max_score) || 5}
+                        alCambiar={(lo, hi) => {
+                          setFiltros({ ...filtros, min_score: lo === 1 ? "" : String(lo), max_score: hi === 5 ? "" : String(hi) });
+                          setPagina(0);
+                        }} />
         {modo === "docente" && (
           <label>Estado
             <select value={filtros.status} onChange={(e) => cambiar("status", e.target.value)}>
@@ -127,8 +128,11 @@ export function ItemBrowser({ portal, modo, acciones, version = 0 }: Props) {
           {lista.items.map((i) => (
             <button key={i.id} className={`fila ${abierto === i.id ? "activa" : ""}`} onClick={() => setAbierto(i.id)}>
               <span className="fila-titulo">
-                <span>
-                  <strong>{i.skill_code}</strong> · {NOMBRE_TIPO[i.type]} · nivel {i.level} · {i.estimated_minutes} min
+                <span className="fila-datos">
+                  <IconoTipo tipo={i.type} />{" "}
+                  <strong>{i.skill_code}</strong>{" "}
+                  <NivelChip nivel={i.level} color={colorDe(skills.find((s) => s.code === i.skill_code)?.category ?? null)} />{" "}
+                  <span className="suave">{i.estimated_minutes} min</span>
                   {i.status === "inactive" && <span className="etiqueta">inactivo</span>}
                   {modo === "docente" && <span className={`etiqueta ${i.available_to_experts ? "publico" : ""}`}>{i.available_to_experts ? "público" : "privado"}</span>}
                 </span>

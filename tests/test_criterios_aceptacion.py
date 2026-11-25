@@ -223,19 +223,19 @@ def test_hu04_c2_los_borradores_generados_quedan_sin_puntuar(content_client, doc
 
 # ---------- HU-05 Puntuar ítems generados por IA ----------
 
-@pytest.mark.parametrize("valor", [0.0, 0.1, 2.5, 3.7, 5.0])
-def test_hu05_c1_puedo_asignar_una_puntuacion_de_0_a_5_con_un_decimal(content_client, docente, validador, skill_ids,
-                                                                      fake_llm, valor):
-    """Puedo asignar a un ítem una puntuación entre 0.0 y 5.0, con un decimal."""
+@pytest.mark.parametrize("valor", [1, 2, 3, 4, 5])
+def test_hu05_c1_puedo_asignar_una_puntuacion_de_1_a_5_estrellas_enteras(content_client, docente, validador,
+                                                                         skill_ids, fake_llm, valor):
+    """Puedo asignar a un ítem una puntuación de 1 a 5 estrellas enteras."""
     item_id = crear_item(content_client, docente, fake_llm, skill_ids[0]["id"])
     r = content_client.put(f"/items/{item_id}/score", json={"score": valor}, headers=validador["headers"])
     assert r.status_code == 200 and float(r.json()["my_score"]) == valor
 
 
-@pytest.mark.parametrize("valor", [-0.1, 5.1, 2.55, 10])
-def test_hu05_c1_no_acepta_puntuaciones_fuera_de_rango_ni_con_mas_decimales(content_client, docente, validador,
-                                                                           skill_ids, fake_llm, valor):
-    """Puedo asignar a un ítem una puntuación entre 0.0 y 5.0, con un decimal (límites)."""
+@pytest.mark.parametrize("valor", [0, 6, -1, 10, 4.5, 2.55])
+def test_hu05_c1_no_acepta_puntuaciones_fuera_de_rango_ni_medias_estrellas(content_client, docente, validador,
+                                                                          skill_ids, fake_llm, valor):
+    """Puedo asignar de 1 a 5 estrellas enteras (límites); no hay medias estrellas."""
     item_id = crear_item(content_client, docente, fake_llm, skill_ids[0]["id"])
     r = content_client.put(f"/items/{item_id}/score", json={"score": valor}, headers=validador["headers"])
     assert r.status_code == 400
@@ -243,8 +243,8 @@ def test_hu05_c1_no_acepta_puntuaciones_fuera_de_rango_ni_con_mas_decimales(cont
 
 
 def test_hu05_c2_los_extremos_y_el_punto_medio_de_la_escala_se_conservan(content_client, docente, skill_ids, fake_llm):
-    """0.0 representa un ítem malo, 2.5 uno de calidad media y 5.0 uno bueno."""
-    for etiqueta, valor in (("malo", 0.0), ("medio", 2.5), ("bueno", 5.0)):
+    """1 estrella representa un ítem malo, 3 uno de calidad media y 5 uno bueno."""
+    for etiqueta, valor in (("malo", 1), ("medio", 3), ("bueno", 5)):
         validador = make_user(["validator"])
         item_id = crear_item(content_client, docente, fake_llm, skill_ids[0]["id"])
         content_client.put(f"/items/{item_id}/score", json={"score": valor}, headers=validador["headers"])
@@ -256,12 +256,12 @@ def test_hu05_c3_la_puntuacion_asignada_queda_guardada_en_el_item(content_client
                                                                   fake_llm):
     """La puntuación asignada queda guardada en el ítem."""
     item_id = crear_item(content_client, docente, fake_llm, skill_ids[0]["id"])
-    content_client.put(f"/items/{item_id}/score", json={"score": 4.2}, headers=validador["headers"])
-    assert float(detalle(content_client, validador, item_id)["my_score"]) == 4.2
+    content_client.put(f"/items/{item_id}/score", json={"score": 4}, headers=validador["headers"])
+    assert detalle(content_client, validador, item_id)["my_score"] == 4
     with connect() as conn, conn.cursor() as cur:
         cur.execute("SELECT s.score FROM content.item_scores s JOIN content.item_versions v ON v.id = s.item_version_id "
                     "WHERE v.item_id = %s AND s.validator_id = %s", (item_id, validador["id"]))
-        assert float(cur.fetchone()["score"]) == 4.2
+        assert cur.fetchone()["score"] == 4
 
 
 def test_hu05_c4_un_mismo_item_puede_ser_puntuado_por_distintos_validadores(content_client, docente, validador,
@@ -269,23 +269,23 @@ def test_hu05_c4_un_mismo_item_puede_ser_puntuado_por_distintos_validadores(cont
     """Un mismo ítem puede ser puntuado por distintos validadores."""
     item_id = crear_item(content_client, docente, fake_llm, skill_ids[0]["id"])
     otro = make_user(["validator"])
-    content_client.put(f"/items/{item_id}/score", json={"score": 1.0}, headers=validador["headers"])
-    content_client.put(f"/items/{item_id}/score", json={"score": 5.0}, headers=otro["headers"])
+    content_client.put(f"/items/{item_id}/score", json={"score": 1}, headers=validador["headers"])
+    content_client.put(f"/items/{item_id}/score", json={"score": 5}, headers=otro["headers"])
     d = detalle(content_client, docente, item_id)
     assert d["score"]["count"] == 2 and float(d["score"]["average"]) == 3.0
     assert float(detalle(content_client, validador, item_id)["my_score"]) == 1.0
     assert float(detalle(content_client, otro, item_id)["my_score"]) == 5.0
 
 
-def test_hu05_c5_un_item_sin_puntuar_es_distinto_de_uno_puntuado_con_0(content_client, docente, validador, skill_ids,
-                                                                      fake_llm):
-    """Un ítem sin puntuar es distinto de un ítem puntuado con 0.0."""
+def test_hu05_c5_un_item_sin_puntuar_es_distinto_de_uno_puntuado_con_1_estrella(content_client, docente, validador,
+                                                                               skill_ids, fake_llm):
+    """Un ítem sin puntuar es distinto de un ítem puntuado con 1 estrella."""
     sin = crear_item(content_client, docente, fake_llm, skill_ids[0]["id"])
-    con_cero = crear_item(content_client, docente, fake_llm, skill_ids[0]["id"])
-    content_client.put(f"/items/{con_cero}/score", json={"score": 0.0}, headers=validador["headers"])
+    con_una = crear_item(content_client, docente, fake_llm, skill_ids[0]["id"])
+    content_client.put(f"/items/{con_una}/score", json={"score": 1}, headers=validador["headers"])
     assert detalle(content_client, docente, sin)["score"] == {"average": None, "count": 0}
-    d = detalle(content_client, docente, con_cero)
-    assert d["score"]["count"] == 1 and float(d["score"]["average"]) == 0.0
+    d = detalle(content_client, docente, con_una)
+    assert d["score"]["count"] == 1 and float(d["score"]["average"]) == 1.0
 
 
 # ---------- HU-06 Crear ítems de una o varias skills ----------
@@ -378,28 +378,28 @@ def test_hu07_c4_puedo_filtrar_por_puntuacion(content_client, docente, validador
     """Puedo filtrar por puntuación."""
     bajo = crear_item(content_client, docente, fake_llm, skill_ids[0]["id"])
     alto = crear_item(content_client, docente, fake_llm, skill_ids[0]["id"])
-    content_client.put(f"/items/{bajo}/score", json={"score": 1.0}, headers=validador["headers"])
-    content_client.put(f"/items/{alto}/score", json={"score": 4.5}, headers=validador["headers"])
+    content_client.put(f"/items/{bajo}/score", json={"score": 1}, headers=validador["headers"])
+    content_client.put(f"/items/{alto}/score", json={"score": 4}, headers=validador["headers"])
     assert alto in ids_listados(content_client, validador, min_score=4) and bajo not in ids_listados(content_client, validador, min_score=4)
     assert bajo in ids_listados(content_client, validador, max_score=2) and alto not in ids_listados(content_client, validador, max_score=2)
     rango = ids_listados(content_client, validador, min_score=1, max_score=5)
     assert {bajo, alto} <= rango
 
 
-def test_hu07_c5_distingo_los_items_sin_puntuar_de_los_de_puntuacion_0(content_client, docente, validador,
-                                                                       skill_ids, fake_llm):
-    """Puedo distinguir los ítems sin puntuar de los que tienen puntuación 0.0."""
+def test_hu07_c5_distingo_los_items_sin_puntuar_de_los_de_1_estrella(content_client, docente, validador,
+                                                                    skill_ids, fake_llm):
+    """Puedo distinguir los ítems sin puntuar de los que tienen 1 estrella."""
     sin = crear_item(content_client, docente, fake_llm, skill_ids[0]["id"])
-    cero = crear_item(content_client, docente, fake_llm, skill_ids[0]["id"])
-    content_client.put(f"/items/{cero}/score", json={"score": 0.0}, headers=validador["headers"])
+    una = crear_item(content_client, docente, fake_llm, skill_ids[0]["id"])
+    content_client.put(f"/items/{una}/score", json={"score": 1}, headers=validador["headers"])
     sin_puntuar = ids_listados(content_client, validador, scored="unscored")
     puntuados = ids_listados(content_client, validador, scored="scored")
-    assert sin in sin_puntuar and cero not in sin_puntuar
-    assert cero in puntuados and sin not in puntuados
-    assert cero in ids_listados(content_client, validador, min_score=0, max_score=0)
-    assert sin not in ids_listados(content_client, validador, min_score=0, max_score=0)
+    assert sin in sin_puntuar and una not in sin_puntuar
+    assert una in puntuados and sin not in puntuados
+    assert una in ids_listados(content_client, validador, min_score=1, max_score=1)
+    assert sin not in ids_listados(content_client, validador, min_score=1, max_score=1)
     filas = {i["id"]: i for i in content_client.get("/items", params={"limit": 200}, headers=validador["headers"]).json()["items"]}
-    assert filas[sin]["average_score"] is None and filas[cero]["average_score"] == 0.0
+    assert filas[sin]["average_score"] is None and filas[una]["average_score"] == 1.0
 
 
 # ---------- HU-08 Ver los atributos de un ítem ----------
@@ -477,31 +477,31 @@ def test_hu10_c2_cada_version_pertenece_a_uno_de_esos_tipos(content_client, doce
 
 # ---------- HU-25 Ver la puntuación de un ítem ----------
 
-def test_hu25_c1_veo_el_promedio_de_las_puntuaciones_de_0_a_5(content_client, docente, skill_ids, fake_llm):
-    """Veo el promedio de las puntuaciones de 0.0 a 5.0 del ítem."""
+def test_hu25_c1_veo_el_promedio_de_las_puntuaciones_de_1_a_5(content_client, docente, skill_ids, fake_llm):
+    """Veo el promedio de las puntuaciones (de 1 a 5 estrellas) del ítem."""
     item_id = crear_item(content_client, docente, fake_llm, skill_ids[0]["id"])
-    for valor in (1.0, 2.0, 4.0):
+    for valor in (1, 2, 4):
         content_client.put(f"/items/{item_id}/score", json={"score": valor}, headers=make_user(["validator"])["headers"])
     d = detalle(content_client, docente, item_id)
-    assert 0.0 <= float(d["score"]["average"]) <= 5.0 and float(d["score"]["average"]) == 2.3  # (1 + 2 + 4) / 3
+    assert 1.0 <= float(d["score"]["average"]) <= 5.0 and float(d["score"]["average"]) == 2.3  # (1 + 2 + 4) / 3
 
 
 def test_hu25_c2_veo_la_cantidad_de_puntuaciones(content_client, docente, skill_ids, fake_llm):
     """Veo la cantidad de puntuaciones que recibió el ítem."""
     item_id = crear_item(content_client, docente, fake_llm, skill_ids[0]["id"])
     for n in range(1, 4):
-        content_client.put(f"/items/{item_id}/score", json={"score": 3.0}, headers=make_user(["validator"])["headers"])
+        content_client.put(f"/items/{item_id}/score", json={"score": 3}, headers=make_user(["validator"])["headers"])
         assert detalle(content_client, docente, item_id)["score"]["count"] == n
 
 
-def test_hu25_c3_un_item_sin_puntuar_se_distingue_de_uno_con_promedio_0(content_client, docente, validador,
+def test_hu25_c3_un_item_sin_puntuar_se_distingue_de_uno_con_promedio_1(content_client, docente, validador,
                                                                        skill_ids, fake_llm):
-    """Un ítem sin puntuar se distingue de uno con promedio 0.0."""
+    """Un ítem sin puntuar se distingue de uno con promedio de 1 estrella."""
     sin = crear_item(content_client, docente, fake_llm, skill_ids[0]["id"])
-    cero = crear_item(content_client, docente, fake_llm, skill_ids[0]["id"])
-    content_client.put(f"/items/{cero}/score", json={"score": 0.0}, headers=validador["headers"])
+    una = crear_item(content_client, docente, fake_llm, skill_ids[0]["id"])
+    content_client.put(f"/items/{una}/score", json={"score": 1}, headers=validador["headers"])
     assert detalle(content_client, docente, sin)["score"] == {"average": None, "count": 0}
-    assert detalle(content_client, docente, cero)["score"] == {"average": 0.0, "count": 1}
+    assert detalle(content_client, docente, una)["score"] == {"average": 1.0, "count": 1}
 
 
 def test_hu25_c4_un_item_sin_puntuar_igual_puede_mostrarse_y_usarse_si_esta_activo(content_client, docente, validador,
@@ -551,11 +551,11 @@ def test_hu28_c1_y_c2_edito_enunciado_tiempo_respuesta_y_rubrica_y_se_publica_lo
     fake_llm.respuestas = [llm_answer("open_question", 1)]
     d = borradores(content_client, docente, skill_ids[0]["id"], "open_question").json()["drafts"][0]
     d["statement"], d["evaluation_goal"], d["reference_answer"] = "Enunciado editado", "Objetivo editado", "Referencia editada"
-    d["rubric"][0]["name"] = "Criterio editado"
+    d["rubric"][2]["name"] = "Criterio editado"  # los 2 primeros son fijos y no se pueden renombrar
     r = publicar(content_client, docente, skill_ids[0]["id"], "open_question", [d], minutes=33)  # el tiempo se edita por borrador
     item = detalle(content_client, docente, r.json()["items"][0]["id"])
     assert (item["statement"], item["evaluation_goal"], item["estimated_minutes"]) == ("Enunciado editado", "Objetivo editado", 33)
-    assert item["content"]["reference_answer"] == "Referencia editada" and item["rubric"][0]["name"] == "Criterio editado"
+    assert item["content"]["reference_answer"] == "Referencia editada" and item["rubric"][2]["name"] == "Criterio editado"
 
 
 @pytest.mark.parametrize("item_type,rotura", [

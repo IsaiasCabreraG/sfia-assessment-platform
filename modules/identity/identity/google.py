@@ -11,6 +11,6 @@ def build_oauth() -> OAuth:
         server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
         client_id=env("GOOGLE_CLIENT_ID"),
         client_secret=env("GOOGLE_CLIENT_SECRET"),
-        client_kwargs={"scope": "openid email profile"},
+        client_kwargs={"scope": "openid email profile", "timeout": 15},  # segundos; el valor por defecto (5) se queda corto si la red tarda
     )
     return oauth

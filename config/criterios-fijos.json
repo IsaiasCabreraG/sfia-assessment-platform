@@ -1,0 +1,141 @@
+{
+  "descripcion": "Criterios fijos de la rúbrica de cada tipo abierto (HU-04-6). Los lee el backend (content/generation/rubric.py) y el portal (docente/tipos.ts). Cada criterio tiene peso 25 y un descriptor para los puntajes 0, 1, 2 y 3. No se editan: la IA solo escribe los otros dos criterios de la rúbrica.",
+  "open_question": [
+    {
+      "name": "Precisión conceptual",
+      "weight": 25,
+      "levels": [
+        {
+          "score": 0,
+          "descriptor": "Los conceptos son incorrectos o no aparecen."
+        },
+        {
+          "score": 1,
+          "descriptor": "Menciona los conceptos principales con errores o imprecisiones importantes."
+        },
+        {
+          "score": 2,
+          "descriptor": "Explica correctamente los conceptos principales."
+        },
+        {
+          "score": 3,
+          "descriptor": "Explica con precisión todos los conceptos relevantes y sus relaciones."
+        }
+      ]
+    },
+    {
+      "name": "Claridad y estructura",
+      "weight": 25,
+      "levels": [
+        {
+          "score": 0,
+          "descriptor": "La respuesta es incomprensible o está desorganizada."
+        },
+        {
+          "score": 1,
+          "descriptor": "Se entiende, pero con ambigüedades o sin un orden claro."
+        },
+        {
+          "score": 2,
+          "descriptor": "Redacción clara y ordenada."
+        },
+        {
+          "score": 3,
+          "descriptor": "Redacción clara, bien estructurada y fácil de seguir de principio a fin."
+        }
+      ]
+    }
+  ],
+  "system_design": [
+    {
+      "name": "Cumplimiento de requisitos funcionales y no funcionales",
+      "weight": 25,
+      "levels": [
+        {
+          "score": 0,
+          "descriptor": "No identifica los requisitos del problema."
+        },
+        {
+          "score": 1,
+          "descriptor": "Cubre algunos requisitos funcionales y omite los no funcionales."
+        },
+        {
+          "score": 2,
+          "descriptor": "Cubre los requisitos funcionales y los no funcionales principales."
+        },
+        {
+          "score": 3,
+          "descriptor": "Cubre todos los requisitos funcionales y no funcionales y deriva decisiones de diseño de ellos."
+        }
+      ]
+    },
+    {
+      "name": "Justificación de decisiones y trade-offs",
+      "weight": 25,
+      "levels": [
+        {
+          "score": 0,
+          "descriptor": "No justifica sus decisiones."
+        },
+        {
+          "score": 1,
+          "descriptor": "Justifica algunas decisiones sin considerar alternativas."
+        },
+        {
+          "score": 2,
+          "descriptor": "Justifica sus decisiones principales señalando sus costos."
+        },
+        {
+          "score": 3,
+          "descriptor": "Justifica todas sus decisiones y compara alternativas con sus trade-offs."
+        }
+      ]
+    }
+  ],
+  "debugging": [
+    {
+      "name": "Identificación de la causa raíz",
+      "weight": 25,
+      "levels": [
+        {
+          "score": 0,
+          "descriptor": "No identifica la causa del fallo."
+        },
+        {
+          "score": 1,
+          "descriptor": "Señala la zona del error sin la causa exacta."
+        },
+        {
+          "score": 2,
+          "descriptor": "Identifica la causa exacta."
+        },
+        {
+          "score": 3,
+          "descriptor": "Identifica la causa exacta y explica por qué produce el síntoma."
+        }
+      ]
+    },
+    {
+      "name": "Corrección propuesta",
+      "weight": 25,
+      "levels": [
+        {
+          "score": 0,
+          "descriptor": "No propone corrección o es incorrecta."
+        },
+        {
+          "score": 1,
+          "descriptor": "La corrección resuelve el síntoma pero introduce otros errores."
+        },
+        {
+          "score": 2,
+          "descriptor": "La corrección es correcta."
+        },
+        {
+          "score": 3,
+          "descriptor": "La corrección es correcta, mínima y no rompe otros casos."
+        }
+      ]
+    }
+  ]
+}

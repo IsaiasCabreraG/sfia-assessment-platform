@@ -1,4 +1,5 @@
 """HU-01: login con Google y lista blanca por rol (user_roles)."""
+import time
 import uuid
 
 import jwt
@@ -65,6 +66,39 @@ def test_token_invalido_o_sin_rol_es_rechazado(catalog_client, sin_rol):
     assert catalog_client.get("/skills").status_code == 401
     assert catalog_client.get("/skills", headers={"Authorization": "Bearer basura"}).status_code == 401
     assert catalog_client.get("/skills", headers=sin_rol["headers"]).status_code == 403
+
+
+def _token_con_tiempos(iat: int, exp: int) -> str:
+    claims = {"sub": str(uuid.uuid4()), "email": "a@b", "name": None, "roles": ["validator"], "iat": iat, "exp": exp}
+    return jwt.encode(claims, env("JWT_SECRET"), algorithm="HS256")
+
+
+def test_un_token_emitido_unos_segundos_en_el_futuro_se_acepta_por_la_diferencia_de_relojes():
+    ahora = int(time.time())
+    assert decode_token(_token_con_tiempos(ahora + 5, ahora + 3600)).roles == ("validator",)
+
+
+@pytest.mark.parametrize("iat,exp", [(120, 3600), (-7200, -120)], ids=["emitido en el futuro", "vencido"])
+def test_la_tolerancia_es_de_segundos_no_de_minutos(iat, exp):
+    ahora = int(time.time())
+    with pytest.raises(HTTPException) as e:
+        decode_token(_token_con_tiempos(ahora + iat, ahora + exp))
+    assert e.value.status_code == 401
+
+
+def test_si_google_no_responde_el_callback_avisa_con_502_y_no_con_un_error_interno(monkeypatch):
+    import httpx
+    from fastapi.testclient import TestClient
+
+    import identity.routes as rutas
+    from identity.main import app
+
+    async def sin_conexion(request):  # la red cae justo al canjear el código por el token
+        raise httpx.ConnectTimeout("sin respuesta de Google")
+
+    monkeypatch.setattr(rutas.oauth.google, "authorize_access_token", sin_conexion)
+    r = TestClient(app, follow_redirects=False).get("/auth/callback")
+    assert r.status_code == 502 and "No se pudo contactar a Google" in r.json()["detail"]
 
 
 def test_require_roles_acepta_y_rechaza():

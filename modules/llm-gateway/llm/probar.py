@@ -29,7 +29,7 @@ def main() -> int:
             return 0
         t0 = time.time()
         respuesta = generate("Responde únicamente con la palabra: ok")
-        print(f"1) Pedido mínimo: «{respuesta[:60]}»  ({time.time() - t0:.1f} s)")
+        print(f"1) Pedido mínimo: «{respuesta.texto[:60]}»  ({time.time() - t0:.1f} s) · modelo: {respuesta.modelo} · tokens: {respuesta.uso}")
         if "--generacion" in sys.argv:
             from content.generation.parser import extract_json
             from content.generation.prompts import build_prompt
@@ -40,7 +40,7 @@ def main() -> int:
                                   level=3, level_title="Apply", item_type=tipo, count=1,
                                   estimated_minutes=5, context=None)
             t0 = time.time()
-            texto = generate(prompt)
+            texto = generate(prompt).texto
             items = validate_items(tipo, extract_json(texto)["items"])
             print(f"2) Generación de un ítem {tipo}: válido ({time.time() - t0:.1f} s)")
             print(f"   Enunciado: {items[0].statement}")

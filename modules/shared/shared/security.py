@@ -15,6 +15,9 @@ from shared.config import env
 
 ALGORITMO = "HS256"
 ROLES = ("teacher_recruiter", "validator", "admin")
+# Los relojes de quien emite el token y de quien lo valida pueden diferir unos segundos (por ejemplo, al sincronizarse
+# el reloj de WSL): sin tolerancia, un token recién emitido podía rechazarse por tener su `iat` "en el futuro".
+TOLERANCIA_RELOJ_SEGUNDOS = 10
 
 _bearer = HTTPBearer(auto_error=False)
 
@@ -42,9 +45,10 @@ def create_access_token(user_id: UUID, email: str, name: str | None, roles: list
 
 
 def decode_token(token: str) -> AuthUser:
-    """Valida firma y expiración y devuelve el usuario del token. Lanza 401 si no es válido."""
+    """Valida firma y expiración (con `TOLERANCIA_RELOJ_SEGUNDOS` de margen) y devuelve el usuario del token.
+    Lanza 401 si no es válido."""
     try:
-        claims = jwt.decode(token, env("JWT_SECRET"), algorithms=[ALGORITMO])
+        claims = jwt.decode(token, env("JWT_SECRET"), algorithms=[ALGORITMO], leeway=TOLERANCIA_RELOJ_SEGUNDOS)
         return AuthUser(
             id=UUID(claims["sub"]),
             email=claims["email"],

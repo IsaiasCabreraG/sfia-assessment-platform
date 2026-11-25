@@ -46,7 +46,7 @@ POST   /role-profiles             # Admin: crear perfil
 - `item_versions` — item_id, versión, tipo, origen (generated/regenerated/edited), pedido de generación, nivel, tiempo estimado, objetivo de evaluación, enunciado
 - Una tabla por tipo, con una fila por versión: `item_choice_options` (alternativa única), `item_true_false`, `item_open_question`, `item_coding`, `item_system_design`, `item_debugging` e `item_findings`
 - `rubric_criteria`, `rubric_levels` — rúbrica de cada versión, solo en los tipos abiertos (pregunta de desarrollo, system design, debugging)
-- `item_scores` — item_version_id, validator_id, puntuación (0.0 a 5.0)
+- `item_scores` — item_version_id, validator_id, puntuación (1 a 5 estrellas enteras)
 - `assets` — archivos adjuntos (S3/bucket)
 
 **APIs internas (REST)**:
@@ -61,7 +61,7 @@ GET    /items?status=active&skill_id=&role_profile_id=&type=&score=   # Filtrar 
 GET    /items/{id}                  # Versión vigente: atributos, datos del tipo, rúbrica, promedio y cantidad de puntuaciones
 PUT    /items/{id}                  # Modificar manualmente → nueva versión
 PUT    /items/{id}/status           # Activar o desactivar
-POST   /item-versions/{id}/scores   # Experto validador puntúa de 0.0 a 5.0 (rol `validator`)
+POST   /item-versions/{id}/scores   # Experto validador puntúa de 1 a 5 estrellas (rol `validator`)
 GET    /items/{id}/tests            # Tests unitarios (coding) para auto-eval
 ```
 

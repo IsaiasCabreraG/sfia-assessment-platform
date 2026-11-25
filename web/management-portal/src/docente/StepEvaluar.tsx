@@ -1,12 +1,17 @@
 "use client";
 
 // Paso 1 de la generación: "Qué evaluar". Un recuadro por skill, con nivel, tiempo y los tipos de ítem
-// que se piden (con la cantidad de cada uno). El rol SFIA precarga los recuadros de sus skills.
+// que se piden (con la cantidad de cada uno). Las skills se añaden una a una o desde un rol SFIA (se eligen las que se quieren).
+import { Fragment } from "react";
 import { NOMBRE_TIPO } from "../shared/ItemDetail";
 import type { Box, Level, RoleProfile, RoleProfileDetail, Skill } from "../shared/types";
 import { colorDe } from "../shared/categorias";
-import { Niveles } from "../shared/Niveles";
+import { NivelChip, Niveles } from "../shared/Niveles";
+import { Ayuda } from "../shared/Ayuda";
+import { IconoTipo } from "../shared/IconoTipo";
 import { SkillPicker } from "../shared/SkillPicker";
+import { RolPicker } from "./RolPicker";
+import { DESCRIPCION_TIPO, TEXTO_CANTIDAD, TEXTO_MINUTOS } from "./tipos";
 
 interface Props {
   skills: Skill[];
@@ -29,21 +34,25 @@ export const nuevoBox = (skill_id: string, level = 3, open = true): Box => ({
   key: siguiente++, skill_id, level, types: { single_choice: { cantidad: 2, minutos: MINUTOS_POR_TIPO.single_choice } }, open, context: "",
 });
 
-export function resumenBox(b: Box, skills: Skill[]): string {
-  const skill = skills.find((s) => s.id === b.skill_id);
-  const tipos = Object.entries(b.types).map(([t, p]) => `${p.cantidad}× ${NOMBRE_TIPO[t]} (${p.minutos} min c/u)`).join(", ");
-  return `${skill?.code ?? "—"} · nivel ${b.level} · ${tipos || "sin tipos"}${b.context.trim() ? ` · contexto: ${b.context.trim()}` : ""}`;
+
+/** Resumen de un recuadro (minimizado y Paso 2): skill, nivel y, por cada tipo pedido, su icono, la cantidad y los minutos. */
+export function ResumenCompacto({ b, skill, color, conNombre = false }: { b: Box; skill?: Skill; color: string; conNombre?: boolean }) {
+  return (
+    <span className="resumen-compacto">
+      <strong>{skill?.code ?? "—"}</strong>
+      {conNombre && <span>{skill?.name}</span>}
+      <NivelChip nivel={b.level} color={color} />
+      {Object.entries(b.types).map(([tipo, p]) => (
+        <span key={tipo} className="tipo-resumen"><IconoTipo tipo={tipo} /> {p.cantidad}× · {p.minutos} min</span>
+      ))}
+      {Object.keys(b.types).length === 0 && <span className="error">sin tipos de ítem</span>}
+      {b.context.trim() && <span className="suave">· contexto: {b.context.trim()}</span>}
+    </span>
+  );
 }
 
 export function StepEvaluar({ skills, niveles, perfiles, boxes, setBoxes, cargarPerfil }: Props) {
   const cambiar = (key: number, cambio: Partial<Box>) => setBoxes(boxes.map((b) => (b.key === key ? { ...b, ...cambio } : b)));
-
-  const elegirRol = async (id: string) => {
-    if (!id) return; // volver a "Rol personalizado" conserva los recuadros
-    if (boxes.length > 0 && !window.confirm("Se reemplazarán los recuadros actuales por los del rol. ¿Continuar?")) return;
-    const perfil = await cargarPerfil(id);
-    setBoxes(perfil.skills.map((s) => nuevoBox(s.id, s.min_level, false)));
-  };
 
   const alternarTipo = (b: Box, tipo: string) => {
     const types = { ...b.types };
@@ -53,20 +62,15 @@ export function StepEvaluar({ skills, niveles, perfiles, boxes, setBoxes, cargar
   };
 
   return (
-    <section className="formulario ancho">
+    <section className="formulario pagina">
       <h3>1. Qué evaluar</h3>
-      <label>Rol SFIA
-        <select value="" onChange={(e) => elegirRol(e.target.value)}>
-          <option value="">Rol personalizado</option>
-          {perfiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
-      </label>
-
       <div className="acciones">
         <SkillPicker skills={skills} alElegir={(id) => {
           const s = skills.find((x) => x.id === id);
           setBoxes([...boxes, nuevoBox(id, s ? Math.min(Math.max(3, s.min_level), s.max_level) : 3)]);
         }} />
+        <RolPicker perfiles={perfiles} skills={skills} cargarPerfil={cargarPerfil} yaEnFormulario={new Set(boxes.map((b) => b.skill_id))}
+                   alAgregar={(lista) => setBoxes([...boxes, ...lista.map((s) => nuevoBox(s.id, s.min_level, false))])} />
         <button type="button" className="a-la-derecha" title="Expandir todo" aria-label="Expandir todo" onClick={() => setBoxes(boxes.map((b) => ({ ...b, open: true })))}>⇊</button>
         <button type="button" title="Minimizar todo" aria-label="Minimizar todo" onClick={() => setBoxes(boxes.map((b) => ({ ...b, open: false })))}>⇈</button>
       </div>
@@ -78,21 +82,16 @@ export function StepEvaluar({ skills, niveles, perfiles, boxes, setBoxes, cargar
         <div key={b.key} className="recuadro" style={{ borderLeft: `6px solid ${color}` }}>
           <div className="recuadro-cabecera">
             <button type="button" className="enlace" onClick={() => cambiar(b.key, { open: !b.open })}>
-              {b.open ? "▾" : "▸"} {b.open ? skills.find((s) => s.id === b.skill_id)?.name : resumenBox(b, skills)}
+              {b.open ? "▾" : "▸"} {b.open ? skill?.name : <ResumenCompacto b={b} skill={skill} color={color} />}
             </button>
             <button type="button" onClick={() => setBoxes(boxes.filter((x) => x.key !== b.key))} aria-label="Quitar">×</button>
           </div>
           {b.open && (
             <div className="recuadro-cuerpo">
+              <div className="fila-skill-nivel">
               <div className="campo-nivel">
                 <span>Skill</span>
-                <div className="acciones">
-                  <SkillPicker skills={skills} texto={skill ? `${skill.code} · ${skill.name} ▾` : "Elegir skill ▾"}
-                               alElegir={(id) => {
-                                 const n = skills.find((x) => x.id === id);
-                                 cambiar(b.key, { skill_id: id, level: n ? Math.min(Math.max(b.level, n.min_level), n.max_level) : b.level });
-                               }} />
-                </div>
+                <strong className="nombre-skill">{skill?.name ?? "—"}</strong>
               </div>
               <div className="campo-nivel">
                 <span>Nivel de responsabilidad</span>
@@ -101,39 +100,44 @@ export function StepEvaluar({ skills, niveles, perfiles, boxes, setBoxes, cargar
                 <span className="suave">{b.level} · {niveles.find((n) => n.level === b.level)?.description}
                   {skill && ` (la skill está definida en los niveles ${skill.min_level} a ${skill.max_level})`}</span>
               </div>
-              <label>Contexto de esta skill (opcional: empresa, cargo o curso)
+              </div>
+              <label>Contexto para la skill
                 <textarea rows={2} value={b.context} onChange={(e) => cambiar(b.key, { context: e.target.value })}
                           placeholder="Industria, producto, cultura, escala…" />
               </label>
               <fieldset>
-                <legend>Tipos de ejercicio: cantidad y tiempo estimado por ítem</legend>
-                {Object.entries(NOMBRE_TIPO).map(([tipo, nombre]) => (
-                  <div key={tipo} className="tipo-fila">
-                    <label className="check">
-                      <input type="checkbox" checked={tipo in b.types} onChange={() => alternarTipo(b, tipo)} /> {nombre}
-                    </label>
-                    {/* Los campos se dibujan siempre (ocultos si el tipo no está marcado) para que la fila no cambie de alto. */}
-                    <div className="tipo-campos" style={{ visibility: tipo in b.types ? "visible" : "hidden" }}>
-                      <label className="check">Cant.
-                        <input type="number" min="1" max="10" aria-label={`Cantidad ${nombre}`} disabled={!(tipo in b.types)}
-                               value={b.types[tipo]?.cantidad ?? 1}
-                               onChange={(e) => cambiar(b.key, { types: { ...b.types, [tipo]: { ...b.types[tipo], cantidad: Number(e.target.value) } } })} />
+                <legend>Tipos de ítem</legend>
+                {Object.keys(b.types).length === 0 && <p className="error">Marca al menos un tipo de ítem para esta skill.</p>}
+                <div className="tipos-rejilla">
+                  <span />
+                  <span className="cab"><Ayuda texto={TEXTO_CANTIDAD}>Cantidad</Ayuda></span>
+                  <span className="cab ultima"><Ayuda texto={TEXTO_MINUTOS}>Tiempo (min)</Ayuda></span>
+                  {Object.entries(NOMBRE_TIPO).map(([tipo, nombre]) => (
+                    <Fragment key={tipo}>
+                      <label className="check fila-tipo">
+                        <input type="checkbox" checked={tipo in b.types} onChange={() => alternarTipo(b, tipo)} />
+                        <IconoTipo tipo={tipo} decorativo />
+                        <Ayuda texto={DESCRIPCION_TIPO[tipo]}>{nombre}</Ayuda>
                       </label>
-                      <label className="check">Min c/u
-                        <input type="number" min="1" aria-label={`Minutos ${nombre}`} disabled={!(tipo in b.types)}
-                               value={b.types[tipo]?.minutos ?? MINUTOS_POR_TIPO[tipo] ?? 10}
-                               onChange={(e) => cambiar(b.key, { types: { ...b.types, [tipo]: { ...b.types[tipo], minutos: Number(e.target.value) } } })} />
-                      </label>
-                    </div>
-                  </div>
-                ))}
+                      {/* Los campos se dibujan siempre (ocultos si el tipo no está marcado) para que la fila no cambie de alto. */}
+                      <input type="number" min="1" max="10" aria-label={`Cantidad ${nombre}`} disabled={!(tipo in b.types)}
+                             style={{ visibility: tipo in b.types ? "visible" : "hidden" }}
+                             value={b.types[tipo]?.cantidad ?? 1}
+                             onChange={(e) => cambiar(b.key, { types: { ...b.types, [tipo]: { ...b.types[tipo], cantidad: Number(e.target.value) } } })} />
+                      <input type="number" min="1" aria-label={`Minutos ${nombre}`} disabled={!(tipo in b.types)}
+                             style={{ visibility: tipo in b.types ? "visible" : "hidden" }}
+                             value={b.types[tipo]?.minutos ?? MINUTOS_POR_TIPO[tipo] ?? 10}
+                             onChange={(e) => cambiar(b.key, { types: { ...b.types, [tipo]: { ...b.types[tipo], minutos: Number(e.target.value) } } })} />
+                    </Fragment>
+                  ))}
+                </div>
               </fieldset>
             </div>
           )}
         </div>
         );
       })}
-      {boxes.length === 0 && <p className="suave">Añade al menos una skill, o elige un rol SFIA.</p>}
+      {boxes.length === 0 && <p className="suave">Añade al menos una skill, o las skills de un rol SFIA.</p>}
     </section>
   );
 }

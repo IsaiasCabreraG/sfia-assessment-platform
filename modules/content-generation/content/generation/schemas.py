@@ -2,8 +2,11 @@
 diccionario de tipos (`docs/architecture/item-types-dictionary.md`). Si la respuesta de la IA no
 cumple, la validación falla y el ítem no se guarda."""
 import re
+from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
+
+from content.generation.rubric import NUM_CRITERIOS, nombres_fijos
 
 # Texto obligatorio: sin espacios sobrantes y con al menos un carácter.
 Text = Field(min_length=1)
@@ -37,7 +40,10 @@ class _Item(_Model):
 
 
 class _WithRubric(_Item):
-    rubric: list[RubricCriterion] = Field(min_length=1)
+    """Tipos abiertos: rúbrica de al menos 4 criterios, con los criterios fijos del tipo (config/criterios-fijos.json)
+    y pesos que suman 100. Lo que genera la IA tiene exactamente 4 de peso 25 (ver checks.py); quien edita puede agregar más."""
+    FIXED_CRITERIA: ClassVar[list[str]] = []
+    rubric: list[RubricCriterion] = Field(min_length=NUM_CRITERIOS)
 
     @model_validator(mode="after")
     def _reglas_rubrica(self):
@@ -46,6 +52,9 @@ class _WithRubric(_Item):
         nombres = [c.name.lower() for c in self.rubric]
         if len(set(nombres)) != len(nombres):
             raise ValueError("los nombres de los criterios no pueden repetirse")
+        faltan = [f for f in self.FIXED_CRITERIA if f.lower() not in nombres]
+        if faltan:
+            raise ValueError(f"la rúbrica debe incluir los criterios fijos: {', '.join(faltan)}")
         return self
 
 
@@ -72,6 +81,7 @@ class TrueFalse(_Item):
 
 
 class OpenQuestion(_WithRubric):
+    FIXED_CRITERIA: ClassVar[list[str]] = nombres_fijos("open_question")
     reference_answer: str = Text
 
 
@@ -94,6 +104,7 @@ class Coding(_Item):
 
 
 class SystemDesign(_WithRubric):
+    FIXED_CRITERIA: ClassVar[list[str]] = nombres_fijos("system_design")
     scenario: str = Text
     functional_requirements: list[str] = Field(min_length=1)
     non_functional_requirements: list[str] = []
@@ -107,6 +118,7 @@ class Finding(_Model):
 
 
 class Debugging(_WithRubric):
+    FIXED_CRITERIA: ClassVar[list[str]] = nombres_fijos("debugging")
     language: str = Text
     code: str = Text
     symptom_input: str | None = None

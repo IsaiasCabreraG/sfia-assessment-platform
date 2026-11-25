@@ -182,7 +182,7 @@ CREATE TABLE IF NOT EXISTS content.item_scores (
     id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     item_version_id uuid         NOT NULL REFERENCES content.item_versions(id),
     validator_id    uuid         NOT NULL REFERENCES identity.users(id),
-    score           numeric(2,1) NOT NULL CHECK (score BETWEEN 0.0 AND 5.0),
+    score           smallint     NOT NULL CHECK (score BETWEEN 1 AND 5),
     created_at      timestamptz  NOT NULL DEFAULT now(),
     UNIQUE (item_version_id, validator_id)
 );

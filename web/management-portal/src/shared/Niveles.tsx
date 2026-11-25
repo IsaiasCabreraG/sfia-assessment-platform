@@ -18,3 +18,12 @@ export function Niveles({ min, max, color, elegido, alElegir }: Props) {
     </span>
   );
 }
+
+/** Un solo nivel como celda con el color de la categoría de la skill (para listas compactas, HU-37). */
+export function NivelChip({ nivel, color }: { nivel: number; color: string }) {
+  return (
+    <span className="niveles-celdas" style={{ ["--cat" as string]: color }}>
+      <span className="nivel-celda activa" data-nivel={nivel} title={`Nivel ${nivel}`}>{nivel}</span>
+    </span>
+  );
+}

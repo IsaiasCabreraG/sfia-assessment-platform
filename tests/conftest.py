@@ -104,7 +104,10 @@ def skill_ids():
 
 @pytest.fixture
 def fake_llm(monkeypatch):
-    """Reemplaza la llamada a la IA. Uso: fake_llm(lambda prompt: "texto") o fake_llm.responder = ..."""
+    """Reemplaza la llamada a la IA. `fake_llm.respuestas` es la lista de respuestas, una por llamada: un texto,
+    una excepción o un `llm_answer(...)` (respuesta válida que se adapta al prompt recibido). El paso de las
+    respuestas de referencia de los tipos abiertos lo contesta solo, sin gastar una respuesta de la lista."""
+    from tests.samples import RespuestaIA, es_prompt_de_referencia, respuesta_desde_prompt
 
     class Fake:
         respuestas: list = []
@@ -112,9 +115,13 @@ def fake_llm(monkeypatch):
 
     def _ask(prompt, authorization):
         Fake.prompts.append(prompt)
+        if es_prompt_de_referencia(prompt):
+            return respuesta_desde_prompt(prompt)
         r = Fake.respuestas.pop(0)
         if isinstance(r, Exception):
             raise r
+        if isinstance(r, RespuestaIA):
+            return respuesta_desde_prompt(prompt, r.item_type, r.count, r.bloque)
         return r
 
     Fake.respuestas, Fake.prompts = [], []

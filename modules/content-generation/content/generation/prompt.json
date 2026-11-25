@@ -1,10 +1,11 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "descripcion": "Plantilla del prompt de generación de ítems (HU-04, HU-06). Se lee en content/generation/prompts.py. Cada elemento de `plantilla` es una línea del prompt; las líneas '' son separadores en blanco.",
   "como_se_arma": [
     "Se recorre `plantilla` en orden y se reemplazan los {marcadores} por los datos del pedido.",
-    "Una línea '{?nombre}' se reemplaza por la frase `opcionales.nombre` y solo aparece si ese dato existe (contexto, regeneración, feedback).",
-    "{reglas} se toma de `reglas_por_tipo` y {forma_json} de `forma_json_por_tipo`, según el tipo pedido.",
+    "Una línea '{?nombre}' se reemplaza por la frase `opcionales.nombre` y solo aparece si ese dato existe (contexto, regeneración, feedback, objetivos, criterios, sin_referencia).",
+    "{reglas} se toma de `reglas_por_tipo` y {forma_json} de `forma_json_por_tipo`, según el tipo pedido. En los tipos abiertos, prompts.py agrega al ejemplo los 2 criterios propios de la rúbrica; los fijos (con sus descriptores) vienen de config/criterios-fijos.json y se muestran en la frase `criterios`.",
+    "Los tipos abiertos se piden en dos pasos: primero el ítem con sus 2 criterios propios (sin respuesta de referencia; el servidor agrega los fijos) y luego, con `plantilla_referencia`, la respuesta de referencia de cada ítem a partir de su rúbrica completa.",
     "Si la IA devolvió una respuesta inválida, se agrega al final la frase `reintento` con los errores."
   ],
   "plantilla": [
@@ -18,6 +19,9 @@
     "{?contexto}",
     "{?regenerar}",
     "{?feedback}",
+    "{?objetivos}",
+    "{?criterios}",
+    "{?sin_referencia}",
     "",
     "Los ítems deben medir la skill al nivel indicado y poder resolverse en el tiempo estimado.",
     "Reglas del tipo: {reglas}",
@@ -29,16 +33,19 @@
   "opcionales": {
     "contexto": "Contexto indicado por el usuario: {contexto}",
     "regenerar": "Estás regenerando un ítem cuyo enunciado era: {enunciado_anterior}\nNo lo repitas.",
-    "feedback": "Comentario del usuario para esta versión: {feedback}"
+    "feedback": "Comentario del usuario para esta versión: {feedback}",
+    "objetivos": "Distribución obligatoria, respétala: {objetivos}",
+    "criterios": "La rúbrica final tendrá 4 criterios de peso 25. Los 2 primeros ya están definidos y se agregan solos: NO los escribas. Son estos:\n{criterios_fijos}\nTú escribe en `rubric` solo 2 criterios más, propios de este problema y con un nombre distinto de los fijos, cada uno de peso 25 y con un descriptor para los puntajes 0, 1, 2 y 3.",
+    "sin_referencia": "No escribas la respuesta de referencia: se te pedirá en un paso aparte."
   },
   "reintento": "Tu respuesta anterior fue rechazada por estos errores; corrígelos: {errores}",
   "reglas_por_tipo": {
-    "single_choice": "Entre 3 y 5 opciones; exactamente una con is_correct=true; sin opciones repetidas.",
-    "true_false": "El enunciado debe ser una afirmación que sea claramente verdadera o falsa.",
-    "open_question": "Incluye rúbrica: los pesos suman exactamente 100 y cada criterio tiene un descriptor para los puntajes 0, 1, 2 y 3.",
+    "single_choice": "Exactamente 4 opciones y exactamente una con is_correct=true; sin opciones repetidas. Cada opción debe entenderse por sí sola, salvo una opción que dependa de otras (por ejemplo 'Todas las anteriores', 'Ninguna de las anteriores' o 'A y B'): solo puede haber una, debe ir en la última posición y referirse solo a opciones anteriores.",
+    "true_false": "El enunciado debe ser una afirmación que sea claramente verdadera o falsa, según la respuesta correcta indicada para cada ítem.",
+    "open_question": "Incluye en `rubric` los 2 criterios propios del problema.",
     "coding": "Los unit_tests deben pasar con reference_solution. starter_code debe contener la función de function_signature.",
-    "system_design": "Al menos un requisito funcional. Incluye rúbrica: los pesos suman exactamente 100 y cada criterio tiene un descriptor para los puntajes 0, 1, 2 y 3.",
-    "debugging": "symptom_observed distinto de symptom_expected; cada hallazgo con line debe apuntar a una línea existente de code (empieza en 1). Incluye rúbrica: los pesos suman exactamente 100 y cada criterio tiene un descriptor para los puntajes 0, 1, 2 y 3."
+    "system_design": "Al menos un requisito funcional. Incluye en `rubric` los 2 criterios propios del problema.",
+    "debugging": "symptom_observed distinto de symptom_expected; cada hallazgo con line debe apuntar a una línea existente de code (empieza en 1). Incluye en `rubric` los 2 criterios propios del problema."
   },
   "forma_json_por_tipo": {
     "single_choice": {
@@ -46,48 +53,32 @@
       "evaluation_goal": "Qué busca evaluar el ítem",
       "options": [
         {
-          "text": "Opción",
-          "is_correct": false
+          "text": "Texto de la alternativa 1",
+          "is_correct": "true en la opción correcta, false en las demás"
         },
         {
-          "text": "Opción",
-          "is_correct": true
+          "text": "Texto de la alternativa 2",
+          "is_correct": "true en la opción correcta, false en las demás"
+        },
+        {
+          "text": "Texto de la alternativa 3",
+          "is_correct": "true en la opción correcta, false en las demás"
+        },
+        {
+          "text": "Texto de la alternativa 4",
+          "is_correct": "true en la opción correcta, false en las demás"
         }
       ]
     },
     "true_false": {
       "statement": "Enunciado",
       "evaluation_goal": "Qué busca evaluar el ítem",
-      "correct_answer": true
+      "correct_answer": "true o false, según lo indicado"
     },
     "open_question": {
       "statement": "Enunciado",
       "evaluation_goal": "Qué busca evaluar el ítem",
-      "reference_answer": "Puntos esperados de la respuesta",
-      "rubric": [
-        {
-          "name": "Nombre del criterio",
-          "weight": 100,
-          "levels": [
-            {
-              "score": 0,
-              "descriptor": "Qué debe cumplir la respuesta para obtener 0"
-            },
-            {
-              "score": 1,
-              "descriptor": "Qué debe cumplir la respuesta para obtener 1"
-            },
-            {
-              "score": 2,
-              "descriptor": "Qué debe cumplir la respuesta para obtener 2"
-            },
-            {
-              "score": 3,
-              "descriptor": "Qué debe cumplir la respuesta para obtener 3"
-            }
-          ]
-        }
-      ]
+      "reference_answer": "Puntos esperados de la respuesta"
     },
     "coding": {
       "statement": "Enunciado",
@@ -113,31 +104,7 @@
       "constraints": [
         "..."
       ],
-      "reference_answer": "Puntos esperados de la respuesta",
-      "rubric": [
-        {
-          "name": "Nombre del criterio",
-          "weight": 100,
-          "levels": [
-            {
-              "score": 0,
-              "descriptor": "Qué debe cumplir la respuesta para obtener 0"
-            },
-            {
-              "score": 1,
-              "descriptor": "Qué debe cumplir la respuesta para obtener 1"
-            },
-            {
-              "score": 2,
-              "descriptor": "Qué debe cumplir la respuesta para obtener 2"
-            },
-            {
-              "score": 3,
-              "descriptor": "Qué debe cumplir la respuesta para obtener 3"
-            }
-          ]
-        }
-      ]
+      "reference_answer": "Puntos esperados de la respuesta"
     },
     "debugging": {
       "statement": "Enunciado",
@@ -153,31 +120,22 @@
           "line": 1,
           "description": "Causa esperada del defecto"
         }
-      ],
-      "rubric": [
-        {
-          "name": "Nombre del criterio",
-          "weight": 100,
-          "levels": [
-            {
-              "score": 0,
-              "descriptor": "Qué debe cumplir la respuesta para obtener 0"
-            },
-            {
-              "score": 1,
-              "descriptor": "Qué debe cumplir la respuesta para obtener 1"
-            },
-            {
-              "score": 2,
-              "descriptor": "Qué debe cumplir la respuesta para obtener 2"
-            },
-            {
-              "score": 3,
-              "descriptor": "Qué debe cumplir la respuesta para obtener 3"
-            }
-          ]
-        }
       ]
     }
+  },
+  "plantilla_referencia": [
+    "Eres un experto en evaluación de competencias de ingeniería de software con el marco SFIA.",
+    "Hay {cantidad} ítem(s) de tipo `{tipo}` de la skill {skill_codigo} - {skill_nombre} (nivel de responsabilidad {nivel}, {nivel_titulo}).",
+    "Escribe la respuesta de referencia de cada ítem, en español: la que obtendría el puntaje 3 en todos los criterios de su rúbrica.",
+    "",
+    "Ítems:",
+    "{items_json}",
+    "",
+    "Responde ÚNICAMENTE con un objeto JSON, sin texto adicional ni bloques de código, con esta forma:",
+    "{forma_json}",
+    "La lista `items` debe tener exactamente {cantidad} elemento(s), en el mismo orden que los ítems."
+  ],
+  "forma_json_referencia": {
+    "reference_answer": "Respuesta de referencia que cumple el puntaje 3 de cada criterio"
   }
 }

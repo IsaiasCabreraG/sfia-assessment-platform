@@ -174,7 +174,7 @@ Table content.item_scores {
   id uuid [pk]
   item_version_id uuid [ref: > content.item_versions.id, not null]
   validator_id uuid [ref: > identity.users.id, not null]
-  score numeric(2,1) [not null, note: 'CHECK 0.0 a 5.0']
+  score smallint [not null, note: 'CHECK 1 a 5']
   created_at timestamptz [not null]
   indexes { (item_version_id, validator_id) [unique] }
 }
