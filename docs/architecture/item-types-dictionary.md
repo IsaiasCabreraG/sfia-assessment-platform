@@ -1,6 +1,6 @@
 # Diccionario de tipos de ítem
 
-> Las tablas corresponden al modelo `sprint1-db.dbml` (tabla base más extensiones). Supuestos aún sin confirmar: los códigos de skill de los ejemplos son ilustrativos.
+> Las tablas corresponden al modelo `db.dbml` (tabla base más extensiones). Supuestos aún sin confirmar: los códigos de skill de los ejemplos son ilustrativos.
 
 ## 1. Convenciones
 

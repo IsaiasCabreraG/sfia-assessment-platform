@@ -2,7 +2,7 @@
 from decimal import Decimal
 from uuid import UUID, uuid4
 
-from shared.errors import BadGateway, BadRequest, NotFound
+from shared.errors import BadGateway, BadRequest, Forbidden, NotFound
 from shared.events import emit_event
 from shared.security import AuthUser
 
@@ -216,7 +216,7 @@ def publish_items(cur, user: AuthUser, *, available_to_experts: bool, groups: li
 
 
 def list_items(cur, user: AuthUser, *, status: str | None, skill_id, profile_id, item_type, level, scored,
-               min_score, max_score, limit: int, offset: int) -> dict:
+               min_score, max_score, limit: int, offset: int, mine: bool = False) -> dict:
     """Lista ítems con filtros (HU-07).
 
     Quien no es docente/reclutador solo ve los activos que el autor dejó disponibles para expertos;
@@ -235,29 +235,38 @@ def list_items(cur, user: AuthUser, *, status: str | None, skill_id, profile_id,
         if valor is not None and not Decimal(1) <= valor <= Decimal(5):
             raise BadRequest(f"{nombre} debe estar entre 1 y 5")
     rows = repository.list_items(cur, {
-        "only_available": not es_docente, "user_id": user.id, "status": status, "skill_id": skill_id, "profile_id": profile_id, "item_type": item_type,
+        "only_available": not es_docente, "mine": mine and es_docente, "user_id": user.id, "status": status, "skill_id": skill_id, "profile_id": profile_id, "item_type": item_type,
         "level": level, "scored": scored, "min_score": min_score, "max_score": max_score,
         "limit": min(max(limit, 1), 200), "offset": max(offset, 0)})
     total = rows[0]["total"] if rows else 0
     return {"total": total, "items": [{k: v for k, v in r.items() if k != "total"} for r in rows]}
 
 
-def item_detail(cur, user: AuthUser, item_id: UUID) -> dict:
-    """Atributos completos de la versión vigente (HU-08) con su puntuación (HU-25)."""
+def item_detail(cur, user: AuthUser, item_id: UUID, version: int | None = None) -> dict:
+    """Atributos completos de la versión vigente (HU-08), o de la `version` indicada, con su puntuación (HU-25).
+
+    Una versión concreta sigue las mismas reglas de visibilidad que el ítem. El constructor la usa para mostrar la
+    versión fijada en una evaluación, que puede no ser la más reciente (`latest_version`)."""
     item = _get_visible_item(cur, user, item_id)
+    latest = item["version"]
+    if version is not None and version != latest:
+        item = repository.get_item_with_version(cur, item_id, version)
+        if item is None:
+            raise NotFound("Versión no encontrada")
     version_id, item_type = item["version_id"], item["type"]
     content = repository.get_type_content(cur, version_id, item_type)
     summary = repository.get_score_summary(cur, version_id)
     return {
         "id": item["id"], "status": item["status"], "available_to_experts": item["available_to_experts"],
         "skill": {"id": item["skill_id"], "code": item["skill_code"], "name": item["skill_name"]},
-        "version": item["version"], "origin": item["origin"], "type": item_type,
+        "version": item["version"], "latest_version": latest, "origin": item["origin"], "type": item_type,
         "level": item["level"], "estimated_minutes": item["estimated_minutes"],
         "evaluation_goal": item["evaluation_goal"], "statement": item["statement"],
         "content": content,
         "rubric": repository.get_rubric(cur, version_id) if item_type in OPEN_TYPES else None,
         "score": {"average": summary["average"], "count": summary["count"]},
         "my_score": repository.get_my_score(cur, version_id, user.id),
+        "is_mine": item["created_by"] == user.id, "source_item_id": item["source_item_id"],
     }
 
 
@@ -272,15 +281,97 @@ def _get_visible_item(cur, user: AuthUser, item_id: UUID) -> dict:
     return item
 
 
+# ---------- Versionado: editar y regenerar (HU-13, HU-14, HU-26) ----------
+
+
+def edit_item(cur, user: AuthUser, item_id: UUID, *, item: dict, estimated_minutes: int,
+              available_to_experts: bool, origin: str, context: str | None) -> dict:
+    """Guarda una edición (HU-13) o una regeneración confirmada (HU-14) como versión nueva (HU-26).
+
+    Si el ítem es del usuario, es la versión siguiente del mismo ítem y se actualiza su disponibilidad.
+    Si es de otro docente, se crea una copia propia (ítem nuevo, versión 1, con `source_item_id`) y el
+    original no cambia. Tipo, skill y nivel se conservan; el contenido pasa las mismas reglas que lo generado.
+    """
+    current = _get_visible_item(cur, user, item_id)
+    own = current["created_by"] == user.id
+    if own:
+        repository.lock_item(cur, item_id)
+        current = _get_visible_item(cur, user, item_id)  # relee: otra edición pudo crear una versión
+    elif current["status"] == "inactive":
+        raise NotFound("Ítem no encontrado")
+    context = (context or "").strip() or None
+    if origin == "regenerated" and context is None:
+        raise BadRequest("Una regeneración debe indicar el nuevo contexto")
+    _check_request(cur, current["skill_id"], current["level"], current["type"], estimated_minutes)
+    try:
+        content = validate_items(current["type"], [item])[0]
+    except ValueError as e:
+        raise BadRequest(f"{current['type']}: {e}")
+    request_id = None
+    if origin == "regenerated":
+        request_id = repository.insert_generation_request(
+            cur, user.id, current["skill_id"], current["level"], current["type"], 1, estimated_minutes,
+            context, "completed")["id"]
+    if own:
+        repository.set_item_availability(cur, item_id, available_to_experts)
+        target_id, number = item_id, current["version"] + 1
+    else:
+        target_id = repository.insert_item(cur, current["skill_id"], user.id, available_to_experts,
+                                           source_item_id=item_id)["id"]
+        number = 1
+    version = repository.insert_version(
+        cur, item_id=target_id, version=number, type=current["type"], origin=origin, request_id=request_id,
+        level=current["level"], minutes=estimated_minutes, goal=content.evaluation_goal, statement=content.statement)
+    repository.insert_content(cur, version["id"], current["type"], content)
+    emit_event(cur, "ItemVersionCreated", target_id,
+               {"item_id": str(target_id), "version": number, "type": current["type"], "origin": origin})
+    return {"id": target_id, "version_id": version["id"], "version": number, "copy": not own,
+            "available_to_experts": available_to_experts}
+
+
+def regenerate_preview(cur, authorization: str, user: AuthUser, item_id: UUID, context: str | None) -> dict:
+    """Vista previa de la regeneración de un ítem con un nuevo contexto (HU-14, HU-14-2). NO guarda nada.
+
+    Conserva tipo, skill, nivel y tiempo, y la respuesta correcta que tenía (alternativa única y verdadero o
+    falso). El docente la revisa y, al confirmar, la guarda con `edit_item` (origin = regenerated).
+    """
+    current = _get_visible_item(cur, user, item_id)
+    if current["created_by"] != user.id and current["status"] == "inactive":
+        raise NotFound("Ítem no encontrado")
+    context = (context or "").strip() or None
+    if context is None:
+        raise BadRequest("Debes indicar el nuevo contexto")
+    content = repository.get_type_content(cur, current["version_id"], current["type"])
+    correct_position = correct_answer = None
+    if current["type"] == "single_choice":
+        correct_position = next((o["position"] for o in content["options"] if o["is_correct"]), None)
+    elif current["type"] == "true_false":
+        correct_answer = content["correct_answer"]
+    result = generate_drafts(
+        cur, authorization, skill_id=current["skill_id"], level=current["level"], item_type=current["type"],
+        item_count=1, estimated_minutes=current["estimated_minutes"], context=context,
+        previous_statement=current["statement"], correct_position=correct_position, correct_answer=correct_answer)
+    return {"item_id": item_id, "context": context, "draft": result["drafts"][0],
+            "item_type": result["item_type"], "estimated_minutes": result["estimated_minutes"]}
+
+
+def item_versions(cur, user: AuthUser, item_id: UUID) -> dict:
+    """Historial de versiones del ítem (la más reciente primero), con su origen y puntuación."""
+    _get_visible_item(cur, user, item_id)
+    return {"item_id": item_id, "versions": repository.list_versions(cur, item_id)}
+
+
 # ---------- Estado (HU-09) y puntuación (HU-05) ----------
 
 
-def set_status(cur, item_id: UUID, status: str) -> dict:
+def set_status(cur, user: AuthUser, item_id: UUID, status: str) -> dict:
+    """Activa o desactiva un ítem (HU-09). Solo su autor puede hacerlo: otros docentes dependen de él (evaluaciones
+    y plantillas)."""
     if status not in ("active", "inactive"):
         raise BadRequest("status debe ser active o inactive")
-    item = repository.get_item_with_current_version(cur, item_id)
-    if item is None:
-        raise NotFound("Ítem no encontrado")
+    item = _get_visible_item(cur, user, item_id)
+    if item["created_by"] != user.id:
+        raise Forbidden("Solo el autor del ítem puede activarlo o desactivarlo")
     if item["status"] != status:
         repository.set_item_status(cur, item_id, status)
         if status == "inactive":

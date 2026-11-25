@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Levanta de una vez los módulos que todavía no estén corriendo: identity, catalog, llm, content y los
+# Levanta de una vez los módulos que todavía no estén corriendo: identity, catalog, llm, content, builder y los
 # portales (web). Los que ya corren se omiten y no se tocan. Muestra el log de lo que inició y, con Ctrl+C, lo detiene.
 #
 #   bash tools/run_all.sh               inicia lo que falte
 #   bash tools/run_all.sh --reiniciar   detiene todo lo de estos puertos y lo inicia de nuevo (necesario tras cambiar código)
 #   bash tools/run_all.sh --detener     detiene todo lo de estos puertos y termina
 #
-# Puertos: identity 8001, catalog 8002, llm 8003, content 8004, web 5173. Para pruebas se pueden cambiar con
-# PORT_IDENTITY, PORT_CATALOG, PORT_LLM, PORT_CONTENT y PORT_WEB (el login con Google solo funciona en los puertos
+# Puertos: identity 8001, catalog 8002, llm 8003, content 8004, builder 8005, web 5173. Para pruebas se pueden cambiar con
+# PORT_IDENTITY, PORT_CATALOG, PORT_LLM, PORT_CONTENT, PORT_BUILDER y PORT_WEB (el login con Google solo funciona en los puertos
 # por defecto, porque son los registrados en Google).
 set -eo pipefail
 cd "$(dirname "$0")/.."
@@ -17,8 +17,8 @@ MODO="${1:-}"
 case "$MODO" in ""|--reiniciar|--detener) ;; *) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;; esac
 
 declare -A PUERTO=( [identity]="${PORT_IDENTITY:-8001}" [catalog]="${PORT_CATALOG:-8002}" [llm]="${PORT_LLM:-8003}"
-                    [content]="${PORT_CONTENT:-8004}" [web]="${PORT_WEB:-5173}" )
-ORDEN=(identity catalog llm content web)
+                    [content]="${PORT_CONTENT:-8004}" [builder]="${PORT_BUILDER:-8005}" [web]="${PORT_WEB:-5173}" )
+ORDEN=(identity catalog llm content builder web)
 LOGS="tools/logs"
 
 escucha() { ss -ltn "sport = :$1" 2>/dev/null | grep -q LISTEN; }
@@ -44,12 +44,13 @@ cargar_env
 exportar_pythonpath
 
 # Si se cambió algún puerto, los módulos deben apuntarse entre sí con los nuevos.
-if [ -n "${PORT_IDENTITY}${PORT_CATALOG}${PORT_LLM}${PORT_CONTENT}${PORT_WEB}" ]; then
+if [ -n "${PORT_IDENTITY}${PORT_CATALOG}${PORT_LLM}${PORT_CONTENT}${PORT_BUILDER}${PORT_WEB}" ]; then
     export CORS_ORIGINS="http://localhost:${PUERTO[web]}" LLM_URL="http://localhost:${PUERTO[llm]}"
     export CATALOG_URL="http://localhost:${PUERTO[catalog]}"
     export PORTAL_DOCENTE_URL="http://localhost:${PUERTO[web]}/docente/" PORTAL_VALIDADOR_URL="http://localhost:${PUERTO[web]}/validador/"
     export NEXT_PUBLIC_IDENTITY_URL="http://localhost:${PUERTO[identity]}" NEXT_PUBLIC_CATALOG_URL="http://localhost:${PUERTO[catalog]}"
     export NEXT_PUBLIC_CONTENT_URL="http://localhost:${PUERTO[content]}"
+    export NEXT_PUBLIC_BUILDER_URL="http://localhost:${PUERTO[builder]}"
     [ "${PUERTO[web]}" != 5173 ] && export NEXT_DIST_DIR=".next-${PUERTO[web]}"
 fi
 

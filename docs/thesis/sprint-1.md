@@ -3,12 +3,12 @@
 | Campo     | Valor                                                                                           |
 | --------- | ----------------------------------------------------------------------------------------------- |
 | Proyecto  | Plataforma de evaluación técnica y práctica para ingeniería de software basada en el marco SFIA |
-| Versión   | 0.3                                                                                             |
+| Versión   | 0.4                                                                                             |
 | Fecha     | 25/11/2026                                                                                      |
 | Autor(es) | Isaías Cabrera                                                                                  |
 | Estado    | Borrador                                                                                        |
 
-> Las historias de usuario están en `user-stories.md`. El modelo de datos está en `../architecture/sprint1-db.dbml` (Figura 3).
+> Las historias de usuario están en `user-stories.md`. El modelo de datos está en `../architecture/db.dbml` (Figura 3).
 
 ## 1. Objetivo y fechas
 
@@ -71,8 +71,10 @@ El modelo de datos incluye estructuras que ninguna HU del Sprint 1 usa: `item_ve
 
 - **Opciones que dependen de otras (HU-04):** al generar alternativa única con la IA, una opción como «todas las anteriores» o «A y B» solo puede ir en la última posición, y un detector de texto lo comprueba (letras A–D en mayúscula, «todas/ninguna/ambas de las anteriores», «las dos primeras», «opción B»). El detector no entiende el sentido: puede rechazar una opción legítima que contenga, por ejemplo, «A y B» con otro significado (se reintenta una vez) y puede dejar pasar una referencia redactada de otra forma. Además, una opción de este tipo solo puede ser la correcta cuando la correcta sorteada es la D, es decir, en aproximadamente 1 de cada 4 preguntas.
 - **Recomendar tipos de ítem (HU-06-3):** el sistema no recomienda ni restringe los tipos de ítem por skill y nivel; el docente/reclutador elige. Una recomendación real requeriría una tabla por categoría de skill y nivel definida por un experto, o una consulta previa a la IA; ninguna está definida.
-- **Guardar un rol propio (HU-38):** las skills elegidas desde un rol no se pueden guardar como un rol personalizado; hay que volver a elegirlas. Requiere almacenamiento nuevo (a quién pertenece, si se comparte, si se edita o se borra).
+- **Guardar un rol propio (HU-38):** las skills elegidas desde un rol no se pueden guardar como un rol personalizado; hay que volver a elegirlas. Requiere almacenamiento nuevo (a quién pertenece, si se comparte, si se edita o se borra). Se aborda en el Sprint 2 (HU-38, junto con HU-11-3 y HU-12).
 - **Adaptar la rúbrica base (HU-36):** los criterios fijos de cada tipo no se pueden cambiar desde la plataforma; se editan en `config/criterios-fijos.json`.
+
+HU-06-3 y HU-36 quedan en el Backlog y fuera del Sprint 2.
 
 ## 6. Pendiente
 

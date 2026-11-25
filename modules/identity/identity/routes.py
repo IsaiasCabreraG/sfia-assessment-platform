@@ -30,7 +30,7 @@ async def login(request: Request, portal: str = "docente"):
 
 
 @router.get("/callback")
-async def callback(request: Request, conn=Depends(get_conn)):
+async def callback(request: Request, conn=Depends(get_conn, scope="function")):
     """Google vuelve aquí: se registra al usuario y se redirige al portal con los tokens en el fragmento."""
     try:
         token = await oauth.google.authorize_access_token(request)
@@ -52,7 +52,7 @@ class RefreshBody(BaseModel):
 
 
 @router.post("/refresh")
-def refresh(body: RefreshBody, conn=Depends(get_conn)):
+def refresh(body: RefreshBody, conn=Depends(get_conn, scope="function")):
     """Renueva la sesión: cambia un refresh token por un access token y un refresh token nuevos."""
     with conn.cursor() as cur:
         access, refresh_token = service.refresh_session(cur, body.refresh_token)
@@ -60,14 +60,14 @@ def refresh(body: RefreshBody, conn=Depends(get_conn)):
 
 
 @router.post("/logout", status_code=204)
-def logout(body: RefreshBody, conn=Depends(get_conn)):
+def logout(body: RefreshBody, conn=Depends(get_conn, scope="function")):
     """Cierra la sesión: revoca el refresh token."""
     with conn.cursor() as cur:
         service.logout(cur, body.refresh_token)
 
 
 @router.get("/me")
-def me(user: AuthUser = Depends(current_user), conn=Depends(get_conn)):
+def me(user: AuthUser = Depends(current_user), conn=Depends(get_conn, scope="function")):
     """Usuario y roles vigentes en la BD (el JWT puede traer roles anteriores a un cambio)."""
     with conn.cursor() as cur:
         return service.user_with_roles(cur, user.id)

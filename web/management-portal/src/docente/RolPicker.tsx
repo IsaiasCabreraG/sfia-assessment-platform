@@ -26,7 +26,8 @@ interface Props {
   cargarPerfil: (id: string) => Promise<RoleProfileDetail>;
   /** Ids de las skills que ya están en el formulario: se muestran marcadas y no se pueden desmarcar desde aquí. */
   yaEnFormulario: Set<string>;
-  alAgregar: (skills: SkillDeRol[]) => void;
+  /** Recibe las skills marcadas y el rol del que salieron (el constructor lo guarda como rol de base). */
+  alAgregar: (skills: SkillDeRol[], rol: RoleProfileDetail) => void;
 }
 
 export function RolPicker({ perfiles, skills, cargarPerfil, yaEnFormulario, alAgregar }: Props) {
@@ -77,7 +78,7 @@ export function RolPicker({ perfiles, skills, cargarPerfil, yaEnFormulario, alAg
 
   const agregar = () => {
     if (!rol) return;
-    alAgregar(rol.skills.filter((s) => marcadas.has(s.id) && !yaEnFormulario.has(s.id)));
+    alAgregar(rol.skills.filter((s) => marcadas.has(s.id) && !yaEnFormulario.has(s.id)), rol);
     cerrar();
   };
 

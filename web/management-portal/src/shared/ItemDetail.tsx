@@ -38,6 +38,7 @@ export function ItemDetail({ item }: { item: ItemDetailData }) {
           {NOMBRE_TIPO[item.type] ?? item.type} · nivel {item.level} · {item.estimated_minutes} min · versión{" "}
           {item.version} · {item.status === "active" ? "activo" : "inactivo"} ·{" "}
           {item.available_to_experts ? "disponible para expertos" : "uso privado"}
+          {item.source_item_id && " · copia de otro ítem"}
         </p>
       </header>
       <VistaItem type={item.type} c={{ statement: item.statement, evaluation_goal: item.evaluation_goal, ...item.content, rubric: item.rubric }} />

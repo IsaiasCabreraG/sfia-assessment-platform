@@ -15,9 +15,19 @@ def _cleanup() -> None:
     """Borra todo lo creado por usuarios de prueba (en orden de dependencias)."""
     with connect() as conn, conn.cursor() as cur:
         cur.execute("CREATE TEMP TABLE tu AS SELECT id FROM identity.users WHERE email LIKE %s", (f"%{TEST_DOMAIN}",))
+        cur.execute("CREATE TEMP TABLE td AS SELECT design_id AS id FROM evaluation.evaluations WHERE owner_id IN (SELECT id FROM tu) "
+                    "UNION SELECT design_id FROM evaluation.templates WHERE owner_id IN (SELECT id FROM tu)")
         cur.execute("CREATE TEMP TABLE ti AS SELECT id FROM content.items WHERE created_by IN (SELECT id FROM tu)")
         cur.execute("CREATE TEMP TABLE tv AS SELECT id FROM content.item_versions WHERE item_id IN (SELECT id FROM ti)")
         for sql in (
+            "DELETE FROM evaluation.design_items WHERE design_id IN (SELECT id FROM td)",
+            "DELETE FROM evaluation.design_skills WHERE design_id IN (SELECT id FROM td)",
+            "DELETE FROM evaluation.evaluations WHERE owner_id IN (SELECT id FROM tu)",
+            "DELETE FROM evaluation.templates WHERE owner_id IN (SELECT id FROM tu)",
+            "DELETE FROM evaluation.designs WHERE id IN (SELECT id FROM td)",
+            "DELETE FROM evaluation.custom_role_skills WHERE custom_role_id IN "
+            "(SELECT id FROM evaluation.custom_roles WHERE owner_id IN (SELECT id FROM tu))",
+            "DELETE FROM evaluation.custom_roles WHERE owner_id IN (SELECT id FROM tu)",
             "DELETE FROM content.rubric_levels WHERE criterion_id IN "
             "(SELECT id FROM content.rubric_criteria WHERE item_version_id IN (SELECT id FROM tv))",
             "DELETE FROM content.rubric_criteria WHERE item_version_id IN (SELECT id FROM tv)",
@@ -79,6 +89,12 @@ def sin_rol():
 @pytest.fixture(scope="session")
 def content_client():
     from content.main import app
+    return TestClient(app)
+
+
+@pytest.fixture(scope="session")
+def builder_client():
+    from builder.main import app
     return TestClient(app)
 
 

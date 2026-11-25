@@ -43,7 +43,7 @@ Reclutador y Docente usan el Portal de Gestión y el Portal de Contenido; el Exp
 | Ejecución de Evaluaciones | REST API + WebSocket | Sesiones, timer real-time, entrega secuencial de items, respuestas crudas |
 
 ### Base de datos
-PostgreSQL en una única instancia, con un schema por módulo (los del Sprint 1 están en la Figura 3). Qué módulos acceden a cuáles y de qué forma está por decidirse.
+PostgreSQL en una única instancia, con un schema por módulo (los de los Sprints 1 y 2 están en la Figura 3). Qué módulos acceden a cuáles y de qué forma está por decidirse.
 
 ## Relaciones (leyenda de flechas)
 

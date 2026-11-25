@@ -8,7 +8,7 @@ VENV="$WORKON_HOME/$ENTORNO"
 # Los paquetes Python viven en carpetas distintas (modules/<módulo>/<paquete>): se ven todos desde PYTHONPATH.
 # La raíz va primero para que también se pueda importar `tests`.
 exportar_pythonpath() {
-    export PYTHONPATH="$PWD:$PWD/modules/identity:$PWD/modules/catalog-sfia:$PWD/modules/content-generation:$PWD/modules/llm-gateway:$PWD/modules/shared"
+    export PYTHONPATH="$PWD:$PWD/modules/identity:$PWD/modules/catalog-sfia:$PWD/modules/content-generation:$PWD/modules/evaluation-builder:$PWD/modules/llm-gateway:$PWD/modules/shared"
 }
 
 # Crea el entorno virtual (virtualenvwrapper) si falta e instala las dependencias si cambiaron.

@@ -1,5 +1,7 @@
 # Sprint 1: guía del código
 
+> El Sprint 2 (constructor de evaluaciones) tiene su propia guía: `code-guide-sprint-2.md`.
+
 Esta guía explica **qué hace cada archivo y cada función** del Sprint 1, y **por dónde pasa una acción** de punta a punta (por ejemplo, qué archivos y funciones se ejecutan cuando alguien inicia sesión o publica ítems).
 
 Las rutas de las secciones 3 a 7 se escriben **relativas a la carpeta de su módulo**, para que sean cortas. Para ubicarlas en el proyecto:
@@ -560,7 +562,7 @@ La anotación de las respuestas (de acuerdo o en desacuerdo, por ítem) queda pa
 
 ## 6. Base de datos
 
-Un schema por módulo, como en `docs/architecture/sprint1-db.dbml`. `content` depende de `catalog` e `identity` (claves foráneas físicas); estos dos no dependen de nadie.
+Un schema por módulo, como en `docs/architecture/db.dbml`. `content` depende de `catalog` e `identity` (claves foráneas físicas); estos dos no dependen de nadie.
 
 | Schema | Tabla | Para qué sirve | Quién la escribe |
 |---|---|---|---|

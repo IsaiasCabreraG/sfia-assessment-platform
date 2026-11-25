@@ -26,7 +26,7 @@ interface Props {
 const COLOR_NEUTRO = "#5b6168";
 
 /** Quita lo que el usuario dejó vacío al editar (líneas, alternativas y hallazgos en blanco). */
-function limpiar(c: Record<string, any>): Record<string, any> {
+export function limpiar(c: Record<string, any>): Record<string, any> {
   const lista = (v: string[]) => v.map((x) => x.trim()).filter(Boolean);
   const r = { ...c };
   for (const k of ["functional_requirements", "non_functional_requirements", "constraints"]) if (k in r) r[k] = lista(r[k]);

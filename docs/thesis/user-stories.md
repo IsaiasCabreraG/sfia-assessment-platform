@@ -3,7 +3,7 @@
 | Campo     | Valor                                                                                           |
 | --------- | ----------------------------------------------------------------------------------------------- |
 | Proyecto  | Plataforma de evaluación técnica y práctica para ingeniería de software basada en el marco SFIA |
-| Versión   | 0.3                                                                                             |
+| Versión   | 0.4                                                                                             |
 | Fecha     | 25/11/2026                                                                                      |
 | Autor(es) | Isaías Cabrera                                                                                  |
 | Estado    | Borrador                                                                                        |
@@ -220,17 +220,13 @@
 - El banco soporta los seis tipos de ítem: alternativa única, verdadero o falso, pregunta de desarrollo, coding challenge, system design y debugging.
 - Cada versión de un ítem pertenece a uno de esos tipos.
 
-### HU-15 Conservar mis ítems modificados
+### HU-15 Conservar mis ítems modificados *(fusionada en HU-26)*
 
-**Requisito:** RF-15
+**Requisito:** RF-15 (fusionado en RF-26; se conserva el número)
 
-**Sprint:** Sprint 2 · Por validar (se solapa con la disponibilidad privada de HU-31)
+**Sprint:** Sprint 2 · Fusionada en HU-26
 
-**Como** docente/reclutador, **quiero** que mis ítems modificados se guarden en un banco personal, **para** reutilizarlos en futuras evaluaciones.
-
-**Criterios de aceptación:**
-- Al modificar un ítem, la versión modificada se guarda en mi banco personal.
-- Puedo consultar mi banco personal.
+HU-15 se fusionó en HU-26: guardar el ítem modificado en el banco personal es consecuencia de versionarlo, y la privacidad de la versión nueva reutiliza la disponibilidad de HU-31. Sus dos criterios pasaron a HU-26.
 
 ### HU-25 Ver la puntuación de un ítem
 
@@ -250,9 +246,9 @@
 
 **Requisito:** RF-26
 
-**Sprint:** Sprint 2 · Probable
+**Sprint:** Sprint 2 · Probable (incluye HU-15)
 
-**Como** docente/reclutador, **quiero** que al modificar o regenerar un ítem se cree una nueva versión, **para** conservar la versión anterior junto con sus puntuaciones.
+**Como** docente/reclutador, **quiero** que al modificar o regenerar un ítem se cree una nueva versión que quede en mi banco, **para** conservar la versión anterior junto con sus puntuaciones y reutilizar mi versión en futuras evaluaciones.
 
 **Criterios de aceptación:**
 - Al regenerar un ítem con un nuevo contexto, se crea una nueva versión.
@@ -261,6 +257,10 @@
 - Las puntuaciones quedan asociadas solo a la versión anterior.
 - La nueva versión parte sin puntuar.
 - Cada versión registra su origen: generada, regenerada o modificada manualmente.
+- Al guardar elijo si el ítem queda disponible para expertos (una copia parte privada). La disponibilidad es del ítem y vale para todas sus versiones. *(de HU-15)*
+- Si el ítem es de otro docente, se crea una copia mía (ítem nuevo, versión 1, con referencia al original) y el original no cambia. *(de HU-15)*
+- Puedo consultar mis ítems en el banco, con un filtro «Solo mis ítems». *(de HU-15)*
+- Puedo ver el historial de versiones de un ítem, con su origen, fecha y puntuación.
 
 ### HU-27 Revisar los borradores antes de publicarlos
 
@@ -371,11 +371,11 @@
 
 **Implementado:** en el banco y en la revisión de borradores, cada ítem muestra su tipo con un icono de color (12 `.svg` propios en `public/icons/`) y su nivel como una celda con el color de la categoría de la skill, con menos texto en cada fila. El Paso 1 usa los mismos iconos.
 
-### HU-38 Guardar un rol propio con las skills elegidas *(nueva, diferida)*
+### HU-38 Guardar un rol propio con las skills elegidas *(nueva, Sprint 2)*
 
 **Como** docente/reclutador, **quiero** guardar las skills que elegí como un rol personalizado, **para** reutilizarlo después sin volver a elegirlas.
 
-*(Explicitud: Alta; decisión del autor al implementar HU-06-4. Diferida: requiere almacenamiento nuevo (a quién pertenece el rol, si se comparte, si se edita o se borra) y queda como limitación en `sprint-1.md`. Código provisorio, sin RF.)*
+*(Explicitud: Alta; decisión del autor al implementar HU-06-4. Diferida del Sprint 1 (requería almacenamiento nuevo: a quién pertenece el rol, si se comparte, si se edita o se borra); se incluye en el Sprint 2 junto con HU-11-3 y HU-12-2, que resuelven el mismo almacenamiento. Código provisorio, sin RF.)*
 
 ## 4. Constructor de evaluaciones
 
@@ -394,12 +394,12 @@
 - Puedo agregar y ordenar ítems con un editor visual drag-and-drop.
 
 **Refinamientos (audios del 30-10 y 06-11):**
-- **HU-11-2** Como docente/reclutador quiero partir de un rol SFIA, ver sus skills con los niveles en que SFIA las define y restringir los niveles para esta evaluación (por ejemplo, nivel 3 a 4), para que el banco se filtre según lo que quiero evaluar. *(Explicitud: Alta; origen A-23)*
-  - *Qué cambia:* Los niveles se definen por skill, no por rol. Se dijo que esto limita mucho el banco.
-- **HU-11-3** Como docente/reclutador quiero distinguir las skills core de las related del rol y agregar skills propias que no están en él, para armar mi versión del rol. *(Explicitud: Alta; origen A-24)*
-  - *Qué cambia:* Se acordó mostrar core y related por separado; saber cuál es related sirve también para análisis posterior.
-- **HU-11-4** Como docente/reclutador quiero configurar la duración total de la prueba, que se pueda subir pero no bajar de la definida por el sistema, para ajustarla a mi caso. *(Explicitud: Media; origen B-07)*
-  - *Qué cambia:* A confirmar; se relaciona con la pregunta al cliente sobre el tiempo máximo global.
+- **HU-11-2** Como docente/reclutador quiero partir de un rol SFIA, ver sus skills con los niveles en que SFIA las define y restringir, para cada skill, los niveles que se evaluarán (por ejemplo, PROG de nivel 3 a 4), para que el banco se filtre según lo que quiero evaluar. *(Explicitud: Alta; origen A-23)*
+  - *Qué cambia:* Los niveles se definen por skill, no por rol. Se dijo que esto limita mucho el banco. **Decisión del autor (25/11/2026):** el rango es de cada skill y no de toda la evaluación; por defecto es el que SFIA define para esa skill. Un rol solo define qué skills se incluyen: SFIA no especifica en qué nivel se aplica cada skill dentro de un rol, así que los niveles nunca son del rol.
+- **HU-11-3** Como docente/reclutador quiero ver qué skills de un rol son core y cuáles related al añadirlas desde él (solo como ayuda para elegir) y agregar skills propias que no están en él, para armar mi versión del rol. Si agrego o quito skills, el rol pasa a ser un rol personalizado que puedo guardar. *(Explicitud: Alta; origen A-24)*
+  - *Qué cambia:* Se acordó mostrar core y related por separado; saber cuál es related sirve también para análisis posterior. **Decisión del autor (25/11/2026):** en la evaluación ya no se distingue core y related (solo se ve al elegir desde el rol); guardar el rol personalizado es opcional (HU-38).
+- **HU-11-4** Como docente/reclutador quiero configurar la duración total de la prueba, con la suma de los minutos de sus ítems como valor recomendado y libertad para subirla o bajarla (con un aviso si baja de esa suma), para ajustarla a mi caso. *(Explicitud: Media; origen B-07)*
+  - *Qué cambia:* Decisión del autor (25/11/2026): reemplaza «no bajar de la definida por el sistema» por un aviso al bajar de la suma. Se relaciona con la pregunta al cliente sobre el tiempo máximo global.
 
 ### HU-12 Guardar como plantilla o publicar
 
@@ -415,7 +415,7 @@
 
 **Refinamientos (audios del 30-10 y 06-11):**
 - **HU-12-2** Como docente/reclutador quiero marcar mis plantillas como públicas o privadas, para que otros docentes las reutilicen. *(Explicitud: Alta; origen A-29)*
-  - *Qué cambia:* **Contradice el supuesto S-6 del Sprint 2** ("la plantilla es privada"). Se comparó con el check "publicar para todos" de los ítems.
+  - *Qué cambia:* **Contradice el supuesto S-6 del Sprint 2** ("la plantilla es privada"). Se comparó con el check "publicar para todos" de los ítems. **Una plantilla pública solo puede tener ítems públicos:** al hacerla pública se confirma hacer públicos los ítems propios privados; los ítems privados de otro docente lo impiden.
 - **HU-12-3** Como docente/reclutador quiero que una evaluación pase por los estados borrador, lista/publicada y descartada, y poder descartarla para que deje de aparecer entre las disponibles, para ordenar mi trabajo. *(Explicitud: Alta; origen A-30, A-32)*
   - *Qué cambia:* Una evaluación publicada no se edita; si cambio algo es otra evaluación. Los estados son de la evaluación; la ejecución es otra cosa (ver HU-32).
 
@@ -428,8 +428,10 @@
 **Como** docente/reclutador, **quiero** modificar manualmente un ítem generado, **para** ajustarlo según estime conveniente.
 
 **Criterios de aceptación:**
-- Puedo editar un ítem de la evaluación.
-- Mis cambios quedan guardados en el ítem.
+- Puedo editar un ítem desde el banco de ítems: su enunciado, el contenido propio de su tipo, la rúbrica y el tiempo estimado. El tipo, la skill y el nivel no cambian.
+- Lo que guardo cumple las mismas reglas que lo generado (por ejemplo, los pesos de la rúbrica suman 100).
+- Mis cambios se guardan como una versión nueva del ítem (HU-26). Si el ítem es de otro docente, se guardan como una copia mía y el original no cambia (HU-15).
+- Al guardar decido de nuevo si el ítem queda disponible para expertos.
 
 ### HU-14 Regenerar un ítem con un nuevo contexto
 
@@ -440,14 +442,15 @@
 **Como** docente/reclutador, **quiero** regenerar un ítem indicando un nuevo contexto, **para** obtener una variante más ajustada a mi caso.
 
 **Criterios de aceptación:**
-- Puedo indicar un nuevo contexto para un ítem.
-- La plataforma genera una nueva versión del ítem con ese contexto.
-- El contexto indicado queda guardado junto con la nueva versión.
-- La nueva versión mantiene el tipo de ítem de la versión anterior (HU-14-2; reemplaza el criterio original que permitía cambiarlo).
+- Puedo indicar un nuevo contexto para un ítem (es obligatorio).
+- La plataforma genera una vista previa del ítem con ese contexto; no se guarda nada hasta que confirmo.
+- Al confirmar se guarda una versión nueva (HU-26) y el contexto indicado queda guardado junto con ella.
+- La nueva versión mantiene el tipo, la skill, el nivel y el tiempo de la anterior, y en alternativa única y verdadero o falso, también la respuesta correcta (HU-14-2; reemplaza el criterio original que permitía cambiar el tipo).
+- Si el ítem es de otro docente, se guarda como una copia mía (HU-15).
 
 **Refinamientos (audios del 30-10 y 06-11):**
 - **HU-14-2** Como docente/reclutador quiero regenerar un ítem cambiando solo su contexto (empresa o lenguaje) y que el tipo de ítem se mantenga, para hacer las mínimas modificaciones. *(Explicitud: Alta; origen A-26)*
-  - *Qué cambia:* **Reemplaza el criterio 4 de HU-14** ("puede ser de un tipo distinto"). Guardar la versión nueva en el banco propio ya lo cubren HU-26 y HU-15.
+  - *Qué cambia:* **Reemplaza el criterio 4 de HU-14** ("puede ser de un tipo distinto"). Guardar la versión nueva en el banco propio ya lo cubre HU-26 (que incluye HU-15).
 
 ### HU-16 Compartir una evaluación por link
 

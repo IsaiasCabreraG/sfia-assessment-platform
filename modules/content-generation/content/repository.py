@@ -19,11 +19,11 @@ def insert_generation_request(cur, user_id, skill_id, level, item_type, count, m
 # ---------- Ítems y versiones ----------
 
 
-def insert_item(cur, skill_id, user_id, available_to_experts: bool) -> dict:
+def insert_item(cur, skill_id, user_id, available_to_experts: bool, source_item_id=None) -> dict:
     cur.execute(
-        "INSERT INTO content.items (status, skill_id, created_by, available_to_experts) "
-        "VALUES ('active', %s, %s, %s) RETURNING *",
-        (skill_id, user_id, available_to_experts),
+        "INSERT INTO content.items (status, skill_id, created_by, available_to_experts, source_item_id) "
+        "VALUES ('active', %s, %s, %s, %s) RETURNING *",
+        (skill_id, user_id, available_to_experts, source_item_id),
     )
     return cur.fetchone()
 
@@ -87,6 +87,31 @@ def insert_content(cur, version_id, item_type: str, c) -> None:
                             "VALUES (%s, %s, %s)", (criterion_id, lvl.score, lvl.descriptor))
 
 
+def lock_item(cur, item_id) -> None:
+    """Bloquea la fila del ítem hasta el fin de la transacción: evita dos versiones nuevas simultáneas."""
+    cur.execute("SELECT id FROM content.items WHERE id = %s FOR UPDATE", (item_id,))
+
+
+def set_item_availability(cur, item_id, available_to_experts: bool) -> None:
+    cur.execute("UPDATE content.items SET available_to_experts = %s WHERE id = %s", (available_to_experts, item_id))
+
+
+def list_versions(cur, item_id) -> list[dict]:
+    """Historial del ítem: la más reciente primero, con la puntuación de cada versión."""
+    cur.execute(
+        """
+        SELECT v.id, v.version, v.origin, v.estimated_minutes, v.created_at, sc.average, sc.n AS count
+        FROM content.item_versions v
+        JOIN LATERAL (SELECT round(avg(score), 1) AS average, count(*)::int AS n
+                      FROM content.item_scores WHERE item_version_id = v.id) sc ON true
+        WHERE v.item_id = %s
+        ORDER BY v.version DESC
+        """,
+        (item_id,),
+    )
+    return cur.fetchall()
+
+
 # ---------- Distribución de las respuestas correctas del banco (HU-04-2 y HU-04-7) ----------
 
 
@@ -120,6 +145,7 @@ JOIN LATERAL (SELECT round(avg(score), 1) AS average, count(*)::int AS n
               FROM content.item_scores WHERE item_version_id = v.id) sc ON true
 WHERE (%(status)s::text IS NULL OR i.status = %(status)s)
   AND (i.available_to_experts OR (NOT %(only_available)s AND i.created_by = %(user_id)s))
+  AND (NOT %(mine)s OR i.created_by = %(user_id)s)
   AND (%(skill_id)s::uuid IS NULL OR i.skill_id = %(skill_id)s)
   AND (%(profile_id)s::uuid IS NULL OR i.skill_id IN
         (SELECT skill_id FROM catalog.role_profile_skills WHERE profile_id = %(profile_id)s))
@@ -144,7 +170,7 @@ def list_items(cur, filters: dict) -> list[dict]:
 def get_item_with_current_version(cur, item_id) -> dict | None:
     cur.execute(
         """
-        SELECT i.id, i.status, i.created_at, i.created_by, i.available_to_experts,
+        SELECT i.id, i.status, i.created_at, i.created_by, i.available_to_experts, i.source_item_id,
                s.id AS skill_id, s.code AS skill_code, s.name AS skill_name,
                v.id AS version_id, v.version, v.type, v.origin, v.level, v.estimated_minutes,
                v.evaluation_goal, v.statement
@@ -154,6 +180,24 @@ def get_item_with_current_version(cur, item_id) -> dict | None:
         WHERE i.id = %s
         """,
         (item_id,),
+    )
+    return cur.fetchone()
+
+
+def get_item_with_version(cur, item_id, version) -> dict | None:
+    """El ítem con una versión concreta (no necesariamente la vigente)."""
+    cur.execute(
+        """
+        SELECT i.id, i.status, i.created_at, i.created_by, i.available_to_experts, i.source_item_id,
+               s.id AS skill_id, s.code AS skill_code, s.name AS skill_name,
+               v.id AS version_id, v.version, v.type, v.origin, v.level, v.estimated_minutes,
+               v.evaluation_goal, v.statement
+        FROM content.items i
+        JOIN catalog.skills s ON s.id = i.skill_id
+        JOIN content.item_versions v ON v.item_id = i.id AND v.version = %s
+        WHERE i.id = %s
+        """,
+        (version, item_id),
     )
     return cur.fetchone()
 

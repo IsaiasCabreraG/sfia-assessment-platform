@@ -13,36 +13,36 @@ router = APIRouter(dependencies=[Depends(require_roles("teacher_recruiter", "val
 
 
 @router.get("/skills")
-def list_skills(q: str | None = None, category: str | None = None, conn=Depends(get_conn)):
+def list_skills(q: str | None = None, category: str | None = None, conn=Depends(get_conn, scope="function")):
     with conn.cursor() as cur:
         return service.skills(cur, q, category)
 
 
 @router.get("/skills/categories")
-def list_categories(conn=Depends(get_conn)):
+def list_categories(conn=Depends(get_conn, scope="function")):
     with conn.cursor() as cur:
         return service.categories(cur)
 
 
 @router.get("/skills/{skill_id}")
-def get_skill(skill_id: UUID, conn=Depends(get_conn)):
+def get_skill(skill_id: UUID, conn=Depends(get_conn, scope="function")):
     with conn.cursor() as cur:
         return service.skill_detail(cur, skill_id)
 
 
 @router.get("/levels")
-def list_levels(conn=Depends(get_conn)):
+def list_levels(conn=Depends(get_conn, scope="function")):
     with conn.cursor() as cur:
         return service.levels(cur)
 
 
 @router.get("/role-profiles")
-def list_profiles(conn=Depends(get_conn)):
+def list_profiles(conn=Depends(get_conn, scope="function")):
     with conn.cursor() as cur:
         return service.profiles(cur)
 
 
 @router.get("/role-profiles/{profile_id}")
-def get_profile(profile_id: UUID, conn=Depends(get_conn)):
+def get_profile(profile_id: UUID, conn=Depends(get_conn, scope="function")):
     with conn.cursor() as cur:
         return service.profile_detail(cur, profile_id)

@@ -1,4 +1,4 @@
-// Modelo de BD Sprint 1 (tabla base + extensiones, un schema por módulo) - pegar en https://dbdiagram.io/d
+// Modelo de BD Sprints 1 y 2 (tabla base + extensiones, un schema por módulo) - pegar en https://dbdiagram.io/d
 // Dependencias (FK físicas): content -> catalog, content -> identity. identity y catalog no dependen de nadie.
 
 Table identity.users {
@@ -74,6 +74,7 @@ Table content.items {
   skill_id uuid [ref: > catalog.skills.id, not null, note: 'una skill por ítem']
   created_by uuid [ref: > identity.users.id, not null]
   available_to_experts boolean [not null, note: 'false = uso privado (solo su autor); true = visible para validadores']
+  source_item_id uuid [ref: > content.items.id, note: 'si es una copia de otro ítem (editado o regenerado por otro docente), el original; null si no']
   created_at timestamptz [not null]
 }
 
@@ -220,4 +221,96 @@ TableGroup content {
 
 TableGroup events {
   events.events
+}
+
+// ---------- Sprint 2: Constructor de Evaluaciones ----------
+// Dependencias (FK físicas): evaluation -> catalog, evaluation -> identity, evaluation -> content.
+
+// Diseño: reglas, skills e ítems de una evaluación o de una plantilla. Cada una tiene el suyo (1 a 1); usar una
+// plantilla o guardar una evaluación como plantilla copia el diseño.
+Table evaluation.designs {
+  id uuid [pk]
+  role_profile_id uuid [ref: > catalog.role_profiles.id, note: 'rol de base (informativo)']
+  duration_minutes int [note: 'editable; el recomendado es la suma de item_versions.estimated_minutes']
+}
+
+Table evaluation.design_skills {
+  design_id uuid [ref: > evaluation.designs.id]
+  skill_id uuid [ref: > catalog.skills.id]
+  min_level smallint [ref: > catalog.levels.level, not null, note: 'niveles de esta skill en la prueba (por defecto, los de SFIA); CHECK min_level <= max_level']
+  max_level smallint [ref: > catalog.levels.level, not null]
+  indexes { (design_id, skill_id) [pk] }
+}
+
+Table evaluation.design_items {
+  design_id uuid [ref: > evaluation.designs.id]
+  item_version_id uuid [ref: > content.item_versions.id]
+  skill_id uuid [not null, note: 'FK compuesta (design_id, skill_id) hacia design_skills: la skill del ítem debe estar seleccionada']
+  position smallint [not null]
+  indexes { (design_id, item_version_id) [pk] }
+}
+
+Ref: evaluation.design_items.(design_id, skill_id) > evaluation.design_skills.(design_id, skill_id)
+
+Table evaluation.evaluations {
+  id uuid [pk]
+  owner_id uuid [ref: > identity.users.id, not null]
+  name varchar [not null]
+  status varchar [not null, note: 'draft | published | discarded']
+  design_id uuid [ref: - evaluation.designs.id, unique, not null]
+  share_token varchar [unique, note: 'se genera al publicar']
+  created_at timestamptz [not null]
+  published_at timestamptz
+}
+
+Table evaluation.templates {
+  id uuid [pk]
+  owner_id uuid [ref: > identity.users.id, not null]
+  name varchar [not null]
+  visibility varchar [not null, note: 'private | public']
+  design_id uuid [ref: - evaluation.designs.id, unique, not null, note: 'una plantilla nunca se publica ni se ejecuta']
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table evaluation.custom_roles {
+  id uuid [pk]
+  owner_id uuid [ref: > identity.users.id, not null]
+  name varchar [not null]
+  created_at timestamptz [not null]
+}
+
+Table evaluation.custom_role_skills {
+  custom_role_id uuid [ref: > evaluation.custom_roles.id]
+  skill_id uuid [ref: > catalog.skills.id]
+  indexes { (custom_role_id, skill_id) [pk] }
+}
+
+Table evaluation.executions {
+  id uuid [pk]
+  evaluation_id uuid [ref: > evaluation.evaluations.id, not null]
+  name varchar [not null]
+  starts_at timestamptz [not null]
+  ends_at timestamptz [not null, note: 'CHECK ends_at > starts_at']
+  created_at timestamptz [not null]
+}
+
+Table evaluation.execution_invitees {
+  id uuid [pk]
+  execution_id uuid [ref: > evaluation.executions.id, not null]
+  email varchar [not null]
+  token_hash varchar [unique, not null, note: 'token único de acceso; vigente mientras dure la ejecución']
+  indexes { (execution_id, email) [unique] }
+}
+
+TableGroup evaluation {
+  evaluation.designs
+  evaluation.design_skills
+  evaluation.design_items
+  evaluation.evaluations
+  evaluation.templates
+  evaluation.custom_roles
+  evaluation.custom_role_skills
+  evaluation.executions
+  evaluation.execution_invitees
 }

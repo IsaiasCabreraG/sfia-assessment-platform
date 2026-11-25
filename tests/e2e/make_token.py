@@ -36,4 +36,9 @@ sesion = {n: nueva_sesion(a["id"]) for n in ("generar", "vencida", "invalida", "
 sesion["vencida"]["access"] = vencido(sesion["vencida"]["access"])
 sesion["invalida"] = {"access": vencido(sesion["invalida"]["access"]), "refresh": "no-existe"}
 sesion["rol_nuevo"] = {"access": token_viejo_de_b, "refresh": nueva_sesion(b["id"])["refresh"]}
+# Versionado de ítems (versionar.mjs): dos docentes (uno es el dueño de un ítem ajeno) y un validador que puntúa.
+for nombre, roles in (("versionar", ["teacher_recruiter"]), ("versionar_ajeno", ["teacher_recruiter"]),
+                      ("versionar_validador", ["validator"])):
+    sesion[nombre] = nueva_sesion(make_user(roles)["id"])
+sesion["constructor_docente"] = nueva_sesion(make_user(["teacher_recruiter"])["id"])  # constructor.mjs
 json.dump(sesion, open(sys.argv[1], "w"))

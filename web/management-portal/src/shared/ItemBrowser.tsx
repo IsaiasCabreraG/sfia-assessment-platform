@@ -19,7 +19,7 @@ interface Props {
   portal: Portal;
   modo: "docente" | "validador";
   /** Botones propios del portal para el ítem abierto; `recargar` actualiza lista y detalle. */
-  acciones?: (item: ItemDetailData, recargar: () => void) => ReactNode;
+  acciones?: (item: ItemDetailData, recargar: () => void, abrir: (id: string) => void) => ReactNode;
   /** Cambia cuando otra pantalla crea ítems, para volver a consultar la lista. */
   version?: number;
 }
@@ -32,7 +32,7 @@ export function ItemBrowser({ portal, modo, acciones, version = 0 }: Props) {
   const [niveles, setNiveles] = useState<Level[]>([]);
   const [filtros, setFiltros] = useState({
     skill_id: "", role_profile_id: "", level: "", item_type: "", scored: "", min_score: "", max_score: "",
-    status: "active",
+    status: "active", mine: "",
   });
   const [pagina, setPagina] = useState(0);
   const [lista, setLista] = useState<{ total: number; items: ItemSummary[] }>({ total: 0, items: [] });
@@ -118,6 +118,12 @@ export function ItemBrowser({ portal, modo, acciones, version = 0 }: Props) {
             </select>
           </label>
         )}
+        {modo === "docente" && (
+          <label className="check">
+            <input type="checkbox" checked={filtros.mine === "true"} onChange={(e) => cambiar("mine", e.target.checked ? "true" : "")} />
+            Solo mis ítems
+          </label>
+        )}
       </section>
 
       {error && <p className="error">{error}</p>}
@@ -152,7 +158,7 @@ export function ItemBrowser({ portal, modo, acciones, version = 0 }: Props) {
           {detalle ? (
             <>
               <ItemDetail item={detalle} />
-              {acciones?.(detalle, recargar)}
+              {acciones?.(detalle, recargar, setAbierto)}
             </>
           ) : (
             <p className="suave">Elige un ítem de la lista para ver sus atributos.</p>

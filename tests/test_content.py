@@ -139,10 +139,14 @@ def test_desactivar_oculta_el_item_al_validador(content_client, docente, validad
     assert content_client.patch(f"/items/{item_id}/status", json={"status": "x"}, headers=docente["headers"]).status_code == 400
 
 
-def test_el_validador_no_cambia_el_estado(content_client, docente, validador, skill_ids, fake_llm):
+def test_solo_el_autor_cambia_el_estado(content_client, docente, validador, skill_ids, fake_llm):
     item_id = _crear(content_client, docente, skill_ids[0]["id"], "true_false", fake_llm)
     assert content_client.patch(f"/items/{item_id}/status", json={"status": "inactive"},
                                 headers=validador["headers"]).status_code == 403
+    otro = make_user(["teacher_recruiter"])  # otro docente ve el ítem público pero no lo puede desactivar
+    assert content_client.patch(f"/items/{item_id}/status", json={"status": "inactive"},
+                                headers=otro["headers"]).status_code == 403
+    assert content_client.get(f"/items/{item_id}", headers=docente["headers"]).json()["status"] == "active"
 
 
 # ---------- HU-05 y HU-25: puntuación ----------

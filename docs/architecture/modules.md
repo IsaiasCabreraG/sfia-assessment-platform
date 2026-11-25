@@ -11,7 +11,7 @@ Plataforma de evaluación técnica y práctica para ingeniería de software basa
 **Owns (datos)**:
 - `skills` — código, nombre, descripción, categoría, subcategoría, nivel mínimo y máximo en que SFIA la define
 - `levels` — nivel 1-7, descripción genérica de responsabilidad
-- `role_profiles` — perfil (ej: "Software Engineer L3") con su familia y sus skills (marcando las primarias)
+- `role_profiles` — perfil (ej: "Software developer") con su familia y sus skills (marcando las primarias)
 
 **API (REST)**:
 ```
@@ -42,7 +42,7 @@ POST   /role-profiles             # Admin: crear perfil
 
 **Owns (datos)**:
 - `generation_requests` — pedido de generación o de regeneración: skill, nivel, tipo, cantidad, tiempo estimado, contexto, estado
-- `items` — id, estado (active/inactive), skill_id (una skill por ítem), disponibilidad para expertos (uso privado o visible para validadores)
+- `items` — id, estado (active/inactive), skill_id (una skill por ítem), disponibilidad para expertos (uso privado o visible para validadores) y, si es una copia de otro ítem, el original (`source_item_id`)
 - `item_versions` — item_id, versión, tipo, origen (generated/regenerated/edited), pedido de generación, nivel, tiempo estimado, objetivo de evaluación, enunciado
 - Una tabla por tipo, con una fila por versión: `item_choice_options` (alternativa única), `item_true_false`, `item_open_question`, `item_coding`, `item_system_design`, `item_debugging` e `item_findings`
 - `rubric_criteria`, `rubric_levels` — rúbrica de cada versión, solo en los tipos abiertos (pregunta de desarrollo, system design, debugging)
@@ -54,12 +54,13 @@ POST   /role-profiles             # Admin: crear perfil
 # Generación
 POST   /drafts                      # Generar borradores (no se guardan): skill, nivel, tipo, cantidad, tiempo y contexto; también regenera un borrador con comentario
 POST   /items/publish               # Publicar los borradores revisados: versión 1, activos y sin puntuar; elige si quedan disponibles para expertos
-POST   /items/{id}/regenerate       # Regenerar con un nuevo contexto (puede cambiar el tipo) → nueva versión
+POST   /items/{id}/regenerate       # Vista previa de la regeneración con un nuevo contexto (mismo tipo, skill, nivel y tiempo); no guarda nada
 
 # Banco de ítems
-GET    /items?status=active&skill_id=&role_profile_id=&type=&score=   # Filtrar (activos por defecto)
+GET    /items?status=active&skill_id=&role_profile_id=&type=&score=&mine=   # Filtrar (activos por defecto); mine=true solo los del docente
+GET    /items/{id}/versions         # Historial de versiones: origen, fecha y puntuación
 GET    /items/{id}                  # Versión vigente: atributos, datos del tipo, rúbrica, promedio y cantidad de puntuaciones
-PUT    /items/{id}                  # Modificar manualmente → nueva versión
+PUT    /items/{id}                  # Guarda una edición o una regeneración confirmada: versión nueva si el ítem es propio, copia propia si es ajeno
 PUT    /items/{id}/status           # Activar o desactivar
 POST   /item-versions/{id}/scores   # Experto validador puntúa de 1 a 5 estrellas (rol `validator`)
 GET    /items/{id}/tests            # Tests unitarios (coding) para auto-eval
@@ -81,13 +82,18 @@ GET    /items/{id}/tests            # Tests unitarios (coding) para auto-eval
 **Responsabilidad**: Componer evaluaciones completas — seleccionar skills, elegir items, definir pesos, timer, orden. Backend REST. Su interfaz vive en el **Portal de Gestión** (SPA), que solo llama al Constructor; este consulta a Catálogo SFIA, Generación de Contenido y Analítica.
 
 **Owns (datos)**:
-- `evaluations` — skills, ítems (por `item_version_id`), pesos, timer, orden, estado (draft/published), `share_token`
-- `templates` — plantillas de evaluación
+- `designs` — reglas, skills e ítems de una prueba: rol de base (informativo) y duración total. Cada evaluación y cada plantilla tiene el suyo (1 a 1); usar una plantilla o guardar una evaluación como plantilla copia el diseño
+- `design_skills` — skills seleccionadas, cada una con su rango de niveles (por defecto, el que SFIA define para la skill). Core y related solo se ven al elegir las skills desde un rol y no se guardan
+- `design_items` — ítems (por `item_version_id`), con su skill y su posición. Una FK compuesta exige que la skill del ítem esté seleccionada en el diseño
+- `evaluations` — nombre, dueño, estado (draft/published/discarded), su diseño y `share_token`
+- `templates` — plantillas: nombre, dueño, visibilidad (pública o privada) y su diseño. Una plantilla nunca se publica ni se ejecuta, y sigue existiendo aunque la evaluación de la que salió termine
+- `custom_roles`, `custom_role_skills` — roles propios con sus skills (HU-38)
+- `executions`, `execution_invitees` — ejecuciones con fecha de inicio y cierre, e invitados con su token único
 
 **Flujo**:
 1. El portal pide al Constructor skills y niveles (que los toma de Catálogo SFIA)
 2. Busca items disponibles (que el Constructor toma de Generación de Contenido)
-3. Arrastra/edita: orden, peso, timer por item
+3. Arrastra/edita: orden de los ítems y duración total
 4. Guarda como **plantilla** o **publica evaluación**
 5. Al publicar se genera un link con `share_token`
 6. Los reportes se piden al Constructor, que consulta Analítica
@@ -250,11 +256,11 @@ DELETE /orgs/{id}/members/{user_id}      # Expulsar
 
 ## Base de Datos Compartida (PostgreSQL)
 
-PostgreSQL (instancia única) con **un schema por módulo**. Para el Sprint 1 están definidos `identity` (Identidad y Acceso), `catalog` (Catálogo SFIA), `content` (Generación de Contenido) y `events` (event store). Los schemas de los demás módulos se definen cuando se aborden.
+PostgreSQL (instancia única) con **un schema por módulo**. Hasta el Sprint 2 están definidos `identity` (Identidad y Acceso), `catalog` (Catálogo SFIA), `content` (Generación de Contenido), `events` (event store) y `evaluation` (Constructor de Evaluaciones). Los schemas de los demás módulos se definen cuando se aborden.
 
-Las FK entre schemas son físicas: `content` depende de `catalog` (`skill_id`, `level`) y de `identity` (`created_by`, `requested_by`, `validator_id`); `catalog` e `identity` no dependen de nadie. El detalle está en `sprint1-db.dbml`, `item-types-dictionary.md` y la Figura 3.
+Las FK entre schemas son físicas: `content` depende de `catalog` (`skill_id`, `level`) y de `identity` (`created_by`, `requested_by`, `validator_id`); `evaluation` depende de `catalog` (`skill_id`, `role_profile_id`, `level`), de `identity` (`owner_id`) y de `content` (`item_version_id`); `catalog` e `identity` no dependen de nadie. El detalle está en `db.dbml`, `item-types-dictionary.md` y la Figura 3.
 
-**Pendiente de decisión:** qué rol de BD accede a cada schema y de qué forma (por ejemplo, la lectura de `evaluations` desde Ejecución).
+**Pendiente de decisión:** qué rol de BD accede a cada schema y de qué forma (por ejemplo, la lectura de `evaluations` desde Ejecución). En el Sprint 2 solo el Constructor accede a `evaluation`; el acceso de Ejecución se decide cuando se construya.
 
 **Patrón de eventos:**
 - Productores: `INSERT INTO events.events (type, aggregate_id, payload) VALUES ...`

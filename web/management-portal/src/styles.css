@@ -193,3 +193,33 @@ button.skill-tarjeta.ya-esta { background: color-mix(in srgb, var(--cat) 18%, wh
 .skill-tarjeta.marcada .niveles-celdas { background: #fff; padding: 2px; border-radius: 6px; }
 .resumen-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; }
 .resumen-item { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .6rem .8rem; border: 1px solid var(--borde); border-radius: 8px; background: #fff; }
+/* Acciones del docente sobre un ítem del banco (editar, regenerar, historial) */
+.acciones-item { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+.acciones-caja { margin-top: .8rem; padding: .7rem .8rem; border: 1px solid var(--borde); border-radius: 8px; background: #f7f8fa; display: flex; flex-direction: column; gap: .6rem; }
+.acciones-caja label { display: flex; flex-direction: column; gap: .2rem; font-size: .85rem; }
+.acciones-caja label.check { flex-direction: row; align-items: center; gap: .4rem; }
+.acciones-caja .acciones-item { margin-top: 0; }
+.aviso { background: #fff4d6; border: 1px solid #f0d88a; border-radius: 6px; padding: .4rem .6rem; font-size: .85rem; margin: 0; }
+.historial { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.historial th, .historial td { border: 1px solid var(--borde); padding: .3rem .5rem; text-align: left; }
+
+/* Constructor de evaluaciones */
+.pasos-barra { display: flex; gap: .5rem; margin: .6rem 0 .8rem; }
+.paso-item { flex: 1; padding: .45rem .7rem; border: 1px solid var(--borde); border-radius: 8px; background: #fff; color: #66707d; }
+.paso-item b { display: inline-block; width: 1.3rem; height: 1.3rem; line-height: 1.3rem; text-align: center; border-radius: 50%; background: #dfe3ea; margin-right: .4rem; color: #333; font-size: .8rem; }
+.paso-item.activo { border-color: var(--azul); background: #eef4ff; color: #1c2430; }
+.paso-item.activo b { background: var(--azul); color: #fff; }
+.tabla-eval { width: 100%; border-collapse: collapse; background: #fff; font-size: .9rem; }
+.tabla-eval th, .tabla-eval td { border: 1px solid var(--borde); padding: .4rem .6rem; text-align: left; vertical-align: middle; }
+.tabla-eval th { background: #f0f2f5; }
+.skill-eval { display: flex; align-items: center; gap: .8rem; border: 1px solid var(--borde); border-radius: 8px; padding: .5rem .7rem; margin-top: .5rem; background: #fff; }
+.skill-eval-datos { flex: 1; min-width: 0; }
+.skill-eval-niveles { text-align: center; font-size: .85rem; }
+.skill-codigo { display: inline-block; padding: .1rem .5rem; border-radius: 6px; color: #fff; font-size: .8rem; font-weight: 600; }
+button.peligro { color: #b3261e; border-color: #e3b3b0; }
+.fila-eval, .fila-banco { display: flex; align-items: center; gap: .6rem; border: 1px solid var(--borde); border-radius: 8px; padding: .45rem .6rem; margin-bottom: .4rem; background: #fff; }
+.fila-eval-datos { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .15rem; }
+.fila-eval .asa { cursor: grab; border: none; background: none; font-size: 1.1rem; color: #66707d; padding: .1rem .3rem; touch-action: none; }
+.etiqueta.aviso-et { background: #fff1d6; }
+.etiqueta.ok-et { background: #def3e3; }
+.acciones button.activa, .acciones button[aria-selected="true"] { background: var(--azul); color: #fff; border-color: var(--azul); }

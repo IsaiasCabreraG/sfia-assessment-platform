@@ -72,9 +72,9 @@ Cambios sobre lo ya construido en el Sprint 1 (login, catálogo SFIA y banco de 
 |---|---|---|---|---|---|
 | HU-37 | Como docente/reclutador quiero que el banco use iconos y colores en vez de texto (tipo de ítem, nivel) y aproveche mejor el espacio, para escanearlo rápido. | Media | Nueva (no existe en el Backlog). **Implementado:** tipo con icono de color (12 `.svg` propios) y nivel como celda con el color de la categoría de la skill, en el banco y en la revisión; el Paso 1 usa los mismos iconos. | A-22 | 01:16:46 a 01:17:23 |
 | HU-36 | Como reclutador quiero quitar o agregar criterios en la rúbrica base de un tipo de pregunta, para adaptarla a lo que valoro. Se dejó para después de este año. | Media | Nueva (no existe en el Backlog) | A-10 | 00:14:01 a 00:15:06 |
-| HU-38 | Como docente/reclutador quiero guardar las skills que elegí como un rol personalizado, para reutilizarlo después sin volver a elegirlas. | Alta | Nueva (decisión del autor al implementar HU-06-4). Diferida: requiere almacenamiento nuevo (a quién pertenece, si se comparte, si se edita o se borra); queda como limitación. | Decisión del autor | — |
+| HU-38 | Como docente/reclutador quiero guardar las skills que elegí como un rol personalizado, para reutilizarlo después sin volver a elegirlas. | Alta | Nueva (decisión del autor al implementar HU-06-4). Diferida del Sprint 1: requería almacenamiento nuevo (a quién pertenece, si se comparte, si se edita o se borra); se incluye en el Sprint 2. | Decisión del autor | — |
 
-HU-36 está diferida: en el audio se dijo que se aborda después de "esta vuelta", es decir después de este año. HU-38 también está diferida (ver `sprint-1.md`, limitaciones).
+HU-36 está diferida: en el audio se dijo que se aborda después de "esta vuelta", es decir después de este año. HU-38 quedó diferida del Sprint 1 y se incluye en el Sprint 2 (ver `sprint-2.md`).
 
 ---
 
@@ -90,7 +90,8 @@ HU-36 está diferida: en el audio se dijo que se aborda después de "esta vuelta
 | HU-27-2, HU-27-3, HU-27-4, HU-27-6 | Implementadas (HU-27-5 es del Sprint 2) |
 | HU-30-2 | Implementada |
 | HU-37 | Implementada |
-| HU-36, HU-38 | **Diferidas**: limitaciones (adaptar la rúbrica base; guardar un rol propio) |
+| HU-36 | **Diferida**: limitación (adaptar la rúbrica base); queda en el Backlog |
+| HU-38 | **Diferida del Sprint 1**: se incluye en el Sprint 2 (guardar un rol propio) |
 
 ## Ya existen en el Backlog (no se repiten)
 
