@@ -47,6 +47,7 @@ HU-38 (diferida en el Sprint 1) se incluye en este sprint junto con HU-11-3 y HU
 **Criterios de aceptación:**
 - Puedo partir de una plantilla de perfil SFIA.
 - Puedo agregar y ordenar ítems con un editor visual drag-and-drop.
+- El banco del constructor solo ofrece los ítems que cumplen las reglas (las skills de la evaluación y los niveles de cada una) y se puede ordenar y paginar. Para usar otra skill u otro nivel se cambian las reglas en el paso 1; ya no hay confirmaciones al agregar. *(Decisión del autor, 26/11/2026)*
 
 **Prioridad en el plan del Sprint 2:** Núcleo.
 
@@ -161,7 +162,7 @@ HU-38 (diferida en el Sprint 1) se incluye en este sprint junto con HU-11-3 y HU
 - Cada versión registra su origen: generada, regenerada o modificada manualmente.
 - Al guardar elijo si el ítem queda disponible para expertos (una copia parte privada). La disponibilidad es del ítem y vale para todas sus versiones. *(de HU-15)*
 - Si el ítem es de otro docente, se crea una copia mía (ítem nuevo, versión 1, con referencia al original) y el original no cambia. *(de HU-15)*
-- Puedo consultar mis ítems en el banco, con un filtro «Solo mis ítems». *(de HU-15)*
+- Reconozco mis ítems privados en el banco por la marca «Privado» (una copia propia parte privada). El filtro «Solo mis ítems» se quitó de la interfaz por decisión del autor (26/11/2026): privado ya indica que es mío; la API conserva `mine`. *(de HU-15)*
 - Puedo ver el historial de versiones de un ítem, con su origen, fecha y puntuación.
 
 **Prioridad en el plan del Sprint 2:** Probable (incluye HU-15).

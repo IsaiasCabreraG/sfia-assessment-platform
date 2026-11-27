@@ -216,7 +216,8 @@ def publish_items(cur, user: AuthUser, *, available_to_experts: bool, groups: li
 
 
 def list_items(cur, user: AuthUser, *, status: str | None, skill_id, profile_id, item_type, level, scored,
-               min_score, max_score, limit: int, offset: int, mine: bool = False) -> dict:
+               min_score, max_score, limit: int, offset: int, mine: bool = False, skill_ids=None,
+               min_level: int | None = None, max_level: int | None = None, order: str = "recent") -> dict:
     """Lista ítems con filtros (HU-07).
 
     Quien no es docente/reclutador solo ve los activos que el autor dejó disponibles para expertos;
@@ -231,12 +232,15 @@ def list_items(cur, user: AuthUser, *, status: str | None, skill_id, profile_id,
         raise BadRequest("scored debe ser scored, unscored o vacío (todos)")
     if item_type is not None and item_type not in ITEM_TYPES:
         raise BadRequest(f"Tipo de ítem inválido: {item_type}")
+    if order not in repository.ORDERS:
+        raise BadRequest(f"order debe ser uno de: {', '.join(repository.ORDERS)}")
     for nombre, valor in (("min_score", min_score), ("max_score", max_score)):
         if valor is not None and not Decimal(1) <= valor <= Decimal(5):
             raise BadRequest(f"{nombre} debe estar entre 1 y 5")
     rows = repository.list_items(cur, {
         "only_available": not es_docente, "mine": mine and es_docente, "user_id": user.id, "status": status, "skill_id": skill_id, "profile_id": profile_id, "item_type": item_type,
         "level": level, "scored": scored, "min_score": min_score, "max_score": max_score,
+        "skill_ids": skill_ids or None, "min_level": min_level, "max_level": max_level, "order": order,
         "limit": min(max(limit, 1), 200), "offset": max(offset, 0)})
     total = rows[0]["total"] if rows else 0
     return {"total": total, "items": [{k: v for k, v in r.items() if k != "total"} for r in rows]}

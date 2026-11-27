@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, Query
 from pydantic import BaseModel
 
 from shared.db import get_conn
@@ -91,13 +91,15 @@ def publish_items(body: PublishBody, user: AuthUser = Depends(docente), conn=Dep
 def list_items(skill_id: UUID | None = None, role_profile_id: UUID | None = None, item_type: str | None = None,
                level: int | None = None, scored: str | None = None, min_score: Decimal | None = None,
                max_score: Decimal | None = None, mine: bool = False, status: str | None = "active", limit: int = 50,
-               offset: int = 0, user: AuthUser = Depends(cualquiera), conn=Depends(get_conn, scope="function")):
-    """HU-07 y HU-15: lista ítems activos filtrando por skill, rol (perfil), puntuación y más; `mine` = solo los míos."""
+               offset: int = 0, skill_ids: list[UUID] = Query(default=[]), min_level: int | None = None,
+               max_level: int | None = None, order: str = "recent", user: AuthUser = Depends(cualquiera), conn=Depends(get_conn, scope="function")):
+    """HU-07 y HU-15: lista ítems activos filtrando por skill (una o varias con `skill_ids`), rol (perfil), rango de nivel,
+    puntuación y más; `mine` = solo los míos; `order` elige el orden (recent, oldest, score, level_asc, level_desc, time, skill)."""
     with conn.cursor() as cur:
         return service.list_items(
             cur, user, status=status or None, skill_id=skill_id, profile_id=role_profile_id, item_type=item_type,
             level=level, scored=scored or None, min_score=min_score, max_score=max_score, limit=limit, offset=offset,
-            mine=mine)
+            mine=mine, skill_ids=skill_ids, min_level=min_level, max_level=max_level, order=order)
 
 
 @router.get("/items/{item_id}")

@@ -4,18 +4,23 @@
 // Los niveles son de cada skill (por defecto, los que SFIA define para ella). Un rol solo aporta skills: el primero que
 // se añade queda como rol de base y, si después se agregan o quitan skills, pasa a ser un rol personalizado que se
 // puede guardar como rol propio (HU-38).
+import { useConfirmar } from "../shared/useConfirmar";
 import { useEffect, useState } from "react";
 import { RolPicker } from "../docente/RolPicker";
 import { api } from "../shared/api";
 import { colorDe } from "../shared/categorias";
 import { BUILDER_URL, CATALOG_URL } from "../shared/config";
+import { BarraFlotante } from "../shared/BarraFlotante";
+import { Contador } from "../shared/Contador";
+import { FichaSkill } from "../shared/DescripcionSkill";
+import { Icono } from "../shared/Estrellas";
+import { NivelesRango } from "../shared/NivelesRango";
 import { SkillPicker } from "../shared/SkillPicker";
-import { Ventana } from "./Ventana";
+import { Ventana } from "../shared/Ventana";
 import type { CustomRoleDetail, CustomRoleSummary, EvaluationDetail, RoleProfile, RoleProfileDetail, Skill, TemplateSummary } from "../shared/types";
 
 interface Fila { skill_id: string; min_level: number; max_level: number; items_count: number }
 interface RolBase { id: string; name: string; skillIds: string[] }
-const NIVELES = [1, 2, 3, 4, 5, 6, 7];
 
 const aFilas = (d: EvaluationDetail): Fila[] =>
   d.skills.map((s) => ({ skill_id: s.id, min_level: s.min_level, max_level: s.max_level, items_count: s.items_count }));
@@ -29,6 +34,7 @@ interface Props {
 }
 
 export function PasoReglas({ detalle, alAbrir, alGuardar, alSiguiente }: Props) {
+  const [confirmar, dialogoConfirmar] = useConfirmar();
   const [skills, setSkills] = useState<Skill[]>([]);
   const [perfiles, setPerfiles] = useState<RoleProfile[]>([]);
   const [id, setId] = useState<string | null>(detalle?.id ?? null);
@@ -43,6 +49,8 @@ export function PasoReglas({ detalle, alAbrir, alGuardar, alSiguiente }: Props) 
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState("");
   const [aviso, setAviso] = useState("");
+  const [vistas, setVistas] = useState<Set<string>>(new Set()); // skills sobre las que se pasó el cursor (se pide su descripción)
+  const ver = (id: string) => setVistas((prev) => (prev.has(id) ? prev : new Set(prev).add(id)));
 
   useEffect(() => {
     api<Skill[]>("docente", `${CATALOG_URL}/skills`).then(setSkills).catch((e) => setError(e.message));
@@ -67,13 +75,8 @@ export function PasoReglas({ detalle, alAbrir, alGuardar, alSiguiente }: Props) 
     setFilas((prev) => [...prev, ...nuevas.filter((n) => !prev.some((f) => f.skill_id === n.id))
       .map((n) => ({ skill_id: n.id, min_level: n.min_level, max_level: n.max_level, items_count: 0 }))]);
 
-  const cambiarNivel = (skillId: string, campo: "min_level" | "max_level", valor: number) =>
-    setFilas((prev) => prev.map((f) => {
-      if (f.skill_id !== skillId) return f;
-      const g = { ...f, [campo]: valor };
-      if (g.min_level > g.max_level) { if (campo === "min_level") g.max_level = valor; else g.min_level = valor; }
-      return g;
-    }));
+  const cambiarRango = (skillId: string, desde: number, hasta: number) =>
+    setFilas((prev) => prev.map((f) => (f.skill_id === skillId ? { ...f, min_level: desde, max_level: hasta } : f)));
 
   const abrirRolesPropios = () => {
     setVentana("rol-propio");
@@ -93,7 +96,7 @@ export function PasoReglas({ detalle, alAbrir, alGuardar, alSiguiente }: Props) 
   };
 
   const usarPlantilla = async (t: TemplateSummary) => {
-    if ((nombre.trim() || filas.length > 0) && !window.confirm("Se creará una evaluación nueva desde la plantilla y se dejará lo que llevas sin guardar. ¿Continuar?")) return;
+    if ((nombre.trim() || filas.length > 0) && !await confirmar("Se creará una evaluación nueva desde la plantilla y se dejará lo que llevas sin guardar. ¿Continuar?")) return;
     try {
       const nueva = await api<{ id: string }>("docente", `${BUILDER_URL}/templates/${t.id}/use`, { method: "POST", body: {} });
       alAbrir(nueva.id);
@@ -126,18 +129,20 @@ export function PasoReglas({ detalle, alAbrir, alGuardar, alSiguiente }: Props) 
   };
 
   return (
-    <div className="dos-columnas" style={{ gridTemplateColumns: "minmax(260px, 1fr) 2.1fr" }}>
+    <div className="con-barra-flotante">
+    <div className="dos-columnas cols-reglas">
+      {dialogoConfirmar}
       <div className="panel formulario">
-        <h3 style={{ margin: 0 }}>Datos</h3>
+        <h3 className="m-0">Datos</h3>
         <label>Nombre de la evaluación
           <input value={nombre} onChange={(e) => setNombre(e.target.value)} maxLength={100} />
         </label>
-        <label>Duración total (min) <span className="suave">opcional; si queda vacía será la suma de los ítems</span>
-          <input type="number" min="1" value={duracion} onChange={(e) => setDuracion(e.target.value)} />
-        </label>
+        <span className="formulario-campo">Duración total (min) <span className="suave">opcional; si queda vacía será la suma de los ítems</span>
+          <Contador etiqueta="Duración total (min)" valor={duracion.trim() ? Number(duracion) : null} alCambiar={(n) => setDuracion(n === null ? "" : String(n))} />
+        </span>
         {id === null && <button type="button" onClick={abrirPlantillas}>Partir de una plantilla…</button>}
         {rolBase && (
-          <p className={personalizado ? "aviso" : "suave"} style={{ margin: 0 }}>
+          <p className={`${personalizado ? "aviso" : "suave"} m-0`}>
             Rol de base: <strong>{rolBase.name}</strong>.{" "}
             {personalizado ? <>Las skills ya no son las del rol: ahora es un <strong>rol personalizado</strong>.</> : "Las skills son las del rol."}
           </p>
@@ -154,54 +159,45 @@ export function PasoReglas({ detalle, alAbrir, alGuardar, alSiguiente }: Props) 
               </div>
             )
         )}
-        <div className="acciones">
-          <button disabled={ocupado} onClick={guardar}>{ocupado ? "Guardando…" : "Guardar"}</button>
-          <button className="primario" disabled={ocupado} onClick={async () => { if (await guardar()) alSiguiente(); }}>Siguiente: ítems →</button>
-        </div>
-        {aviso && <p className="ok" style={{ margin: 0 }}>{aviso}</p>}
-        {error && <p className="error" style={{ margin: 0 }}>{error}</p>}
+        {aviso && <p className="ok m-0">{aviso}</p>}
+        {error && <p className="error m-0">{error}</p>}
       </div>
 
       <div className="panel">
-        <h3 style={{ margin: "0 0 .5rem" }}>Skills de la evaluación ({filas.length})</h3>
+        <h3 className="mb-5">Skills de la evaluación ({filas.length})</h3>
         <div className="acciones">
+          <SkillPicker skills={skills} alElegir={(sid) => { const s = porId.get(sid); if (s) agregar([{ id: s.id, min_level: s.min_level, max_level: s.max_level }]); }} />
           <RolPicker perfiles={perfiles} skills={skills} cargarPerfil={(rid) => api<RoleProfileDetail>("docente", `${CATALOG_URL}/role-profiles/${rid}`)}
                      yaEnFormulario={enFormulario}
                      alAgregar={(lista, rol) => {
                        agregar(lista.map((s) => ({ id: s.id, min_level: s.min_level, max_level: s.max_level })));
                        setRolBase((prev) => prev ?? { id: rol.id, name: rol.name, skillIds: rol.skills.map((s) => s.id) });
                      }} />
-          <button type="button" onClick={abrirRolesPropios}>+ Añadir skills de un rol propio…</button>
-          <SkillPicker skills={skills} alElegir={(sid) => { const s = porId.get(sid); if (s) agregar([{ id: s.id, min_level: s.min_level, max_level: s.max_level }]); }} />
+          <button type="button" onClick={abrirRolesPropios}>Añadir desde un rol propio</button>
         </div>
         {filas.length === 0 && <p className="suave">Añade skills (o las skills de un rol) para definir qué se evaluará.</p>}
         {filas.map((f) => {
           const s = porId.get(f.skill_id);
+          const color = colorDe(s?.category ?? null);
           const fuera = s !== undefined && (f.min_level < s.min_level || f.max_level > s.max_level);
           return (
-            <div key={f.skill_id} className="skill-eval">
-              <div className="skill-eval-datos">
-                <span className="skill-codigo" style={{ background: colorDe(s?.category ?? null) }}>{s?.code ?? "…"}</span>{" "}
-                <strong>{s?.name ?? ""}</strong>
-                {s && <div className="suave">SFIA define esta skill en los niveles {s.min_level} a {s.max_level}</div>}
-              </div>
-              <div className="skill-eval-niveles">
-                <span className="suave">Niveles en esta evaluación</span>
-                <div>
-                  <select aria-label={`Nivel mínimo de ${s?.code ?? "la skill"}`} value={f.min_level} onChange={(e) => cambiarNivel(f.skill_id, "min_level", Number(e.target.value))}>
-                    {NIVELES.map((n) => <option key={n} value={n}>{n}</option>)}
-                  </select>
-                  {" a "}
-                  <select aria-label={`Nivel máximo de ${s?.code ?? "la skill"}`} value={f.max_level} onChange={(e) => cambiarNivel(f.skill_id, "max_level", Number(e.target.value))}>
-                    {NIVELES.map((n) => <option key={n} value={n}>{n}</option>)}
-                  </select>
+            <div key={f.skill_id} className="skill-eval" style={{ ["--cat" as string]: color }} onMouseEnter={() => ver(f.skill_id)} onFocus={() => ver(f.skill_id)}>
+              <div className="skill-eval-fila">
+                <div className="skill-eval-datos">
+                  <span className="skill-codigo" style={{ background: color }}>{s?.code ?? "…"}</span>{" "}
+                  <strong>{s?.name ?? ""}</strong>
                 </div>
+                <NivelesRango desde={f.min_level} hasta={f.max_level} color={color} sfia={s ? [s.min_level, s.max_level] : undefined}
+                              etiqueta={`Niveles de ${s?.code ?? "la skill"}`} alCambiar={(d, h) => cambiarRango(f.skill_id, d, h)} />
                 {fuera && <span className="etiqueta">fuera del rango SFIA</span>}
+                {f.items_count > 0 && <span className="etiqueta">{f.items_count} ítem{f.items_count === 1 ? "" : "s"}</span>}
+                <button type="button" className="icono-btn peligro" disabled={f.items_count > 0}
+                        title={f.items_count > 0 ? "Quita primero sus ítems (paso 2)" : "Quitar la skill"}
+                        aria-label={`Quitar ${s?.code ?? "la skill"}`} onClick={() => setFilas((prev) => prev.filter((x) => x.skill_id !== f.skill_id))}>
+                  <Icono nombre="descartar" />
+                </button>
               </div>
-              {f.items_count > 0 && <span className="etiqueta">{f.items_count} ítem{f.items_count === 1 ? "" : "s"}</span>}
-              <button type="button" className="peligro" disabled={f.items_count > 0}
-                      title={f.items_count > 0 ? "Quita primero sus ítems (paso 2)" : undefined}
-                      aria-label={`Quitar ${s?.code ?? "la skill"}`} onClick={() => setFilas((prev) => prev.filter((x) => x.skill_id !== f.skill_id))}>Quitar</button>
+              {s && <div className="skill-eval-detalle"><div><FichaSkill skill={s} color={color} activo={vistas.has(f.skill_id)} /></div></div>}
             </div>
           );
         })}
@@ -229,7 +225,7 @@ export function PasoReglas({ detalle, alAbrir, alGuardar, alSiguiente }: Props) 
                   <span className="etiqueta">{t.visibility === "public" ? "pública" : "privada"}</span>
                   <span className="etiqueta">{t.mine ? "mía" : `de ${t.owner_name ?? "otro docente"}`}</span>
                   {!t.available && <span className="etiqueta">no disponible</span>}
-                  <span className="suave" style={{ display: "block" }}>
+                  <span className="suave bloque">
                     {t.skills_count} skills · {t.items_count} ítems
                     {!t.available && t.blocked_items && ` · ${t.blocked_items.map((b) => `${b.skill_code}: ${b.reason}`).join(", ")}`}
                   </span>
@@ -238,6 +234,11 @@ export function PasoReglas({ detalle, alAbrir, alGuardar, alSiguiente }: Props) 
             ))}
         </Ventana>
       )}
+    </div>
+    <BarraFlotante>
+      <button disabled={ocupado} onClick={guardar}>{ocupado ? "Guardando…" : "Guardar"}</button>
+      <button className="primario" disabled={ocupado} onClick={async () => { if (await guardar()) alSiguiente(); }}>Siguiente: ítems →</button>
+    </BarraFlotante>
     </div>
   );
 }

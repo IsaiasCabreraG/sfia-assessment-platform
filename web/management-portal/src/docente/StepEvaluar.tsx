@@ -8,6 +8,8 @@ import type { Box, Level, RoleProfile, RoleProfileDetail, Skill } from "../share
 import { colorDe } from "../shared/categorias";
 import { NivelChip, Niveles } from "../shared/Niveles";
 import { Ayuda } from "../shared/Ayuda";
+import { Contador } from "../shared/Contador";
+import { Icono } from "../shared/Estrellas";
 import { IconoTipo } from "../shared/IconoTipo";
 import { SkillPicker } from "../shared/SkillPicker";
 import { RolPicker } from "./RolPicker";
@@ -31,7 +33,7 @@ export const MINUTOS_POR_TIPO: Record<string, number> = {
   single_choice: 2, true_false: 1, open_question: 8, debugging: 15, coding: 25, system_design: 30,
 };
 export const nuevoBox = (skill_id: string, level = 3, open = true): Box => ({
-  key: siguiente++, skill_id, level, types: { single_choice: { cantidad: 2, minutos: MINUTOS_POR_TIPO.single_choice } }, open, context: "",
+  key: siguiente++, skill_id, level, types: {}, open, context: "",
 });
 
 
@@ -45,7 +47,7 @@ export function ResumenCompacto({ b, skill, color, conNombre = false }: { b: Box
       {Object.entries(b.types).map(([tipo, p]) => (
         <span key={tipo} className="tipo-resumen"><IconoTipo tipo={tipo} /> {p.cantidad}× · {p.minutos} min</span>
       ))}
-      {Object.keys(b.types).length === 0 && <span className="error">sin tipos de ítem</span>}
+      {Object.keys(b.types).length === 0 && <span className="error">Sin tipo de ítem seleccionado</span>}
       {b.context.trim() && <span className="suave">· contexto: {b.context.trim()}</span>}
     </span>
   );
@@ -84,7 +86,9 @@ export function StepEvaluar({ skills, niveles, perfiles, boxes, setBoxes, cargar
             <button type="button" className="enlace" onClick={() => cambiar(b.key, { open: !b.open })}>
               {b.open ? "▾" : "▸"} {b.open ? skill?.name : <ResumenCompacto b={b} skill={skill} color={color} />}
             </button>
-            <button type="button" onClick={() => setBoxes(boxes.filter((x) => x.key !== b.key))} aria-label="Quitar">×</button>
+            <button type="button" className="icono-btn peligro" onClick={() => setBoxes(boxes.filter((x) => x.key !== b.key))} aria-label="Quitar" title="Quitar la skill">
+              <Icono nombre="descartar" />
+            </button>
           </div>
           {b.open && (
             <div className="recuadro-cuerpo">
@@ -97,8 +101,7 @@ export function StepEvaluar({ skills, niveles, perfiles, boxes, setBoxes, cargar
                 <span>Nivel de responsabilidad</span>
                 <Niveles min={skill?.min_level ?? 1} max={skill?.max_level ?? 7} color={color} elegido={b.level}
                          alElegir={(n) => cambiar(b.key, { level: n })} />
-                <span className="suave">{b.level} · {niveles.find((n) => n.level === b.level)?.description}
-                  {skill && ` (la skill está definida en los niveles ${skill.min_level} a ${skill.max_level})`}</span>
+                <span className="suave">{b.level} · {niveles.find((n) => n.level === b.level)?.description}</span>
               </div>
               </div>
               <label>Contexto para la skill
@@ -107,9 +110,8 @@ export function StepEvaluar({ skills, niveles, perfiles, boxes, setBoxes, cargar
               </label>
               <fieldset>
                 <legend>Tipos de ítem</legend>
-                {Object.keys(b.types).length === 0 && <p className="error">Marca al menos un tipo de ítem para esta skill.</p>}
                 <div className="tipos-rejilla">
-                  <span />
+                  <span className="error aviso-tipos">{Object.keys(b.types).length === 0 ? "Marca al menos un tipo de ítem." : ""}</span>
                   <span className="cab"><Ayuda texto={TEXTO_CANTIDAD}>Cantidad</Ayuda></span>
                   <span className="cab ultima"><Ayuda texto={TEXTO_MINUTOS}>Tiempo (min)</Ayuda></span>
                   {Object.entries(NOMBRE_TIPO).map(([tipo, nombre]) => (
@@ -120,14 +122,12 @@ export function StepEvaluar({ skills, niveles, perfiles, boxes, setBoxes, cargar
                         <Ayuda texto={DESCRIPCION_TIPO[tipo]}>{nombre}</Ayuda>
                       </label>
                       {/* Los campos se dibujan siempre (ocultos si el tipo no está marcado) para que la fila no cambie de alto. */}
-                      <input type="number" min="1" max="10" aria-label={`Cantidad ${nombre}`} disabled={!(tipo in b.types)}
-                             style={{ visibility: tipo in b.types ? "visible" : "hidden" }}
-                             value={b.types[tipo]?.cantidad ?? 1}
-                             onChange={(e) => cambiar(b.key, { types: { ...b.types, [tipo]: { ...b.types[tipo], cantidad: Number(e.target.value) } } })} />
-                      <input type="number" min="1" aria-label={`Minutos ${nombre}`} disabled={!(tipo in b.types)}
-                             style={{ visibility: tipo in b.types ? "visible" : "hidden" }}
-                             value={b.types[tipo]?.minutos ?? MINUTOS_POR_TIPO[tipo] ?? 10}
-                             onChange={(e) => cambiar(b.key, { types: { ...b.types, [tipo]: { ...b.types[tipo], minutos: Number(e.target.value) } } })} />
+                      <Contador etiqueta={`Cantidad ${nombre}`} min={1} max={10} deshabilitado={!(tipo in b.types)} oculto={!(tipo in b.types)}
+                                valor={b.types[tipo]?.cantidad ?? 1}
+                                alCambiar={(n) => cambiar(b.key, { types: { ...b.types, [tipo]: { ...b.types[tipo], cantidad: n ?? 1 } } })} />
+                      <Contador etiqueta={`Minutos ${nombre}`} min={1} deshabilitado={!(tipo in b.types)} oculto={!(tipo in b.types)}
+                                valor={b.types[tipo]?.minutos ?? MINUTOS_POR_TIPO[tipo] ?? 10}
+                                alCambiar={(n) => cambiar(b.key, { types: { ...b.types, [tipo]: { ...b.types[tipo], minutos: n ?? 1 } } })} />
                     </Fragment>
                   ))}
                 </div>

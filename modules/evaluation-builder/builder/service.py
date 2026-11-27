@@ -291,7 +291,7 @@ def item_usage(cur, user: AuthUser, item_id: UUID) -> dict:
 
 
 def available_items(cur, user: AuthUser, *, skill_ids, min_level, max_level, item_type, q, evaluation_id,
-                    only_rules: bool, limit: int, offset: int) -> dict:
+                    only_rules: bool, limit: int, offset: int, order: str = "skill") -> dict:
     """Ítems del banco que el docente puede agregar (activos, públicos o suyos, en su versión vigente).
 
     Los filtros son libres. Con `evaluation_id`, cada ítem indica si su skill está en la evaluación, si su nivel está
@@ -300,6 +300,8 @@ def available_items(cur, user: AuthUser, *, skill_ids, min_level, max_level, ite
     """
     if item_type is not None and item_type not in ITEM_TYPES:
         raise BadRequest(f"Tipo de ítem inválido: {item_type}")
+    if order not in repository.AVAILABLE_ORDERS:
+        raise BadRequest(f"order debe ser uno de: {', '.join(repository.AVAILABLE_ORDERS)}")
     design_id, design_items = None, []
     if evaluation_id is not None:
         design_id = _own_evaluation(cur, user, evaluation_id)["design_id"]
@@ -309,7 +311,7 @@ def available_items(cur, user: AuthUser, *, skill_ids, min_level, max_level, ite
     rows = repository.list_available_items(cur, {
         "user_id": user.id, "skill_ids": skill_ids or None, "min_level": min_level, "max_level": max_level,
         "item_type": item_type, "q": (q or "").strip() or None, "design_id": design_id,
-        "only_rules": only_rules, "design_items": design_items, "limit": min(max(limit, 1), 100), "offset": max(offset, 0)})
+        "only_rules": only_rules, "design_items": design_items, "order": order, "limit": min(max(limit, 1), 100), "offset": max(offset, 0)})
     total = rows[0]["total"] if rows else 0
     return {"total": total, "items": [{k: v for k, v in r.items() if k != "total"} for r in rows]}
 

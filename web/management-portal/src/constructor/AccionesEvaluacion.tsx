@@ -2,6 +2,7 @@
 
 // Acciones sobre una evaluación guardada: duplicar (la forma de «cambiar» una publicada), guardarla como plantilla
 // y descartarla. Las usan el paso 3 y la vista de una evaluación publicada.
+import { useConfirmar } from "../shared/useConfirmar";
 import { useState, type ReactNode } from "react";
 import { api } from "../shared/api";
 import { BUILDER_URL } from "../shared/config";
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export function AccionesEvaluacion({ detalle, alAbrir, alSalir, puedeDescartar = true, children }: Props) {
+  const [confirmar, dialogoConfirmar] = useConfirmar();
   const [plantilla, setPlantilla] = useState(false);
   const [aviso, setAviso] = useState("");
   const [error, setError] = useState("");
@@ -29,7 +31,7 @@ export function AccionesEvaluacion({ detalle, alAbrir, alSalir, puedeDescartar =
   };
 
   const descartar = async () => {
-    if (!window.confirm(`¿Descartar «${detalle.name}»? Dejará de aparecer entre las disponibles.`)) return;
+    if (!await confirmar(`¿Descartar «${detalle.name}»? Dejará de aparecer entre las disponibles.`)) return;
     try {
       await api("docente", `${BUILDER_URL}/evaluations/${detalle.id}/discard`, { method: "POST", body: {} });
       alSalir();
@@ -38,6 +40,7 @@ export function AccionesEvaluacion({ detalle, alAbrir, alSalir, puedeDescartar =
 
   return (
     <>
+      {dialogoConfirmar}
       <div className="acciones">
         {children}
         <button onClick={() => { setAviso(""); setPlantilla(true); }}>Guardar como plantilla…</button>

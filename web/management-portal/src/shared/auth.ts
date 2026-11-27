@@ -6,8 +6,8 @@ import { IDENTITY_URL } from "./config";
 
 export type Portal = "docente" | "validador";
 
-const claveAccess = (portal: Portal) => `sprint1_token_${portal}`;
-const claveRefresh = (portal: Portal) => `sprint1_refresh_${portal}`;
+const claveAccess = (portal: Portal) => `sfia_token_${portal}`;
+const claveRefresh = (portal: Portal) => `sfia_refresh_${portal}`;
 
 /** Si la URL trae `#access_token=...&refresh_token=...`, los guarda y limpia la URL. */
 export function guardarTokenDeLaUrl(portal: Portal): void {
@@ -92,7 +92,7 @@ export function iniciarLogin(portal: Portal): void {
 }
 
 // Aviso para la pantalla de acceso cuando la sesión se perdió sin que el usuario la cerrara.
-const claveAviso = (portal: Portal) => `sprint1_aviso_${portal}`;
+const claveAviso = (portal: Portal) => `sfia_aviso_${portal}`;
 export const avisarSesionVencida = (portal: Portal) => localStorage.setItem(claveAviso(portal), "1");
 export function leerAvisoSesionVencida(portal: Portal): boolean {
   const hay = localStorage.getItem(claveAviso(portal)) !== null;

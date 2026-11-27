@@ -3,9 +3,19 @@
 import { readFileSync } from "node:fs";
 import { chromium } from "/mnt/c/Users/isaia/Repositorios/Tesis/poc/tests/e2e/node_modules/playwright/index.mjs";
 
-/** Abre el menú "+ Añadir skill…", busca la skill por su código y la elige. */
+/** Responde al diálogo «Confirmar» del portal (ya no se usa window.confirm) y devuelve su mensaje. */
+async function confirmar(page, aceptar = true) {
+  const d = page.getByRole("dialog", { name: "Confirmar" });
+  await d.waitFor();
+  const mensaje = await d.locator("p").innerText();
+  await d.getByRole("button", { name: aceptar ? "Aceptar" : "Cancelar" }).click();
+  await d.waitFor({ state: "detached" });
+  return mensaje;
+}
+
+/** Abre el menú «Añadir una skill», busca la skill por su código y la elige. */
 async function abrirSkill(page, codigo) {
-  await page.getByRole("button", { name: "+ Añadir skill…" }).click();
+  await page.getByRole("button", { name: "Añadir una skill" }).click();
   await page.getByLabel("Buscar skill").fill(codigo);
   await page.locator("button.skill-opcion", { has: page.locator(".codigo", { hasText: new RegExp(`^${codigo}$`) }) }).first().click();
 }
@@ -18,7 +28,7 @@ const esperar = async (cond, ms = 15000) => { const t0 = Date.now(); while (!(aw
 
 const browser = await chromium.launch();
 const ctx = await browser.newContext();
-await ctx.addInitScript((s) => { localStorage.setItem("sprint1_token_docente", s.access); localStorage.setItem("sprint1_refresh_docente", s.refresh); }, sesion);
+await ctx.addInitScript((s) => { localStorage.setItem("sfia_token_docente", s.access); localStorage.setItem("sfia_refresh_docente", s.refresh); }, sesion);
 const page = await ctx.newPage();
 const errores = [];
 page.on("pageerror", (e) => errores.push(String(e)));
@@ -30,8 +40,9 @@ try {
   await page.getByText("Qué evaluar").waitFor(); paso("el portal abre con sesión y muestra el paso 1");
 
   // Añadir skills desde un rol: 21 familias → roles → skills core y related, sin ninguna marcada de antemano
-  await page.getByRole("button", { name: "+ Añadir skills de un rol…" }).click();
+  await page.getByRole("button", { name: "Añadir desde un rol", exact: true }).click();
   const dialogo = page.getByRole("dialog", { name: "Añadir skills de un rol" });
+  await dialogo.locator("button.categoria-cabecera").first().waitFor(); // las familias cargan después de abrir el diálogo
   if ((await dialogo.locator("button.categoria-cabecera").count()) !== 21) throw new Error(`se esperaban 21 familias y hay ${await dialogo.locator("button.categoria-cabecera").count()}`);
   await dialogo.locator("button.categoria-cabecera").nth(2).click(); await dialogo.locator("button.categoria-cabecera").nth(5).click();
   await dialogo.getByLabel("Buscar rol").fill("Accessibility practitioners");
@@ -40,6 +51,7 @@ try {
   await dialogo.getByRole("heading", { name: /^Skills related/ }).waitFor();
   if ((await dialogo.locator(".skill-tarjeta[aria-checked=true]").count()) !== 0) throw new Error("ninguna skill debe venir elegida");
   const botonAgregar = dialogo.getByRole("button", { name: /^Añadir/ });
+  if ((await dialogo.locator(".modal-pie").getByRole("button", { name: /^Añadir/ }).count()) !== 1) throw new Error("los botones de acción deben estar en el pie fijo del diálogo");
   if (!(await botonAgregar.isDisabled())) throw new Error("sin skills marcadas no se puede añadir");
   await dialogo.locator(".rol-grupo").nth(0).locator(".skill-tarjeta").first().click();
   await dialogo.locator(".rol-grupo").nth(1).locator(".skill-tarjeta").first().click();
@@ -47,7 +59,7 @@ try {
   await esperar(async () => (await page.locator(".recuadro").count()) === 2);
   paso("[roles] se elige un rol por familia, se ven sus skills core y related sin ninguna marcada y se añaden solo las marcadas");
   // Las skills que ya están en el formulario se ven marcadas, avisan y no se pueden desmarcar; se pueden sumar skills de otro rol
-  await page.getByRole("button", { name: "+ Añadir skills de un rol…" }).click();
+  await page.getByRole("button", { name: "Añadir desde un rol", exact: true }).click();
   await dialogo.getByLabel("Buscar rol").fill("Accessibility practitioners");
   await dialogo.locator("button.rol-opcion", { hasText: "Accessibility practitioners" }).click();
   await dialogo.getByRole("heading", { name: /^Skills core/ }).waitFor();
@@ -64,7 +76,7 @@ try {
 
   // Paso 1: una skill con 2 alternativas (por defecto) + 1 system design
   // Abrir una categoría del menú no cambia el ancho de ninguna categoría
-  await page.getByRole("button", { name: "+ Añadir skill…" }).click();
+  await page.getByRole("button", { name: "Añadir una skill" }).click();
   const anchos = () => page.locator("section.categoria").evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().width)));
   const anchosCerrados = await anchos();
   for (const cab of await page.locator("button.categoria-cabecera").all()) await cab.click();
@@ -73,7 +85,10 @@ try {
   paso("[estilo] abrir las categorías del menú no cambia su ancho");
   await page.keyboard.press("Escape");
   await abrirSkill(page, "PROG");
-  await page.getByText("Tipos de ítem", { exact: true }).waitFor(); paso("[HU-06 c1] + Añadir skill crea un recuadro");
+  await page.getByText("Tipos de ítem", { exact: true }).waitFor(); paso("[HU-06 c1] «Añadir una skill» crea un recuadro");
+  if ((await page.locator(".fila-tipo input[type=checkbox]:checked").count()) !== 0) throw new Error("por defecto no debe haber ningún tipo de ítem marcado");
+  await page.getByLabel("Alternativa única", { exact: true }).check();
+  paso("[paso 1] por defecto no hay ningún tipo de ítem marcado");
   // El paso ocupa al menos el 70 % del ancho, la skill y su nivel van en la misma fila y los tipos se leen con letra más grande
   const anchoPaso = (await page.locator("section.pagina").boundingBox()).width, anchoMain = (await page.locator("main").boundingBox()).width;
   if (anchoPaso / anchoMain < 0.7) throw new Error(`el paso ocupa solo ${Math.round((anchoPaso / anchoMain) * 100)} % del ancho`);
@@ -97,10 +112,9 @@ try {
   const habilitadas = await page.locator(".campo-nivel button.nivel-celda:not(:disabled)").count();
   const total = await page.locator(".campo-nivel button.nivel-celda").count();
   if (total !== 7 || habilitadas < 1) throw new Error("el selector de nivel no tiene 7 celdas");
-  const rango = await page.locator(".campo-nivel .suave").first().innerText();
-  const m = rango.match(/niveles (\d) a (\d)/); if (!m) throw new Error("no se informa el rango de la skill");
-  if (habilitadas !== Number(m[2]) - Number(m[1]) + 1) throw new Error(`habilitadas ${habilitadas} ≠ rango ${m[1]}-${m[2]}`);
-  paso("[nivel] solo se pueden elegir los niveles en que la skill está definida");
+  if (await page.locator(".campo-nivel .suave").first().innerText().then((x) => /definida en los niveles/.test(x))) throw new Error("no debe repetirse el rango de la skill en texto");
+  if ((await page.locator(".campo-nivel button.nivel-celda.elegida").count()) !== 1) throw new Error("debe verse con claridad el nivel elegido");
+  paso("[nivel] solo se pueden elegir los niveles en que la skill está definida, se ve cuál está elegido y no se repite el rango en texto");
   const altoAntes = (await page.locator("fieldset").first().boundingBox()).height;
   await page.getByLabel("System design", { exact: true }).check();
   await page.getByLabel("Minutos System design").waitFor();
@@ -114,15 +128,33 @@ try {
   await page.getByLabel("Alternativa única", { exact: true }).uncheck();
   await page.getByLabel("System design", { exact: true }).uncheck();
   if (!(await page.getByRole("button", { name: "Siguiente" }).isDisabled())) throw new Error("«Siguiente» debe estar desactivado sin tipos");
-  const motivoSinTipos = await page.locator(".acciones .error").innerText();
-  if (!/Marca al menos un tipo de ítem en: PROG/.test(motivoSinTipos)) throw new Error(`motivo: ${motivoSinTipos}`);
-  await page.getByText("Marca al menos un tipo de ítem para esta skill.").waitFor();
-  paso("[paso 1] sin ningún tipo marcado, «Siguiente» queda desactivado y dice en qué skill falta");
+  const motivoSinTipos = await page.locator(".barra-flotante .error").innerText();
+  if (!/Hay una skill sin tipo de ítem/.test(motivoSinTipos)) throw new Error(`motivo: ${motivoSinTipos}`);
+  await page.getByText("Marca al menos un tipo de ítem.", { exact: true }).waitFor();
+  // el aviso va al mismo nivel que «Cantidad» y «Tiempo» y no empuja nada hacia abajo
+  const [yAviso, yCantidad] = await Promise.all([page.locator(".aviso-tipos"), page.locator(".recuadro .cab").first()].map(async (l) => (await l.boundingBox()).y));
+  if (Math.abs(yAviso - yCantidad) > 5) throw new Error("el aviso de «sin tipos» no está al nivel de Cantidad y Tiempo");
+  // Minimizada, la skill sin tipos lo dice en rojo; junto a «Siguiente» el mensaje es genérico y no lo repite
+  await page.getByRole("button", { name: "Minimizar todo" }).click();
+  await page.locator(".recuadro-cabecera .error", { hasText: "Sin tipo de ítem seleccionado" }).waitFor();
+  if (/Sin tipo de ítem seleccionado/.test(await page.locator(".barra-flotante .error").innerText())) throw new Error("el mensaje de «Siguiente» no debe repetir el de la skill");
+  await page.getByRole("button", { name: "Expandir todo" }).click();
+  paso("[paso 1] sin ningún tipo marcado, «Siguiente» queda desactivado con un mensaje genérico y la skill minimizada lo dice en rojo");
   await page.getByLabel("Alternativa única", { exact: true }).check();
   await page.getByLabel("System design", { exact: true }).check();
   await page.getByLabel("Cantidad Alternativa única").fill("2");
   await page.getByLabel("Minutos System design").fill("45");
-  if (await page.locator(".acciones .error").count()) throw new Error("el motivo debe desaparecer al marcar tipos");
+  // Los tiempos se cambian con «−» y «+» (también se escriben), sin las flechitas del navegador
+  const contadorMin = page.locator(".contador", { has: page.getByLabel("Minutos System design") });
+  await contadorMin.getByRole("button", { name: "Más" }).click();
+  if ((await page.getByLabel("Minutos System design").inputValue()) !== "46") throw new Error("«+» debe sumar un minuto");
+  await contadorMin.getByRole("button", { name: "Menos" }).click();
+  if ((await page.getByLabel("Minutos System design").inputValue()) !== "45") throw new Error("«−» debe restar un minuto");
+  if ((await page.getByLabel("Minutos System design").evaluate((e) => getComputedStyle(e).appearance)) !== "textfield") throw new Error("el campo no debe mostrar las flechitas del navegador");
+  const cajaContador = await contadorMin.boundingBox(), cajaMas = await contadorMin.getByRole("button", { name: "Más" }).boundingBox();
+  if (Math.abs(cajaContador.x + cajaContador.width - (cajaMas.x + cajaMas.width)) > 1.5) throw new Error("el campo debe terminar donde termina el «+»");
+  paso("[paso 1] los tiempos tienen «−» y «+», se pueden escribir, no muestran flechitas y el campo termina en el «+»");
+  if (await page.locator(".barra-flotante .error").count()) throw new Error("el motivo debe desaparecer al marcar tipos");
 
   // Minimizados, los recuadros muestran el icono, la cantidad y los minutos de cada tipo en lugar de su nombre
   await page.getByRole("button", { name: "Minimizar todo" }).click();
@@ -167,8 +199,8 @@ try {
   paso("[HU-27-4] la rúbrica se muestra como matriz (criterios en filas, niveles en columnas)");
 
   // HU-30-2: volver descarta los borradores generados pero conserva la selección
-  page.once("dialog", (d) => d.accept());
   await page.getByRole("button", { name: "Volver", exact: true }).click();
+  await confirmar(page);
   await page.getByText("2. Resumen").waitFor();
   await page.locator(".resumen-item", { hasText: "2×" }).filter({ hasText: "45 min" }).waitFor();
   await page.getByRole("button", { name: "Generar", exact: true }).click();
@@ -228,39 +260,50 @@ try {
 
   // Banco: el ítem editado, con alternativas en letras y disponible para expertos
   await page.getByRole("button", { name: "Banco de ítems" }).click();
-  await page.locator("button.fila", { hasText: "Enunciado corregido E2E" }).first().click();
+  await page.locator("section.lista .fila-item", { hasText: "Enunciado corregido E2E" }).first().click();
   await page.locator("ol.alternativas").waitFor();
   const estilo = await page.locator("ol.alternativas").evaluate((e) => getComputedStyle(e).listStyleType);
   if (estilo !== "upper-alpha") throw new Error(`las alternativas usan "${estilo}"`);
   paso("[HU-08] las alternativas se enumeran con letras (A, B, C)");
-  await page.getByText(/disponible para expertos/).first().waitFor(); paso("[HU-31 c2] el detalle indica 'disponible para expertos'");
+  await page.getByText(/Disponible para expertos/).first().waitFor(); paso("[HU-31 c2] el detalle indica 'disponible para expertos'");
   // HU-37: la lista muestra el tipo con un icono y el nivel con color, en lugar de texto
-  const primera = page.locator("section.lista button.fila").first();
+  const primera = page.locator("section.lista .fila-item").first();
   await primera.locator(".icono-tipo [role=img]").waitFor();
   await primera.locator(".nivel-celda.activa").waitFor();
   const tipoIcono = await primera.locator(".icono-tipo [role=img]").getAttribute("title");
   if (!["Alternativa única", "Verdadero o falso", "Pregunta de desarrollo", "Coding challenge", "System design", "Debugging"].includes(tipoIcono)) throw new Error(`título del icono: ${tipoIcono}`);
   paso("[HU-37] cada ítem del banco muestra su tipo con un icono y su nivel con color");
-  await page.locator("section.lista button.fila .etiqueta", { hasText: /^(público|privado)$/ }).first().waitFor();
+  // Lo público no lleva etiqueta y lo privado dice «Privado»; la versión no se muestra en la lista
+  if (await page.locator("section.lista .fila-item", { hasText: "Enunciado corregido E2E" }).first().getByText("Privado", { exact: true }).count()) throw new Error("un ítem disponible para expertos no debe decir Privado");
+  if (await page.locator("section.lista .fila-item").first().getByText(/versión/i).count()) throw new Error("la lista no debe mostrar la versión");
   if (await page.locator("section.lista, section.panel").getByText("Sin puntuar", { exact: true }).count() !== 0) throw new Error("no debe aparecer la etiqueta 'Sin puntuar'");
   // (la base puede tener otros ítems ya puntuados; se revisan los PROG recién publicados, que no tienen puntuación)
-  if (await page.locator("section.lista button.fila", { hasText: "PROG" }).locator(".etiqueta.puntuado").count() !== 0) throw new Error("un ítem sin puntuar no debe mostrar estrella");
-  paso("[banco] cada ítem dice público o privado y los ítems sin puntuar no muestran etiqueta de puntaje");
-  // Filtros del banco: la skill se elige con el mismo menú de "Añadir skill" y hay filtro por nivel
-  const totalItems = async () => Number((await page.locator("section.lista > p.suave").first().innerText()).match(/(\d+) ítem/)[1]);
-  await page.locator(".filtros .campo-filtro button").click();
+  if (await page.locator("section.lista .fila-item", { hasText: "PROG" }).locator(".etiqueta.puntuado").count() !== 0) throw new Error("un ítem sin puntuar no debe mostrar estrella");
+  paso("[banco] lo privado se marca como «Privado» y los ítems sin puntuar no muestran etiqueta de puntaje");
+  // Filtros del banco: varias skills como burbujas (con el mismo menú de «Añadir una skill») y nivel como rango de cuadritos
+  const totalItems = async () => Number((await page.locator("section.lista .lista-cabecera > span.suave").first().innerText()).match(/(\d+) ítem/)[1]);
+  const sinFiltro = await totalItems();
+  await page.locator(".filtros").getByRole("button", { name: "Añadir una skill" }).click();
   await page.getByLabel("Buscar skill").fill("PROG");
   await page.locator("button.skill-opcion", { has: page.locator(".codigo", { hasText: /^PROG$/ }) }).first().click();
-  await esperar(async () => (await totalItems()) >= 1);
-  await page.getByLabel("Nivel de responsabilidad").selectOption("7");
+  await page.locator(".filtros .burbuja", { hasText: "PROG" }).waitFor();
+  await esperar(async () => (await totalItems()) >= 1 && (await totalItems()) <= sinFiltro);
+  const nivelesBanco = page.getByRole("group", { name: "Nivel de responsabilidad" });
+  await nivelesBanco.getByRole("button", { name: "Nivel 7", exact: true }).click();
   await esperar(async () => (await totalItems()) === 0);
-  await page.getByLabel("Nivel de responsabilidad").selectOption("3");
+  await nivelesBanco.getByRole("button", { name: "Nivel 3", exact: true }).click();   // un nivel y luego otro: de 3 a 7
   await esperar(async () => (await totalItems()) >= 1);
-  await page.locator(".filtros .campo-filtro button").click();
-  await page.getByRole("button", { name: "Todas las skills" }).click();
-  paso("[HU-07] el filtro de skill usa el menú con buscador y hay filtro por nivel de responsabilidad");
-  await page.locator("button.fila", { hasText: /\b7 min/ }).first().waitFor();
-  await page.locator("button.fila", { hasText: "45 min" }).first().waitFor(); paso("[HU-06 c2, HU-28 c1] cada ítem se guardó con su propio tiempo (7 y 45 min)");
+  await page.getByRole("button", { name: "Quitar PROG" }).click();
+  await esperar(async () => (await totalItems()) >= 1);
+  await page.getByLabel("Ordenar por").selectOption("time");
+  await esperar(async () => {
+    const minutos = (await page.locator("section.lista .fila-item-datos > .suave").allInnerTexts()).map((x) => parseInt(x));
+    return minutos.length > 1 && minutos.every((m, i) => i === 0 || minutos[i - 1] <= m);   // de menor a mayor
+  });
+  if ((await page.locator("section.lista .lista-cabecera .paginacion").count()) !== 1) throw new Error("falta la paginación sobre la lista");
+  paso("[HU-07] el banco filtra por varias skills (burbujas), por rango de nivel y se ordena por tiempo");
+  await page.locator("section.lista .fila-item", { has: page.locator(".fila-item-datos > .suave", { hasText: /^7 min$/ }) }).first().waitFor();
+  await page.locator("section.lista .fila-item", { has: page.locator(".fila-item-datos > .suave", { hasText: /^45 min$/ }) }).first().waitFor(); paso("[HU-06 c2, HU-28 c1] cada ítem se guardó con su propio tiempo (7 y 45 min)");
 
   // El catálogo es un enlace al sitio de SFIA
   const href = await page.getByRole("link", { name: /Catálogo SFIA/ }).getAttribute("href");

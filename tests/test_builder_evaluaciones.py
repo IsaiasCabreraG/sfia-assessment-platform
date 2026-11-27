@@ -232,6 +232,8 @@ def test_items_disponibles_filtros_visibilidad_y_marcas_de_la_evaluacion(builder
     assert ids(buscar(skill_ids=[_s(b)])) == {de_otra[0]}
     assert ids(buscar(min_level=4)) == {fuera[0]} and ids(buscar(max_level=3)) == {en_rango[0], de_otra[0]}
     assert ids(buscar(item_type="coding")) == set()
+    assert buscar(order="level_desc")[0]["id"] == fuera[0]  # el de nivel 5 va primero
+    assert builder_client.get("/available-items", headers=docente["headers"], params={"order": "x"}).status_code == 400
     assert builder_client.get("/available-items", headers=docente["headers"], params={"item_type": "x"}).status_code == 400
     ev = _borrador(builder_client, docente, [_sk(a, 3, 4)])
     _put(builder_client, docente, ev, item_version_ids=[_s(en_rango[1])])

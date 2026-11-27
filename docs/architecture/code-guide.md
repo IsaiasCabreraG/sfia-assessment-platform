@@ -214,7 +214,7 @@ El botón **«Publicar N preguntas»** cuenta solo los no descartados.
 
 En `GenerateView.tsx`:
 
-- Un efecto **guarda** en `localStorage` (clave `sprint1_borradores_docente`) los recuadros (cada uno con su contexto), los borradores (cada uno con el suyo) y el paso actual, cada vez que cambian. El trabajo guardado antes de que el contexto fuera por skill se sigue recuperando: su contexto único se reparte entre sus recuadros y borradores.
+- Un efecto **guarda** en `localStorage` (clave `sfia_borradores_docente`) los recuadros (cada uno con su contexto), los borradores (cada uno con el suyo) y el paso actual, cada vez que cambian. El trabajo guardado antes de que el contexto fuera por skill se sigue recuperando: su contexto único se reparte entre sus recuadros y borradores.
 - Al abrir la pantalla, otro efecto **recupera** ese trabajo y muestra el aviso *"Recuperamos tu trabajo sin publicar"* con el botón *Empezar de cero* (`reiniciar`).
 - Se borra al **publicar** o al empezar de cero (`olvidarTrabajo`).
 - Así sobrevive a recargar la página, cerrar la pestaña o volver a iniciar sesión.
@@ -553,10 +553,10 @@ La anotación de las respuestas (de acuerdo o en desacuerdo, por ítem) queda pa
 
 | Dónde | Qué se guarda |
 |---|---|
-| `localStorage` · `sprint1_token_<portal>` | Access token |
-| `localStorage` · `sprint1_refresh_<portal>` | Refresh token |
-| `localStorage` · `sprint1_aviso_<portal>` | Aviso de sesión vencida (se lee una vez) |
-| `localStorage` · `sprint1_borradores_docente` | Trabajo sin publicar del generador |
+| `localStorage` · `sfia_token_<portal>` | Access token |
+| `localStorage` · `sfia_refresh_<portal>` | Refresh token |
+| `localStorage` · `sfia_aviso_<portal>` | Aviso de sesión vencida (se lee una vez) |
+| `localStorage` · `sfia_borradores_docente` | Trabajo sin publicar del generador |
 
 ---
 

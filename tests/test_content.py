@@ -193,6 +193,13 @@ def test_filtros_por_skill_puntuacion_y_sin_puntuar(content_client, docente, val
     assert b in ids(scored="unscored", limit=200) and a not in ids(scored="unscored", limit=200)
     assert a in ids(min_score=1, max_score=1, limit=200) and a not in ids(min_score=2, limit=200)  # 1 estrella es puntuado
     assert b not in ids(min_score=1, limit=200)  # un ítem sin puntuar no entra en un filtro por puntaje
+    # varias skills, rango de nivel y orden
+    dos = [str(skill_ids[0]["id"]), str(skill_ids[1]["id"])]
+    assert {a, b} <= ids(skill_ids=dos, limit=200) and b not in ids(skill_ids=dos[:1], limit=200)
+    assert a in ids(min_level=1, max_level=7, limit=200) and a not in ids(min_level=8, limit=200)
+    por_puntaje = [i["id"] for i in content_client.get("/items", params={"skill_ids": dos, "order": "score", "limit": 200}, headers=h).json()["items"]]
+    assert por_puntaje.index(a) < por_puntaje.index(b)  # lo puntuado va antes que lo sin puntuar
+    assert content_client.get("/items", params={"order": "x"}, headers=h).status_code == 400
 
 
 def test_filtro_por_rol_se_resuelve_por_las_skills_del_perfil(content_client, docente, validador, skill_ids, fake_llm):

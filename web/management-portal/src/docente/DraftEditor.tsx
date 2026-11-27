@@ -2,6 +2,7 @@
 
 // Edición de un borrador antes de publicar. Muestra los campos propios de cada tipo de ítem; las reglas
 // (pesos de la rúbrica que suman 100, una sola opción correcta, etc.) las valida el backend al publicar.
+import { Icono } from "../shared/Estrellas";
 import { CRITERIOS_FIJOS, OPEN_TYPES, type CriterioRubrica } from "./tipos";
 
 type Contenido = Record<string, any>;
@@ -51,7 +52,7 @@ function Opciones({ c, set }: { c: Contenido; set: (cambio: Contenido) => void }
           <input type="radio" name="correcta" checked={o.is_correct}
                  onChange={() => set({ options: opciones.map((x, j) => ({ ...x, is_correct: j === i })) })} />
           <input className="crece" value={o.text} onChange={(e) => cambiar(i, { text: e.target.value })} />
-          <button type="button" disabled={opciones.length <= 2} onClick={() => set({ options: opciones.filter((_, j) => j !== i) })}>×</button>
+          <button type="button" className="icono-btn peligro" aria-label="Quitar" title="Quitar" disabled={opciones.length <= 2} onClick={() => set({ options: opciones.filter((_, j) => j !== i) })}><Icono nombre="descartar" /></button>
         </div>
       ))}
       <button type="button" onClick={() => set({ options: [...opciones, { text: "", is_correct: false }] })}>+ Alternativa</button>
@@ -71,7 +72,7 @@ function Hallazgos({ c, set }: { c: Contenido; set: (cambio: Contenido) => void 
           <input type="number" min="1" placeholder="Línea" className="corto" value={h.line ?? ""}
                  onChange={(e) => cambiar(i, { line: e.target.value ? Number(e.target.value) : null })} />
           <input className="crece" placeholder="Causa esperada" value={h.description} onChange={(e) => cambiar(i, { description: e.target.value })} />
-          <button type="button" disabled={hallazgos.length <= 1} onClick={() => set({ findings: hallazgos.filter((_, j) => j !== i) })}>×</button>
+          <button type="button" className="icono-btn peligro" aria-label="Quitar" title="Quitar" disabled={hallazgos.length <= 1} onClick={() => set({ findings: hallazgos.filter((_, j) => j !== i) })}><Icono nombre="descartar" /></button>
         </div>
       ))}
       <button type="button" onClick={() => set({ findings: [...hallazgos, { line: null, description: "" }] })}>+ Hallazgo</button>
@@ -99,7 +100,7 @@ function Rubrica({ type, c, set }: { type: string; c: Contenido; set: (cambio: C
             <input className="crece" placeholder="Criterio" value={k.name} disabled={fijo} onChange={(e) => cambiar(i, { name: e.target.value })} />
             <input type="number" min="1" max="100" className="corto" value={k.weight} disabled={fijo} onChange={(e) => cambiar(i, { weight: Number(e.target.value) })} />
             <span>%</span>
-            <button type="button" disabled={fijo || criterios.length <= 4} onClick={() => set({ rubric: criterios.filter((_, j) => j !== i) })}>×</button>
+            <button type="button" className="icono-btn peligro" aria-label="Quitar" title="Quitar" disabled={fijo || criterios.length <= 4} onClick={() => set({ rubric: criterios.filter((_, j) => j !== i) })}><Icono nombre="descartar" /></button>
           </div>
           {k.levels.map((l, n) => (
             <label key={l.score}>Puntaje {l.score}

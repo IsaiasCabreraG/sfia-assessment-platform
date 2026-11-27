@@ -57,12 +57,12 @@ POST   /items/publish               # Publicar los borradores revisados: versió
 POST   /items/{id}/regenerate       # Vista previa de la regeneración con un nuevo contexto (mismo tipo, skill, nivel y tiempo); no guarda nada
 
 # Banco de ítems
-GET    /items?status=active&skill_id=&role_profile_id=&type=&score=&mine=   # Filtrar (activos por defecto); mine=true solo los del docente
+GET    /items?status=active&skill_ids=&role_profile_id=&item_type=&min_level=&max_level=&scored=&min_score=&max_score=&mine=&order=&limit=&offset=   # Filtrar (activos por defecto). `skill_ids` admite varias skills (se repite el parámetro); `min_level` y `max_level` filtran por rango de nivel; `order`: recent (por defecto), oldest, score, level_asc, level_desc, time o skill; `mine=true` solo los del docente
 GET    /items/{id}/versions         # Historial de versiones: origen, fecha y puntuación
-GET    /items/{id}                  # Versión vigente: atributos, datos del tipo, rúbrica, promedio y cantidad de puntuaciones
+GET    /items/{id}?version=N        # Versión vigente (o la N): atributos, datos del tipo, rúbrica, promedio y cantidad de puntuaciones
 PUT    /items/{id}                  # Guarda una edición o una regeneración confirmada: versión nueva si el ítem es propio, copia propia si es ajeno
-PUT    /items/{id}/status           # Activar o desactivar
-POST   /item-versions/{id}/scores   # Experto validador puntúa de 1 a 5 estrellas (rol `validator`)
+PATCH  /items/{id}/status           # Activar o desactivar (solo el autor)
+PUT    /items/{id}/score            # Experto validador puntúa de 1 a 5 estrellas (rol `validator`)
 GET    /items/{id}/tests            # Tests unitarios (coding) para auto-eval
 ```
 
@@ -100,10 +100,34 @@ GET    /items/{id}/tests            # Tests unitarios (coding) para auto-eval
 
 **API (REST)**:
 ```
-POST   /evaluations                  # Crear evaluación
-PUT    /evaluations/{id}             # Editar
-POST   /evaluations/{id}/publish     # Publicar → link con share_token
-GET    /evaluations/{id}/reports     # Consulta Analítica
+# Evaluaciones (borrador → publicada o descartada)
+POST   /evaluations                  # Crear (borrador)
+GET    /evaluations?status=          # Mis evaluaciones, por estado
+GET    /evaluations/{id}             # Detalle: reglas, skills con sus niveles, ítems y duración recomendada
+PUT    /evaluations/{id}             # Editar por partes (nombre, rol de base, duración, skills e ítems); solo borradores
+POST   /evaluations/{id}/publish     # Publicar; sin duración fijada queda la recomendada (suma de los ítems)
+POST   /evaluations/{id}/discard     # Descartar
+POST   /evaluations/{id}/duplicate   # Duplicar en un borrador nuevo (la forma de cambiar una publicada)
+GET    /evaluations/{id}/reports     # Pendiente: consulta Analítica
+
+# Ítems del banco para armar la evaluación
+GET    /available-items?evaluation_id=&only_rules=&skill_ids=&min_level=&max_level=&item_type=&q=&order=&limit=&offset=   # Con `only_rules` solo ofrece lo que cumple las reglas (las skills de la evaluación y sus niveles); `order`: skill (por defecto), recent, score, level_asc, level_desc o time
+GET    /items/{id}/usage             # En cuántas evaluaciones publicadas y plantillas públicas está el ítem (solo cuentas)
+
+# Plantillas
+POST   /evaluations/{id}/template    # Guardar una evaluación como plantilla (copia su diseño)
+GET    /templates                    # Plantillas disponibles (propias y públicas)
+GET    /templates/{id}
+PUT    /templates/{id}
+DELETE /templates/{id}
+POST   /templates/{id}/use           # Crear un borrador a partir de la plantilla
+
+# Roles propios
+POST   /custom-roles
+GET    /custom-roles
+GET    /custom-roles/{id}
+PUT    /custom-roles/{id}
+DELETE /custom-roles/{id}
 ```
 
 **Eventos que emite**:

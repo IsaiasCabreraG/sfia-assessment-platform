@@ -3,8 +3,12 @@
 // Acciones del docente sobre un ítem del banco: activar/desactivar (HU-09), editar (HU-13), regenerar con un nuevo
 // contexto (HU-14) y ver el historial de versiones (HU-26). Editar y regenerar guardan una versión nueva del ítem
 // o, si el ítem es de otro docente, una copia propia (HU-15).
+import { Contador } from "../shared/Contador";
+import { useConfirmar } from "../shared/useConfirmar";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { api } from "../shared/api";
+import { Icono } from "../shared/Estrellas";
 import { BUILDER_URL, CONTENT_URL } from "../shared/config";
 import type { ItemDetailData, ItemVersionInfo } from "../shared/types";
 import { VistaItem } from "../shared/VistaItem";
@@ -28,9 +32,12 @@ interface Props {
   recargar: () => void;
   /** Abre otro ítem del banco (por ejemplo, la copia recién creada). */
   abrir: (id: string) => void;
+  /** Dónde dibujar los botones con icono (arriba a la derecha del detalle). */
+  barra: HTMLElement | null;
 }
 
-export function AccionesItem({ item, recargar, abrir }: Props) {
+export function AccionesItem({ item, recargar, abrir, barra }: Props) {
+  const [confirmar, dialogoConfirmar] = useConfirmar();
   const [modo, setModo] = useState<Modo>(null);
   const [contenido, setContenido] = useState<Contenido>({});
   const [minutos, setMinutos] = useState(item.estimated_minutes);
@@ -63,7 +70,7 @@ export function AccionesItem({ item, recargar, abrir }: Props) {
       const partes: string[] = [];
       if (u.published_evaluations) partes.push(`${u.published_evaluations} evaluación${u.published_evaluations === 1 ? " publicada" : "es publicadas"} (no se ${u.published_evaluations === 1 ? "verá afectada" : "verán afectadas"})`);
       if (u.public_templates) partes.push(`${u.public_templates} plantilla${u.public_templates === 1 ? " pública" : "s públicas"} (dejará${u.public_templates === 1 ? "" : "n"} de estar disponible${u.public_templates === 1 ? "" : "s"})`);
-      return window.confirm(`Este ítem está en ${partes.join(" y en ")}. ¿${accion}?`);
+      return await confirmar(`Este ítem está en ${partes.join(" y en ")}. ¿${accion}?`);
     } catch (e) {
       setError(`No se pudo comprobar dónde se usa el ítem: ${(e as Error).message}`);
       return false;
@@ -129,21 +136,35 @@ export function AccionesItem({ item, recargar, abrir }: Props) {
 
   return (
     <>
-      <div className="acciones-item">
-        {item.is_mine && <button onClick={cambiarEstado}>{item.status === "active" ? "Desactivar ítem" : "Activar ítem"}</button>}
-        <button aria-pressed={modo === "editar"} onClick={() => abrirModo("editar")}>Editar</button>
-        <button aria-pressed={modo === "regenerar"} onClick={() => abrirModo("regenerar")}>Regenerar con otro contexto</button>
-        <button aria-pressed={modo === "historial"} onClick={() => abrirModo("historial")}>Historial</button>
-      </div>
+      {dialogoConfirmar}
+      {barra && createPortal(
+        <>
+          <button type="button" className="icono-btn" aria-label="Editar" title="Editar" aria-pressed={modo === "editar"} onClick={() => abrirModo("editar")}>
+            <Icono nombre="editar" />
+          </button>
+          <button type="button" className="icono-btn" aria-label="Regenerar con otro contexto" title="Regenerar con otro contexto" aria-pressed={modo === "regenerar"}
+                  onClick={() => abrirModo("regenerar")}>
+            <Icono nombre="regenerar" />
+          </button>
+          <button type="button" className="icono-btn" aria-label="Historial" title="Historial" aria-pressed={modo === "historial"} onClick={() => abrirModo("historial")}>
+            <Icono nombre="historial" />
+          </button>
+          {item.is_mine && (
+            <button type="button" className={`icono-btn ${item.status === "active" ? "peligro" : ""}`} onClick={cambiarEstado}
+                    aria-label={item.status === "active" ? "Desactivar ítem" : "Activar ítem"} title={item.status === "active" ? "Desactivar ítem" : "Activar ítem"}>
+              <Icono nombre={item.status === "active" ? "desactivar" : "activar"} />
+            </button>
+          )}
+        </>, barra)}
       {aviso && <p className="ok">{aviso}</p>}
       {error && <p className="error">{error}</p>}
 
       {modo === "editar" && (
         <div className="acciones-caja">
           <DraftEditor type={item.type} content={contenido} onChange={setContenido} />
-          <label className="check">Tiempo (min)
-            <input type="number" min="1" className="corto" value={minutos} onChange={(e) => setMinutos(Number(e.target.value))} />
-          </label>
+          <span className="check">Tiempo (min)
+            <Contador etiqueta="Tiempo estimado" valor={minutos} alCambiar={(n) => setMinutos(n ?? 1)} />
+          </span>
           {pie("edited")}
         </div>
       )}

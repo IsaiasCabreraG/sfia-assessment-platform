@@ -3,8 +3,8 @@ import { avisarSesionVencida, cerrarSesion, leerToken, refrescarSesion, type Por
 
 export class ApiError extends Error {
   status: number;
-  body: any;
-  constructor(status: number, mensaje: string, body: any) {
+  body: unknown;
+  constructor(status: number, mensaje: string, body: unknown) {
     super(mensaje);
     this.status = status;
     this.body = body;

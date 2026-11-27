@@ -2,7 +2,7 @@
 
 // Icono de un tipo de ítem (HU-37): su forma y su color identifican el tipo sin leer su nombre.
 import { Icono } from "./Estrellas";
-import { NOMBRE_TIPO } from "./ItemDetail";
+import { NOMBRE_TIPO } from "./tipos";
 
 export const COLOR_TIPO: Record<string, string> = {
   single_choice: "#1f5fbf",

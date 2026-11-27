@@ -38,9 +38,9 @@ export function App() {
                 portal="docente"
                 modo="docente"
                 version={version}
-                acciones={(item, recargar, abrir) => (
+                acciones={(item, recargar, abrir, barra) => (
                   // HU-09 (activar/desactivar), HU-13 (editar), HU-14 (regenerar) y HU-26 (historial).
-                  <AccionesItem key={item.id} item={item} recargar={recargar} abrir={abrir} />
+                  <AccionesItem key={item.id} item={item} recargar={recargar} abrir={abrir} barra={barra} />
                 )}
               />
             )}

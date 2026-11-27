@@ -3,9 +3,9 @@
 import { readFileSync } from "node:fs";
 import { chromium } from "/mnt/c/Users/isaia/Repositorios/Tesis/poc/tests/e2e/node_modules/playwright/index.mjs";
 
-/** Abre el menú "+ Añadir skill…", busca la skill por su código y la elige. */
+/** Abre el menú «Añadir una skill», busca la skill por su código y la elige. */
 async function abrirSkill(page, codigo) {
-  await page.getByRole("button", { name: "+ Añadir skill…" }).click();
+  await page.getByRole("button", { name: "Añadir una skill" }).click();
   await page.getByLabel("Buscar skill").fill(codigo);
   await page.locator("button.skill-opcion", { has: page.locator(".codigo", { hasText: new RegExp(`^${codigo}$`) }) }).first().click();
 }
@@ -23,22 +23,22 @@ async function abrir(s) {
   await ctx.addInitScript((x) => {
     if (!sessionStorage.getItem("ya")) { // solo la primera carga: las siguientes conservan lo que haga la aplicación
       sessionStorage.setItem("ya", "1");
-      localStorage.setItem("sprint1_token_docente", x.access);
-      localStorage.setItem("sprint1_refresh_docente", x.refresh);
+      localStorage.setItem("sfia_token_docente", x.access);
+      localStorage.setItem("sfia_refresh_docente", x.refresh);
     }
   }, s);
   const page = await ctx.newPage();
   await page.goto(`${portal}/docente/`);
   return page;
 }
-const guardado = (page) => page.evaluate(() => ({ a: localStorage.getItem("sprint1_token_docente"), r: localStorage.getItem("sprint1_refresh_docente") }));
+const guardado = (page) => page.evaluate(() => ({ a: localStorage.getItem("sfia_token_docente"), r: localStorage.getItem("sfia_refresh_docente") }));
 
 /** Deja el access token vencido (la firma ya no coincide): el backend responde 401 en la siguiente llamada. */
 const vencerAccess = (page) => page.evaluate(() => {
-  const [h, p, f] = localStorage.getItem("sprint1_token_docente").split(".");
+  const [h, p, f] = localStorage.getItem("sfia_token_docente").split(".");
   const cuerpo = JSON.parse(atob(p.replace(/-/g, "+").replace(/_/g, "/")));
   cuerpo.exp = Math.floor(Date.now() / 1000) - 10;
-  localStorage.setItem("sprint1_token_docente", [h, btoa(JSON.stringify(cuerpo)).replace(/=+$/, ""), f].join("."));
+  localStorage.setItem("sfia_token_docente", [h, btoa(JSON.stringify(cuerpo)).replace(/=+$/, ""), f].join("."));
 });
 
 /** Genera un borrador de alternativa única y lo edita, para tener trabajo sin publicar en pantalla. */
@@ -46,6 +46,7 @@ async function conBorradorEditado(s, texto) {
   const page = await abrir(s);
   await page.getByText("Qué evaluar").waitFor();
   await abrirSkill(page, "PROG");
+  await page.getByLabel("Alternativa única", { exact: true }).check();   // por defecto no hay ningún tipo marcado
   await page.getByLabel("Cantidad Alternativa única").fill("1");
   await page.getByRole("button", { name: "Siguiente" }).click();
   await page.getByRole("button", { name: "Generar", exact: true }).click();
@@ -82,10 +83,10 @@ try {
   await page.getByText("Qué evaluar").waitFor();
   const antes = (await guardado(page)).a;
   await page.evaluate(() => {  // simula que pasó la hora: deja un access vencido (firma válida, exp pasado)
-    const [h, p, f] = localStorage.getItem("sprint1_token_docente").split(".");
+    const [h, p, f] = localStorage.getItem("sfia_token_docente").split(".");
     const cuerpo = JSON.parse(atob(p.replace(/-/g, "+").replace(/_/g, "/")));
     cuerpo.exp = Math.floor(Date.now() / 1000) - 10;  // la firma ya no coincide: el backend lo rechaza igual con 401
-    localStorage.setItem("sprint1_token_docente", [h, btoa(JSON.stringify(cuerpo)).replace(/=+$/, ""), f].join("."));
+    localStorage.setItem("sfia_token_docente", [h, btoa(JSON.stringify(cuerpo)).replace(/=+$/, ""), f].join("."));
   });
   await page.getByRole("button", { name: "Banco de ítems" }).click();
   await page.getByText(/ítem\(s\)/).waitFor();
@@ -121,11 +122,11 @@ try {
   // 7. La sesión se pierde de verdad (refresh inválido): al volver a entrar se recupera el borrador.
   page = await conBorradorEditado(sesiones.sesion_perdida, "Borrador que sobrevive al login");
   await vencerAccess(page);
-  await page.evaluate(() => localStorage.setItem("sprint1_refresh_docente", "ya-no-sirve"));
+  await page.evaluate(() => localStorage.setItem("sfia_refresh_docente", "ya-no-sirve"));
   await page.getByRole("button", { name: "Publicar 1 pregunta" }).click();
   await page.getByRole("button", { name: "Iniciar sesión con Google" }).waitFor();
   await page.getByText(/Tu sesión venció/).waitFor();
-  await page.evaluate((x) => { localStorage.setItem("sprint1_token_docente", x.access); localStorage.setItem("sprint1_refresh_docente", x.refresh); }, sesiones.reentrada);
+  await page.evaluate((x) => { localStorage.setItem("sfia_token_docente", x.access); localStorage.setItem("sfia_refresh_docente", x.refresh); }, sesiones.reentrada);
   await page.reload();  // equivale a volver de Google con una sesión nueva
   await page.getByText(/Recuperamos tu trabajo sin publicar/).waitFor();
   await page.locator(".panel-borrador").getByText("Borrador que sobrevive al login").waitFor();

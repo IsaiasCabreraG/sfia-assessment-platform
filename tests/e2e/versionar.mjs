@@ -1,6 +1,6 @@
 // Prueba E2E del versionado de ítems en el Portal Docente (HU-13, HU-14, HU-15, HU-26): editar un ítem propio crea
 // una versión nueva, regenerar con otro contexto (vista previa y confirmar), historial, copia propia de un ítem ajeno
-// y filtro «Solo mis ítems».
+// y marca de «Privado» en la copia propia.
 // Uso: node versionar.mjs <url-del-portal> <archivo-de-sesiones.json>
 import { readFileSync } from "node:fs";
 import { chromium } from "/mnt/c/Users/isaia/Repositorios/Tesis/poc/tests/e2e/node_modules/playwright/index.mjs";
@@ -44,14 +44,14 @@ await llamar(sesiones.versionar_validador, "PUT", `${CONTENT}/items/${idPropio}/
 
 const browser = await chromium.launch();
 const ctx = await browser.newContext();
-await ctx.addInitScript((s) => { localStorage.setItem("sprint1_token_docente", s.access); localStorage.setItem("sprint1_refresh_docente", s.refresh); }, sesiones.versionar);
+await ctx.addInitScript((s) => { localStorage.setItem("sfia_token_docente", s.access); localStorage.setItem("sfia_refresh_docente", s.refresh); }, sesiones.versionar);
 const page = await ctx.newPage();
 const errores = [];
 page.on("pageerror", (e) => errores.push(String(e)));
 page.on("console", (m) => { if (m.type() === "error") errores.push(m.text()); });
 
-const cabecera = () => page.locator("article.detalle header .suave");
-const filas = (texto) => page.locator("section.lista button.fila", { hasText: texto });
+const cabecera = () => page.locator("article.detalle header .ficha-meta");
+const filas = (texto) => page.locator("section.lista .fila-item", { hasText: texto });
 
 try {
   await page.goto(`${portal}/docente/`);
@@ -102,17 +102,16 @@ try {
   await page.getByLabel("Enunciado").fill(enunciadoCopia);
   await page.getByRole("button", { name: "Guardar como copia mía" }).click();
   await esperar(async () => /copia de otro ítem/.test(await cabecera().innerText()));
-  if (!/uso privado/.test(await cabecera().innerText())) throw new Error("la copia debe ser de uso privado");
+  if (!/Privado/.test(await cabecera().innerText())) throw new Error("la copia debe ser privada");
   paso("[HU-15] editar un ítem ajeno avisa, guarda una copia propia privada y la abre");
   const original = await llamar(sesiones.versionar_ajeno, "GET", `${CONTENT}/items/${idAjeno}`);
   if (original.version !== 1 || original.statement !== enunciadoAjeno) throw new Error("el original no debe cambiar");
   paso("[HU-15] el ítem original del otro docente queda intacto (versión 1)");
 
-  // HU-15: «Solo mis ítems»
-  await page.getByLabel("Solo mis ítems").check();
-  await esperar(async () => (await filas(enunciadoAjeno).count()) === 0);
-  await filas(enunciadoCopia).first().waitFor();
-  paso("[HU-15] «Solo mis ítems» oculta los ítems de otros y muestra la copia propia");
+  // HU-15: en la lista, la copia propia se marca como privada y el ítem del otro docente no
+  await filas(enunciadoCopia).first().getByText("Privado", { exact: true }).waitFor();
+  if (await filas(enunciadoAjeno).first().getByText("Privado", { exact: true }).count()) throw new Error("el ítem público del otro docente no debe decir Privado");
+  paso("[HU-15] la lista marca la copia propia como «Privado» y no el ítem público del otro docente");
 
   if (errores.length) throw new Error("errores en la consola: " + errores.join(" | "));
   console.log(`\nOK: ${pasos.length} comprobaciones`);

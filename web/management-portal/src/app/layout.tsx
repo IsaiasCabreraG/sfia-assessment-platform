@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "../styles.css";
 
-export const metadata: Metadata = { title: "Plataforma SFIA - Sprint 1" };
+export const metadata: Metadata = { title: "Plataforma SFIA" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

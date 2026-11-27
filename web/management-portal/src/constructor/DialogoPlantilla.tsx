@@ -4,7 +4,7 @@
 // tener ítems públicos: se confirma hacer públicos los ítems propios que hoy son privados; los privados de otros docentes
 // y los inactivos lo impiden.
 import { useState } from "react";
-import { Ventana } from "./Ventana";
+import { Ventana } from "../shared/Ventana";
 
 export interface ItemDePlantilla { skill_code: string; item_active: boolean; item_public: boolean; is_mine: boolean }
 
@@ -41,11 +41,11 @@ export function DialogoPlantilla({ titulo, nombreInicial, visibilidadInicial = "
 
   return (
     <Ventana titulo={titulo} alCerrar={alCerrar}>
-      <div className="formulario" style={{ maxWidth: "none" }}>
+      <div className="formulario ancho-total">
         <label>Nombre
           <input value={nombre} maxLength={100} onChange={(e) => setNombre(e.target.value)} />
         </label>
-        <fieldset style={{ border: "none", padding: 0, margin: 0 }}>
+        <fieldset className="sin-borde">
           <legend>Visibilidad</legend>
           <label className="check"><input type="radio" name="visibilidad" checked={!publica} onChange={() => setVisibilidad("private")} /> Privada (solo yo)</label>
           <label className="check"><input type="radio" name="visibilidad" checked={publica} onChange={() => setVisibilidad("public")} /> Pública (otros docentes la pueden usar)</label>
@@ -55,13 +55,13 @@ export function DialogoPlantilla({ titulo, nombreInicial, visibilidadInicial = "
         {publica && !impide && propios.length > 0 && (
           <div className="aviso">
             Se harán públicos <strong>{propios.length} ítem{propios.length === 1 ? "" : "s"} tuyo{propios.length === 1 ? "" : "s"}</strong> que hoy {propios.length === 1 ? "es privado" : "son privados"} ({codigos(propios)}): quedarán visibles para los expertos y en tus otras evaluaciones.
-            <label className="check" style={{ marginTop: ".4rem" }}>
+            <label className="check mt-4">
               <input type="checkbox" checked={confirmado} onChange={(e) => setConfirmado(e.target.checked)} /> Entiendo y quiero hacerlos públicos
             </label>
           </div>
         )}
         {error && <p className="error">{error}</p>}
-        <div className="acciones" style={{ justifyContent: "flex-end" }}>
+        <div className="acciones fin">
           <button onClick={alCerrar}>Cancelar</button>
           <button className="primario" disabled={ocupado || !nombre.trim() || impide || faltaConfirmar} onClick={guardar}>{ocupado ? "Guardando…" : textoGuardar}</button>
         </div>

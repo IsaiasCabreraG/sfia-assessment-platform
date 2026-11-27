@@ -3,6 +3,8 @@
 // Revisión de borradores (HU-04, HU-27 y HU-30): a la izquierda la lista de borradores y a la derecha el elegido,
 // completo, con editar, regenerar y descartar arriba como iconos. Los borradores viven solo en pantalla;
 // "Publicar" los guarda en el banco (versión 1, activos, sin puntuar).
+import { Contador } from "../shared/Contador";
+import { useConfirmar } from "../shared/useConfirmar";
 import { useState } from "react";
 import { api } from "../shared/api";
 import { CONTENT_URL } from "../shared/config";
@@ -37,6 +39,7 @@ export function limpiar(c: Record<string, any>): Record<string, any> {
 }
 
 export function ReviewView({ drafts, setDrafts, fallos, alPublicar, alVolver }: Props) {
+  const [confirmar, dialogoConfirmar] = useConfirmar();
   const [seleccion, setSeleccion] = useState<string | null>(drafts[0]?.id ?? null);
   const [editando, setEditando] = useState(false);
   const [regenerando, setRegenerando] = useState(false);
@@ -53,8 +56,8 @@ export function ReviewView({ drafts, setDrafts, fallos, alPublicar, alVolver }: 
 
   const elegir = (id: string) => { setSeleccion(id); setEditando(false); setRegenerando(false); setFeedback(""); };
 
-  const volver = () => {
-    if (window.confirm("Se descartarán los borradores generados. Se conserva lo que elegiste (skills, nivel y tipos) para generar otra tanda. ¿Continuar?")) alVolver();
+  const volver = async () => {
+    if (await confirmar("Se descartarán los borradores generados. Se conserva lo que elegiste (skills, nivel y tipos) para generar otra tanda. ¿Continuar?")) alVolver();
   };
 
   const regenerar = async (d: Draft) => {
@@ -101,6 +104,7 @@ export function ReviewView({ drafts, setDrafts, fallos, alPublicar, alVolver }: 
 
   return (
     <section className="revision">
+      {dialogoConfirmar}
       <header className="revision-cabecera">
         <button type="button" className="icono-btn" aria-label="Volver" title="Volver al resumen (se descartan los borradores)" onClick={volver}>
           <Icono nombre="volver" /> Volver
@@ -118,13 +122,12 @@ export function ReviewView({ drafts, setDrafts, fallos, alPublicar, alVolver }: 
                     className={`fila borrador-fila ${d.id === actual?.id ? "activa" : ""} ${d.discarded ? "descartado" : ""}`}>
               <span className="fila-titulo">
                 <span className="fila-datos">
-                  <IconoTipo tipo={d.item_type} />{" "}
-                  <strong>{d.skill_label.split(" · ")[0]}</strong>{" "}
-                  <NivelChip nivel={d.level} color={d.skill_color ?? COLOR_NEUTRO} />{" "}
-                  <span className="suave">{d.minutes} min</span>
+                  <strong style={{ color: d.skill_color }}>{d.skill_label.split(" · ")[0]}</strong>{" "}
+                  <NivelChip nivel={d.level} color={d.skill_color ?? COLOR_NEUTRO} />
                 </span>
                 {d.discarded && <span className="etiqueta">descartado</span>}
               </span>
+              <span className="fila-datos suave"><IconoTipo tipo={d.item_type} /> {NOMBRE_TIPO[d.item_type]} · {d.minutes} min</span>
               <span className="enunciado">{d.content.statement}</span>
             </button>
           ))}
@@ -160,15 +163,19 @@ export function ReviewView({ drafts, setDrafts, fallos, alPublicar, alVolver }: 
               </header>
 
               <div className="panel-meta">
-                <IconoTipo tipo={actual.item_type} />
-                <span>{NOMBRE_TIPO[actual.item_type]}</span>
-                <strong>{actual.skill_label}</strong>
-                <NivelChip nivel={actual.level} color={actual.skill_color ?? COLOR_NEUTRO} />
-                <label className="check">Tiempo (min)
-                  <input type="number" min="1" className="corto" aria-label="Tiempo estimado" value={actual.minutes} disabled={actual.discarded}
-                         onChange={(e) => cambiar(actual.id, { minutes: Number(e.target.value) })} />
-                </label>
-                {actual.discarded && <span className="etiqueta">descartado</span>}
+                <div className="panel-meta-skill">
+                  <strong style={{ color: actual.skill_color }}>{actual.skill_label}</strong>
+                  <NivelChip nivel={actual.level} color={actual.skill_color ?? COLOR_NEUTRO} />
+                  {actual.discarded && <span className="etiqueta">descartado</span>}
+                </div>
+                <div className="panel-meta-tipo">
+                  <IconoTipo tipo={actual.item_type} />
+                  <span>{NOMBRE_TIPO[actual.item_type]}</span>
+                  <span className="check">Tiempo (min)
+                    <Contador etiqueta="Tiempo estimado" valor={actual.minutes} deshabilitado={actual.discarded}
+                              alCambiar={(n) => cambiar(actual.id, { minutes: n ?? 1 })} />
+                  </span>
+                </div>
               </div>
 
               {editando && !actual.discarded

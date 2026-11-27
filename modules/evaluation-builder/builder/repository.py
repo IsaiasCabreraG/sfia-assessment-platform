@@ -220,13 +220,23 @@ WHERE i.status = 'active'
   AND (%(max_level)s::int IS NULL OR v.level <= %(max_level)s)
   AND (%(item_type)s::text IS NULL OR v.type = %(item_type)s)
   AND (%(q)s::text IS NULL OR v.statement ILIKE '%%' || %(q)s || '%%')
-ORDER BY s.code, v.level, i.created_at DESC, i.id
+ORDER BY {order}, i.id
 LIMIT %(limit)s OFFSET %(offset)s
 """
 
+# Ordenamientos de «ítems disponibles» (el valor de `order` elige un fragmento; nunca se interpola texto del usuario).
+AVAILABLE_ORDERS = {
+    "skill": "s.code, v.level, i.created_at DESC",
+    "recent": "i.created_at DESC",
+    "score": "sc.average DESC NULLS LAST, s.code",
+    "level_asc": "v.level, s.code",
+    "level_desc": "v.level DESC, s.code",
+    "time": "v.estimated_minutes, s.code",
+}
+
 
 def list_available_items(cur, filters: dict) -> list[dict]:
-    cur.execute(_AVAILABLE_SQL, filters)
+    cur.execute(_AVAILABLE_SQL.format(order=AVAILABLE_ORDERS[filters["order"]]), filters)
     return cur.fetchall()
 
 

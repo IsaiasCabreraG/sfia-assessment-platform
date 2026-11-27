@@ -1,39 +1,46 @@
 "use client";
 
-// Banco de ítems: filtros (HU-07), lista con puntuación (HU-25) y detalle (HU-08) de un ítem.
+// Banco de ítems: filtros (HU-07), lista ordenable y paginada con puntuación (HU-25) y detalle (HU-08) de un ítem.
 // Lo usan los dos portales; `modo` decide qué filtros se ofrecen y `acciones` agrega los botones propios
 // de cada portal (activar/desactivar en el docente, puntuar en el validador).
+import { useVigencia } from "./useVigencia";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { api, consulta } from "./api";
 import type { Portal } from "./auth";
 import { CATALOG_URL, CONTENT_URL } from "./config";
-import { colorDe } from "./categorias";
-import { IconoTipo } from "./IconoTipo";
-import { ItemDetail, NOMBRE_TIPO, Puntuacion } from "./ItemDetail";
-import { NivelChip } from "./Niveles";
+import { FilaItem } from "./FilaItem";
+import { FiltroSkills } from "./FiltroSkills";
+import { ItemDetail, NOMBRE_TIPO } from "./ItemDetail";
+import { NivelesRango } from "./NivelesRango";
+import { Ordenar } from "./Ordenar";
+import { Paginacion } from "./Paginacion";
 import { RangoEstrellas } from "./RangoEstrellas";
-import { SkillPicker } from "./SkillPicker";
-import type { ItemDetailData, ItemSummary, Level, RoleProfile, Skill } from "./types";
+import type { ItemDetailData, ItemSummary, RoleProfile, RoleProfileDetail, Skill } from "./types";
 
 interface Props {
   portal: Portal;
   modo: "docente" | "validador";
-  /** Botones propios del portal para el ítem abierto; `recargar` actualiza lista y detalle. */
-  acciones?: (item: ItemDetailData, recargar: () => void, abrir: (id: string) => void) => ReactNode;
+  /** Botones propios del portal para el ítem abierto; `recargar` actualiza lista y detalle y `barra` es el lugar (arriba a la
+   *  derecha del detalle) donde dibujar sus botones con icono, con un portal de React. */
+  acciones?: (item: ItemDetailData, recargar: () => void, abrir: (id: string) => void, barra: HTMLElement | null) => ReactNode;
   /** Cambia cuando otra pantalla crea ítems, para volver a consultar la lista. */
   version?: number;
 }
 
 const LIMITE = 20;
+const ORDENES: [string, string][] = [
+  ["recent", "Más recientes"], ["oldest", "Más antiguos"], ["score", "Mejor puntuados"], ["skill", "Skill"],
+  ["level_asc", "Nivel (menor a mayor)"], ["level_desc", "Nivel (mayor a menor)"], ["time", "Tiempo (menor a mayor)"],
+];
 
 export function ItemBrowser({ portal, modo, acciones, version = 0 }: Props) {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [perfiles, setPerfiles] = useState<RoleProfile[]>([]);
-  const [niveles, setNiveles] = useState<Level[]>([]);
   const [filtros, setFiltros] = useState({
-    skill_id: "", role_profile_id: "", level: "", item_type: "", scored: "", min_score: "", max_score: "",
-    status: "active", mine: "",
+    role_profile_id: "", min_level: 1, max_level: 7, item_type: "", scored: "", min_score: "", max_score: "",
+    status: "active", order: "recent",
   });
+  const [skillIds, setSkillIds] = useState<string[]>([]);
   const [pagina, setPagina] = useState(0);
   const [lista, setLista] = useState<{ total: number; items: ItemSummary[] }>({ total: 0, items: [] });
   const [abierto, setAbierto] = useState<string | null>(null);
@@ -43,46 +50,50 @@ export function ItemBrowser({ portal, modo, acciones, version = 0 }: Props) {
   // Catálogos para los filtros.
   useEffect(() => {
     api<Skill[]>(portal, `${CATALOG_URL}/skills`).then(setSkills).catch((e) => setError(e.message));
-    api<Level[]>(portal, `${CATALOG_URL}/levels`).then(setNiveles).catch(() => {});
-    if (modo === "validador") api<RoleProfile[]>(portal, `${CATALOG_URL}/role-profiles`).then(setPerfiles).catch(() => {});
+    api<RoleProfile[]>(portal, `${CATALOG_URL}/role-profiles`).then(setPerfiles).catch(() => {});
   }, [portal, modo]);
 
+  const nueva = useVigencia();
   const cargarLista = useCallback(() => {
-    api<{ total: number; items: ItemSummary[] }>(
-      portal,
-      `${CONTENT_URL}/items${consulta({ ...filtros, limit: LIMITE, offset: pagina * LIMITE })}`,
-    )
-      .then((r) => { setLista(r); setError(""); })
-      .catch((e) => setError(e.message));
-  }, [portal, filtros, pagina, version]);
+    const vigente = nueva();
+    const { min_level, max_level, ...resto } = filtros;
+    const q = new URLSearchParams(consulta({ ...resto, min_level: min_level === 1 ? "" : min_level, max_level: max_level === 7 ? "" : max_level,
+      limit: LIMITE, offset: pagina * LIMITE }).slice(1));
+    skillIds.forEach((id) => q.append("skill_ids", id));
+    api<{ total: number; items: ItemSummary[] }>(portal, `${CONTENT_URL}/items?${q.toString()}`)
+      .then((r) => { if (vigente()) { setLista(r); setError(""); } })
+      .catch((e) => { if (vigente()) setError(e.message); });
+  }, [portal, filtros, skillIds, pagina, version, nueva]);
 
   useEffect(cargarLista, [cargarLista]);
 
+  const nuevaDetalle = useVigencia();
   const cargarDetalle = useCallback(() => {
+    const vigente = nuevaDetalle();
     if (!abierto) return setDetalle(null);
-    api<ItemDetailData>(portal, `${CONTENT_URL}/items/${abierto}`).then(setDetalle).catch((e) => setError(e.message));
-  }, [portal, abierto]);
+    api<ItemDetailData>(portal, `${CONTENT_URL}/items/${abierto}`)
+      .then((d) => { if (vigente()) setDetalle(d); })
+      .catch((e) => { if (vigente()) setError(e.message); });
+  }, [portal, abierto, nuevaDetalle]);
 
   useEffect(cargarDetalle, [cargarDetalle]);
 
-  const skillFiltrada = skills.find((s) => s.id === filtros.skill_id);
+  const porCodigo = new Map(skills.map((s) => [s.code, s]));
   const recargar = () => { cargarLista(); cargarDetalle(); };
   const cambiar = (campo: string, valor: string) => { setFiltros({ ...filtros, [campo]: valor }); setPagina(0); };
+  const [barra, setBarra] = useState<HTMLElement | null>(null);
 
   return (
     <div className="banco">
       <section className="filtros">
+        <FiltroSkills portal={portal} skills={skills} seleccion={skillIds} alCambiar={(ids) => { setSkillIds(ids); setPagina(0); }}
+                      perfiles={modo === "docente" ? perfiles : undefined}
+                      cargarPerfil={modo === "docente" ? (id) => api<RoleProfileDetail>(portal, `${CATALOG_URL}/role-profiles/${id}`) : undefined} />
         <div className="campo-filtro">
-          <span>Skill</span>
-          <SkillPicker skills={skills} alElegir={(id) => cambiar("skill_id", id)} alLimpiar={() => cambiar("skill_id", "")}
-                       texto={skillFiltrada ? `${skillFiltrada.code} · ${skillFiltrada.name} ▾` : "Todas ▾"} />
+          <span>Nivel de responsabilidad: {filtros.min_level === 1 && filtros.max_level === 7 ? "cualquiera" : `${filtros.min_level} a ${filtros.max_level}`}</span>
+          <NivelesRango desde={filtros.min_level} hasta={filtros.max_level} color="#4f5966" etiqueta="Nivel de responsabilidad"
+                        alCambiar={(lo, hi) => { setFiltros({ ...filtros, min_level: lo, max_level: hi }); setPagina(0); }} />
         </div>
-        <label>Nivel de responsabilidad
-          <select value={filtros.level} onChange={(e) => cambiar("level", e.target.value)}>
-            <option value="">Todos</option>
-            {niveles.map((n) => <option key={n.level} value={n.level}>{n.level} · {n.description}</option>)}
-          </select>
-        </label>
         {modo === "validador" && (
           <label>Rol
             <select value={filtros.role_profile_id} onChange={(e) => cambiar("role_profile_id", e.target.value)}>
@@ -118,47 +129,32 @@ export function ItemBrowser({ portal, modo, acciones, version = 0 }: Props) {
             </select>
           </label>
         )}
-        {modo === "docente" && (
-          <label className="check">
-            <input type="checkbox" checked={filtros.mine === "true"} onChange={(e) => cambiar("mine", e.target.checked ? "true" : "")} />
-            Solo mis ítems
-          </label>
-        )}
+        <Ordenar valor={filtros.order} opciones={ORDENES} alCambiar={(v) => cambiar("order", v)} />
       </section>
 
       {error && <p className="error">{error}</p>}
 
       <div className="dos-columnas">
         <section className="lista">
-          <p className="suave">{lista.total} ítem(s)</p>
-          {lista.items.map((i) => (
-            <button key={i.id} className={`fila ${abierto === i.id ? "activa" : ""}`} onClick={() => setAbierto(i.id)}>
-              <span className="fila-titulo">
-                <span className="fila-datos">
-                  <IconoTipo tipo={i.type} />{" "}
-                  <strong>{i.skill_code}</strong>{" "}
-                  <NivelChip nivel={i.level} color={colorDe(skills.find((s) => s.code === i.skill_code)?.category ?? null)} />{" "}
-                  <span className="suave">{i.estimated_minutes} min</span>
-                  {i.status === "inactive" && <span className="etiqueta">inactivo</span>}
-                  {modo === "docente" && <span className={`etiqueta ${i.available_to_experts ? "publico" : ""}`}>{i.available_to_experts ? "público" : "privado"}</span>}
-                </span>
-                <Puntuacion promedio={i.average_score} cantidad={i.scores_count} />
-              </span>
-              <span className="enunciado">{i.statement}</span>
-            </button>
-          ))}
-          <div className="paginacion">
-            <button disabled={pagina === 0} onClick={() => setPagina(pagina - 1)}>Anterior</button>
-            <span>Página {pagina + 1}</span>
-            <button disabled={(pagina + 1) * LIMITE >= lista.total} onClick={() => setPagina(pagina + 1)}>Siguiente</button>
+          <div className="lista-cabecera">
+            <span className="suave">{lista.total} ítem(s)</span>
+            <Paginacion pagina={pagina} total={lista.total} limite={LIMITE} alCambiar={setPagina} />
           </div>
+          {lista.items.map((i) => (
+            <FilaItem key={i.id} activa={abierto === i.id} alPulsar={() => setAbierto(i.id)}
+                      d={{ type: i.type, skill_code: i.skill_code, category: porCodigo.get(i.skill_code)?.category ?? null, level: i.level,
+                           estimated_minutes: i.estimated_minutes, statement: i.statement, privado: modo === "docente" && !i.available_to_experts,
+                           inactivo: i.status === "inactive", average_score: i.average_score, scores_count: i.scores_count }} />
+          ))}
+          {lista.total > LIMITE && <Paginacion pagina={pagina} total={lista.total} limite={LIMITE} alCambiar={setPagina} />}
         </section>
 
         <section className="panel">
           {detalle ? (
             <>
-              <ItemDetail item={detalle} />
-              {acciones?.(detalle, recargar, setAbierto)}
+              <div className="panel-cabecera"><span className="barra-iconos" ref={setBarra} /></div>
+              <ItemDetail item={detalle} categoria={porCodigo.get(detalle.skill.code)?.category ?? null} />
+              {acciones?.(detalle, recargar, setAbierto, barra)}
             </>
           ) : (
             <p className="suave">Elige un ítem de la lista para ver sus atributos.</p>

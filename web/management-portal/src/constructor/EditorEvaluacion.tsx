@@ -26,9 +26,11 @@ export function EditorEvaluacion({ id, alSalir, alAbrir }: Props) {
 
   useEffect(() => {
     if (id === null) return;
+    let vigente = true;
     api<EvaluationDetail>("docente", `${BUILDER_URL}/evaluations/${id}`)
-      .then((d) => { setDetalle(d); setListo(true); })
-      .catch((e) => setError(e.message));
+      .then((d) => { if (vigente) { setDetalle(d); setListo(true); } })
+      .catch((e) => { if (vigente) setError(e.message); });
+    return () => { vigente = false; };
   }, [id]);
 
   const soloLectura = detalle !== null && detalle.status !== "draft";
@@ -39,8 +41,8 @@ export function EditorEvaluacion({ id, alSalir, alAbrir }: Props) {
 
   return (
     <section>
-      <div className="acciones" style={{ justifyContent: "space-between" }}>
-        <h2 style={{ margin: 0 }}>{detalle ? detalle.name : "Nueva evaluación"}</h2>
+      <div className="acciones entre">
+        <h2 className="m-0">{detalle ? detalle.name : "Nueva evaluación"}</h2>
         <button onClick={alSalir}>← Mis evaluaciones</button>
       </div>
       {!soloLectura && (

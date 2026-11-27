@@ -2,6 +2,7 @@
 
 // Generación de ítems con IA (HU-04 y HU-06) en tres pasos, como el prototipo:
 // 1. Qué evaluar (recuadros por skill) → 2. Contexto y resumen → 3. Revisión de borradores y publicación.
+import { BarraFlotante } from "../shared/BarraFlotante";
 import { useEffect, useState } from "react";
 import { api } from "../shared/api";
 import { colorDe } from "../shared/categorias";
@@ -15,7 +16,7 @@ type Paso = "evaluar" | "resumen" | "generando" | "revision" | "publicado";
 interface Grupo { box: Box; tipo: string; cantidad: number; minutos: number }
 
 // El trabajo sin publicar se guarda en el navegador: sobrevive a una recarga, a cerrar la pestaña o a volver a iniciar sesión.
-const CLAVE_TRABAJO = "sprint1_borradores_docente";
+const CLAVE_TRABAJO = "sfia_borradores_docente";
 const olvidarTrabajo = () => { try { localStorage.removeItem(CLAVE_TRABAJO); } catch {} };
 
 const SIMULTANEAS = 3; // pedidos a la IA en paralelo (cada uno lanza un subproceso de la CLI)
@@ -77,7 +78,7 @@ export function GenerateView({ alCrear }: { alCrear: () => void }) {
   const motivo = boxes.length === 0
     ? "Añade al menos una skill, o las skills de un rol."
     : sinTipos.length > 0
-      ? `Marca al menos un tipo de ítem en: ${sinTipos.map((b) => skills.find((s) => s.id === b.skill_id)?.code ?? "una skill").join(", ")}.`
+      ? "Hay una skill sin tipo de ítem."
       : "";
   const puedeAvanzar = motivo === "";
 
@@ -149,15 +150,15 @@ export function GenerateView({ alCrear }: { alCrear: () => void }) {
     );
 
   return (
-    <div>
+    <div className="con-barra-flotante">
       {error && <p className="error">{error}</p>}
       {paso === "evaluar" && (
         <>
           <StepEvaluar skills={skills} niveles={niveles} perfiles={perfiles} boxes={boxes} setBoxes={setBoxes} cargarPerfil={cargarPerfil} />
-          <div className="acciones">
-            <button className="primario" disabled={!puedeAvanzar} title={motivo || undefined} onClick={() => setPaso("resumen")}>Siguiente</button>
+          <BarraFlotante>
             {motivo && <span className="error" role="status">{motivo}</span>}
-          </div>
+            <button className="primario" disabled={!puedeAvanzar} title={motivo || undefined} onClick={() => setPaso("resumen")}>Siguiente</button>
+          </BarraFlotante>
         </>
       )}
       {paso === "resumen" && (
@@ -175,10 +176,10 @@ export function GenerateView({ alCrear }: { alCrear: () => void }) {
               );
             })}
           </ul>
-          <div className="acciones">
-            <button onClick={() => setPaso("evaluar")}>Atrás</button>
+          <BarraFlotante>
+            <button className="izquierda" onClick={() => setPaso("evaluar")}>Atrás</button>
             <button className="primario" onClick={() => generar(grupos)}>Generar</button>
-          </div>
+          </BarraFlotante>
         </section>
       )}
     </div>

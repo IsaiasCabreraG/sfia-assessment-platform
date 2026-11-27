@@ -140,12 +140,12 @@ def item_usage(item_id: UUID, user: AuthUser = Depends(docente), conn=Depends(ge
 def available_items(skill_ids: list[UUID] = Query(default=[]), min_level: int | None = None,
                     max_level: int | None = None, item_type: str | None = None, q: str | None = None,
                     evaluation_id: UUID | None = None, only_rules: bool = False, limit: int = 20, offset: int = 0,
-                    user: AuthUser = Depends(docente), conn=Depends(get_conn, scope="function")):
+                    order: str = "skill", user: AuthUser = Depends(docente), conn=Depends(get_conn, scope="function")):
     """HU-11: ítems del banco que se pueden agregar, con filtros libres."""
     with conn.cursor() as cur:
         return service.available_items(
             cur, user, skill_ids=skill_ids, min_level=min_level, max_level=max_level, item_type=item_type, q=q,
-            evaluation_id=evaluation_id, only_rules=only_rules, limit=limit, offset=offset)
+            evaluation_id=evaluation_id, only_rules=only_rules, limit=limit, offset=offset, order=order)
 
 
 # ---------- Plantillas (HU-12) ----------

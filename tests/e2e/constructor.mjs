@@ -1,13 +1,23 @@
 // Prueba E2E del Constructor de evaluaciones en el Portal Docente (HU-11, HU-12, HU-38). Crece con cada entrega.
 // Entrega 4a: listado de evaluaciones y paso 1 (reglas): skills con niveles propios, roles, rol personalizado,
 // rol propio y plantillas.
-// Entrega 4b: paso 2 (ítems): banco con filtros, confirmaciones de skill nueva y de rango, orden con dnd-kit y ficha
+// Entrega 4b: paso 2 (ítems): banco que solo ofrece lo que cumple las reglas, orden con dnd-kit y ficha
 // de la versión fijada.
 // Entrega 4c: paso 3 (publicación), evaluación publicada en solo lectura, guardar como plantilla, pestañas Plantillas y
 // Mis roles, y el aviso al desactivar un ítem usado.
 // Uso: node constructor.mjs <url-del-portal> <archivo-de-sesiones.json>
 import { readFileSync } from "node:fs";
 import { chromium } from "/mnt/c/Users/isaia/Repositorios/Tesis/poc/tests/e2e/node_modules/playwright/index.mjs";
+
+/** Responde al diálogo «Confirmar» del portal (ya no se usa window.confirm) y devuelve su mensaje. */
+async function confirmar(page, aceptar = true) {
+  const d = page.getByRole("dialog", { name: "Confirmar" });
+  await d.waitFor();
+  const mensaje = await d.locator("p").innerText();
+  await d.getByRole("button", { name: aceptar ? "Aceptar" : "Cancelar" }).click();
+  await d.waitFor({ state: "detached" });
+  return mensaje;
+}
 
 const BUILDER = "http://localhost:9005", CATALOG = "http://localhost:9002", CONTENT = "http://localhost:9004"; // puertos de run_e2e.sh
 const [portal, archivoSesiones] = process.argv.slice(2);
@@ -33,7 +43,7 @@ const sfia = (codigo) => catalogo.find((s) => s.code === codigo);
 
 const browser = await chromium.launch();
 const ctx = await browser.newContext();
-await ctx.addInitScript((s) => { localStorage.setItem("sprint1_token_docente", s.access); localStorage.setItem("sprint1_refresh_docente", s.refresh); }, sesion);
+await ctx.addInitScript((s) => { localStorage.setItem("sfia_token_docente", s.access); localStorage.setItem("sfia_refresh_docente", s.refresh); }, sesion);
 const page = await ctx.newPage();
 const errores = [];
 page.on("pageerror", (e) => errores.push(String(e)));
@@ -42,9 +52,9 @@ page.on("console", (m) => { if (m.type() === "error") errores.push(m.text()); })
 const botonExacto = (nombre) => page.getByRole("button", { name: nombre, exact: true });
 const filasSkill = () => page.locator(".skill-eval");
 const filaSkill = (codigo) => page.locator(".skill-eval", { has: page.locator(".skill-codigo", { hasText: new RegExp(`^${codigo}$`) }) });
-/** Abre «+ Añadir skill…», busca por código y elige la skill. */
+/** Abre «Añadir una skill», busca por código y elige la skill. */
 async function anadirSkill(codigo) {
-  await botonExacto("+ Añadir skill…").click();
+  await botonExacto("Añadir una skill").click();
   await page.getByLabel("Buscar skill").fill(codigo);
   await page.locator("button.skill-opcion", { has: page.locator(".codigo", { hasText: new RegExp(`^${codigo}$`) }) }).first().click();
 }
@@ -63,18 +73,28 @@ try {
   await page.getByLabel("Nombre de la evaluación").fill(nombreEvaluacion);
   await anadirSkill("PROG");
   const prog = sfia("PROG");
-  await filaSkill("PROG").getByText(`SFIA define esta skill en los niveles ${prog.min_level} a ${prog.max_level}`).waitFor();
-  const valor = async (etiqueta) => Number(await page.getByLabel(etiqueta).inputValue());
-  if ((await valor("Nivel mínimo de PROG")) !== prog.min_level || (await valor("Nivel máximo de PROG")) !== prog.max_level)
-    throw new Error("la skill debe partir del rango que SFIA define para ella");
+  const rangoEnPantalla = async (codigo) => {
+    const marcados = await page.getByRole("group", { name: `Niveles de ${codigo}` }).locator("button[aria-pressed=true]").evaluateAll((bs) => bs.map((b) => Number(b.dataset.nivel)));
+    return [Math.min(...marcados), Math.max(...marcados)];
+  };
+  const [minPantalla, maxPantalla] = await rangoEnPantalla("PROG");
+  if (minPantalla !== prog.min_level || maxPantalla !== prog.max_level) throw new Error("la skill debe partir del rango que SFIA define para ella");
   const nuevoMin = Math.min(prog.min_level + 1, prog.max_level);
-  await page.getByLabel("Nivel mínimo de PROG").selectOption(String(nuevoMin));
-  await page.getByLabel("Nivel máximo de PROG").selectOption(String(Math.max(nuevoMin, 7)));  // se puede salir del rango SFIA
+  const grupo = page.getByRole("group", { name: "Niveles de PROG" });
+  await grupo.getByRole("button", { name: "Nivel 7", exact: true }).click();   // un nivel y luego otro eligen el rango (se puede salir del rango SFIA)
+  await grupo.getByRole("button", { name: `Nivel ${nuevoMin}`, exact: true }).click();
+  const [lo, hi] = await rangoEnPantalla("PROG");
+  if (lo !== nuevoMin || hi !== 7) throw new Error(`el rango elegido es ${lo}-${hi}, se esperaba ${nuevoMin}-7`);
   if (prog.max_level < 7) await filaSkill("PROG").getByText("fuera del rango SFIA").waitFor();
-  paso("[HU-11-2] cada skill muestra el rango SFIA y sus niveles en la evaluación (por defecto los de SFIA), editables por skill");
+  // Al pasar el cursor, la skill se expande con su descripción y lo que significa cada nivel
+  await filaSkill("PROG").hover();
+  await esperar(async () => !(await filaSkill("PROG").locator(".ficha-skill").innerText()).includes("Cargando la descripción"));
+  await esperar(async () => (await filaSkill("PROG").locator(".ficha-niveles li").count()) === prog.max_level - prog.min_level + 1);
+  paso("[HU-11-2] al pasar el cursor, la skill muestra su descripción y sus niveles");
+  paso("[HU-11-2] cada skill muestra sus niveles como cuadritos (por defecto los de SFIA), editables por skill");
 
   // Skills de un rol: core y related solo se ven en la ventana; el rol queda como base y al cambiar las skills es personalizado
-  await page.getByRole("button", { name: "+ Añadir skills de un rol…" }).click();
+  await page.getByRole("button", { name: "Añadir desde un rol", exact: true }).click();
   const dialogo = page.getByRole("dialog", { name: "Añadir skills de un rol" });
   await dialogo.getByLabel("Buscar rol").fill("Accessibility practitioners");
   await dialogo.locator("button.rol-opcion", { hasText: "Accessibility practitioners" }).click();
@@ -104,11 +124,19 @@ try {
 
   // Listado: continuar recupera lo guardado
   await page.getByRole("button", { name: "← Mis evaluaciones" }).click();
-  const fila = page.locator("table.tabla-eval tbody tr", { hasText: nombreEvaluacion });
+  const fila = page.locator("li.fila-evaluacion", { hasText: nombreEvaluacion });
   await fila.waitFor();
+  if ((await fila.evaluate((e) => getComputedStyle(e).gridTemplateColumns.split(" ").length)) !== 6) throw new Error("los atributos de la evaluación deben ir en columnas");
+  await page.locator(".cabecera-eval").waitFor();
+  // los títulos de las columnas quedan sobre sus datos y las acciones son iconos (sin texto)
+  for (const i of [0, 1, 2, 3]) {
+    const xTitulo = (await page.locator(".cabecera-eval > span").nth(i + 1).boundingBox()).x, xDato = (await fila.locator(":scope > span").nth(i).boundingBox()).x;
+    if (Math.abs(xTitulo - xDato) > 2) throw new Error(`el título de la columna ${i + 1} está desplazado (${xTitulo} ≠ ${xDato})`);
+  }
+  if ((await fila.getByRole("button", { name: "Continuar" }).innerText()).trim() !== "") throw new Error("«Continuar» debe ser un icono, sin texto");
   await fila.getByRole("button", { name: "Continuar" }).click();
   await esperar(async () => (await filasSkill().count()) === 2);
-  if ((await valor("Nivel mínimo de PROG")) !== nuevoMin) throw new Error("el nivel guardado no se recuperó");
+  if ((await rangoEnPantalla("PROG"))[0] !== nuevoMin) throw new Error("el nivel guardado no se recuperó");
   await page.getByText("Rol de base:").waitFor();
   paso("[constructor] continuar un borrador recupera sus skills, sus niveles y su rol de base");
 
@@ -117,13 +145,13 @@ try {
   await fila.getByRole("button", { name: "Duplicar" }).click();
   await esperar(async () => (await page.getByLabel("Nombre de la evaluación").inputValue()) === `${nombreEvaluacion} (copia)`);
   await page.getByRole("button", { name: "← Mis evaluaciones" }).click();
-  const copia = page.locator("table.tabla-eval tbody tr", { hasText: `${nombreEvaluacion} (copia)` });
+  const copia = page.locator("li.fila-evaluacion", { hasText: `${nombreEvaluacion} (copia)` });
   await copia.waitFor();
-  page.once("dialog", (d) => d.accept());
   await copia.getByRole("button", { name: "Descartar" }).click();
+  await confirmar(page);
   await esperar(async () => (await copia.count()) === 0);
   await botonExacto("Descartadas").click();
-  await page.locator("table.tabla-eval tbody tr", { hasText: `${nombreEvaluacion} (copia)` }).waitFor();
+  await page.locator("li.fila-evaluacion", { hasText: `${nombreEvaluacion} (copia)` }).waitFor();
   await botonExacto("Borradores").click();
   paso("[HU-12-3] duplicar abre una copia en borrador; descartar la saca de los borradores y la deja en «Descartadas»");
 
@@ -137,7 +165,7 @@ try {
   paso("[HU-12] «Partir de una plantilla» crea un borrador con las skills y los niveles de la plantilla");
   await page.getByRole("button", { name: "← Mis evaluaciones" }).click();
   await botonExacto("+ Nueva evaluación").click();
-  await page.getByRole("button", { name: "+ Añadir skills de un rol propio…" }).click();
+  await page.getByRole("button", { name: "Añadir desde un rol propio" }).click();
   await page.getByRole("dialog", { name: "Añadir skills de un rol propio" }).locator("button.rol-opcion", { hasText: nombreRolPropio }).click();
   await esperar(async () => (await filasSkill().count()) === 2);
   paso("[HU-38] las skills de un rol propio se añaden a la evaluación");
@@ -154,37 +182,32 @@ try {
   const itemEnRango = await publicar(`4b en rango ${sufijo}`, prog.id, 3);
   const itemFuera = await publicar(`4b fuera ${sufijo}`, prog.id, 6);
   const itemNuevo = await publicar(`4b skill nueva ${sufijo}`, otraSkill.id, 3);
-  const evPaso2 = await llamar("POST", `${BUILDER}/evaluations`, { name: `Paso 2 E2E ${sufijo}`, skills: [{ skill_id: prog.id, min_level: 3, max_level: 4 }] });
+  const itemExcluido = await publicar(`4b excluido ${sufijo}`, prog.id, 2);   // nivel fuera de las reglas (PROG 3 a 6)
+  const evPaso2 = await llamar("POST", `${BUILDER}/evaluations`, { name: `Paso 2 E2E ${sufijo}`, skills: [
+    { skill_id: prog.id, min_level: 3, max_level: 6 }, { skill_id: otraSkill.id, min_level: 3, max_level: 3 }] });
   await page.getByRole("button", { name: "← Mis evaluaciones" }).click();
-  await page.locator("table.tabla-eval tbody tr", { hasText: `Paso 2 E2E ${sufijo}` }).getByRole("button", { name: "Continuar" }).click();
+  await page.locator("li.fila-evaluacion", { hasText: `Paso 2 E2E ${sufijo}` }).getByRole("button", { name: "Continuar" }).click();
   await page.getByRole("button", { name: /Ítems/ }).click();
-  const banco = () => page.locator(".fila-banco");
-  const enEvaluacion = () => page.locator(".fila-eval");
+  const banco = () => page.locator(".fila-banco-contenedor");
+  const enEvaluacion = () => page.locator(".fila-eval-contenedor");
   await page.getByLabel("Buscar ítems").fill(sufijo);
-  await esperar(async () => (await banco().count()) === 1);
-  await banco().first().getByText("en rango", { exact: true }).waitFor();
-  paso("[HU-11] el banco ofrece por defecto solo los ítems que cumplen las reglas (skills y niveles de cada una)");
-  await page.getByLabel("Solo ítems que cumplen las reglas").uncheck();
   await esperar(async () => (await banco().count()) === 3);
-  await banco().filter({ hasText: `4b fuera ${sufijo}` }).getByText("fuera de rango", { exact: true }).waitFor();
-  await banco().filter({ hasText: `4b skill nueva ${sufijo}` }).getByText("skill nueva", { exact: true }).waitFor();
-  paso("[HU-11] con filtros libres el banco marca cada ítem: en rango, fuera de rango o skill nueva");
+  if (await banco().filter({ hasText: `4b excluido ${sufijo}` }).count()) throw new Error("el banco no debe ofrecer ítems fuera de las reglas");
+  paso("[HU-11] el banco solo ofrece los ítems que cumplen las reglas (skills y niveles de cada una)");
 
-  await banco().filter({ hasText: `4b en rango ${sufijo}` }).getByRole("button", { name: "Agregar" }).click();
-  await esperar(async () => (await enEvaluacion().count()) === 1);
-  await banco().filter({ hasText: `4b fuera ${sufijo}` }).getByRole("button", { name: "Agregar" }).click();
-  const dialogoRango = page.getByRole("dialog", { name: "Ítem fuera del rango de la skill" });
-  await dialogoRango.getByText("3 a 4").waitFor();
-  await dialogoRango.getByRole("button", { name: "Ampliar PROG y agregar" }).click();
-  await esperar(async () => (await enEvaluacion().count()) === 2);
-  const rangoNuevo = (await llamar("GET", `${BUILDER}/evaluations/${evPaso2.id}`)).skills.find((s) => s.code === "PROG");
-  if (rangoNuevo.min_level !== 3 || rangoNuevo.max_level !== 6) throw new Error("confirmar debe ampliar el rango de la skill: " + JSON.stringify(rangoNuevo));
-  paso("[HU-11] un ítem fuera del rango de su skill pide confirmación y, al aceptar, amplía el rango de esa skill");
-  await banco().filter({ hasText: `4b skill nueva ${sufijo}` }).getByRole("button", { name: "Agregar" }).click();
-  await page.getByRole("dialog", { name: "Agregar una skill nueva" }).getByRole("button", { name: "Añadir skill y agregar" }).click();
+  // Ordenar por nivel (mayor a menor): el de nivel 6 va primero
+  await page.getByLabel("Ordenar por").selectOption("level_desc");
+  await esperar(async () => /4b fuera/.test(await banco().first().innerText()));
+  paso("[HU-11] el banco se puede ordenar (aquí por nivel, de mayor a menor)");
+
+  for (const texto of ["en rango", "fuera", "skill nueva"]) {
+    await banco().filter({ hasText: `4b ${texto} ${sufijo}` }).getByRole("button", { name: "Agregar" }).click();
+    await esperar(async () => (await banco().filter({ hasText: `4b ${texto} ${sufijo}` }).getByRole("button", { name: "Quitar de la evaluación" }).count()) === 1);   // el «+» pasa a «−»
+  }
   await esperar(async () => (await enEvaluacion().count()) === 3);
-  if (!(await llamar("GET", `${BUILDER}/evaluations/${evPaso2.id}`)).skills.some((s) => s.code === "ACIN")) throw new Error("la skill nueva debe sumarse a la evaluación");
-  paso("[HU-11] un ítem de una skill nueva pide confirmación y, al aceptar, suma la skill a la evaluación");
+  const rangoNuevo = (await llamar("GET", `${BUILDER}/evaluations/${evPaso2.id}`)).skills.find((s) => s.code === "PROG");
+  if (rangoNuevo.min_level !== 3 || rangoNuevo.max_level !== 6) throw new Error("agregar ítems no debe cambiar las reglas: " + JSON.stringify(rangoNuevo));
+  paso("[HU-11] agregar un ítem lo suma a la evaluación sin pedir confirmaciones ni cambiar las reglas");
   await page.getByText("30 min").waitFor();
 
   // Orden con dnd-kit (con el teclado): el tercer ítem sube al primer lugar
@@ -198,17 +221,28 @@ try {
   // La ficha muestra la versión fijada, aunque el ítem tenga una versión más nueva
   await llamar("PUT", `${CONTENT}/items/${itemEnRango.id}`, { item: { statement: `4b en rango ${sufijo} EDITADO`, evaluation_goal: "Objetivo E2E",
     options: [{ text: "A", is_correct: false }, { text: "B", is_correct: true }, { text: "C", is_correct: false }] }, estimated_minutes: 10, available_to_experts: true });
-  await enEvaluacion().filter({ hasText: `4b en rango ${sufijo}` }).getByRole("button", { name: "Rúbrica" }).click();
+  await enEvaluacion().filter({ hasText: `4b en rango ${sufijo}` }).locator(".enunciado").click();
   const ficha = page.getByRole("dialog", { name: "Ficha del ítem" });
+  await ficha.getByRole("button", { name: "Cerrar" }).waitFor();
+  for (const accion of ["Editar", "Regenerar con otro contexto", "Historial"]) await ficha.getByRole("button", { name: accion, exact: true }).waitFor();   // las mismas acciones que en el banco   // la X roja de cerrar, en la esquina de todos los diálogos
   await ficha.getByText("hay una versión más nueva (2)").waitFor();
   if (await ficha.getByText("EDITADO").count()) throw new Error("la ficha debe mostrar la versión fijada (1), no la nueva");
   await page.keyboard.press("Escape");
-  paso("[HU-27-5] «Rúbrica» abre la ficha de la versión fijada en la evaluación y avisa si hay una más nueva");
+  paso("[HU-27-5] pulsar un ítem abre la ficha de la versión fijada en la evaluación y avisa si hay una más nueva");
 
   await enEvaluacion().filter({ hasText: `4b fuera ${sufijo}` }).getByRole("button", { name: "Quitar" }).click();
   await esperar(async () => (await enEvaluacion().count()) === 2);
   await page.getByText("20 min").waitFor();
   paso("[HU-11] quitar un ítem lo saca de la evaluación y actualiza los minutos recomendados");
+  // El ítem agregado se ve más oscuro en el banco y su «−» lo quita de la evaluación (el ítem sigue en el banco)
+  await banco().filter({ hasText: `4b fuera ${sufijo}` }).getByRole("button", { name: "Agregar" }).click();
+  await esperar(async () => (await enEvaluacion().count()) === 3);
+  // «en rango» se editó antes: su versión vigente no es la agregada, así que solo los otros dos se ven oscuros
+  if ((await page.locator(".fila-item.agregada").count()) !== 2) throw new Error("los ítems agregados deben verse más oscuros en el banco");
+  await banco().filter({ hasText: `4b fuera ${sufijo}` }).getByRole("button", { name: "Quitar de la evaluación" }).click();
+  await esperar(async () => (await enEvaluacion().count()) === 2);
+  await banco().filter({ hasText: `4b fuera ${sufijo}` }).getByRole("button", { name: "Agregar" }).waitFor();
+  paso("[HU-11] el ítem agregado se ve más oscuro en el banco y el «−» de su fila lo quita de la evaluación"); 
 
   // ---------- Entrega 4c ----------
   const evaluacion = async (id) => llamar("GET", `${BUILDER}/evaluations/${id}`);
@@ -219,9 +253,18 @@ try {
   await botonExacto("Siguiente: publicación →").click();
   await page.getByText("✓ Tiene al menos un ítem").waitFor();
   await page.getByText("✓ Todos los ítems están activos y disponibles").waitFor();
-  await page.locator("table.tabla-eval tbody tr", { hasText: "PROG" }).getByText("3 a 6").waitFor();
+  const resumenProg = page.locator(".skill-resumen", { hasText: "PROG" });
+  await resumenProg.waitFor();
+  const nivelesProg = await resumenProg.locator(".nivel-celda.activa").allInnerTexts();
+  if (nivelesProg.join("") !== "3456") throw new Error(`los niveles de PROG en el resumen son ${nivelesProg.join(",")}`);
+  if ((await page.locator(".graficos .torta-anillo").count()) !== 2 || (await page.locator(".graficos .linea-niveles .linea-punto").count()) !== 7) throw new Error("el resumen debe tener dos tortas y un gráfico de líneas con los 7 niveles");
+  if (await page.locator(".skills-sin-items").count()) throw new Error("todas las skills tienen ítems: no debe haber bloque «sin ítems»");
+  await page.getByRole("button", { name: "Cambiar la duración" }).click();   // la duración se cambia desde el resumen
   await page.getByLabel("Duración total (min)").fill("5");
   await page.getByText("La duración es menor que la suma de los ítems").waitFor();
+  await page.getByRole("dialog", { name: "Duración total" }).getByRole("button", { name: "Guardar" }).click();
+  await page.getByRole("dialog", { name: "Duración total" }).waitFor({ state: "detached" });
+  await page.getByText("5", { exact: true }).first().waitFor();
   paso("[HU-11-4] el paso 3 resume skills con sus niveles y avisa (sin bloquear) si la duración baja de la suma de los ítems");
 
   // Guardar como plantilla pública: los ítems ya son públicos, no hace falta confirmar nada
@@ -245,9 +288,9 @@ try {
   // Publicadas: «Ver» abre la versión de solo lectura, con la rúbrica de cada ítem, y se puede duplicar
   await page.getByRole("button", { name: "← Mis evaluaciones" }).click();
   await botonExacto("Publicadas").click();
-  await page.locator("table.tabla-eval tbody tr", { hasText: `Paso 2 E2E ${sufijo}` }).getByRole("button", { name: "Ver" }).click();
+  await page.locator("li.fila-evaluacion", { hasText: `Paso 2 E2E ${sufijo}` }).getByRole("button", { name: "Ver" }).click();
   await page.getByText("Esta evaluación ya no se puede modificar").waitFor();
-  await page.locator(".fila-eval").first().getByRole("button", { name: "Rúbrica" }).click();
+  await page.locator(".fila-item").first().click();
   await page.getByRole("dialog", { name: "Ficha del ítem" }).waitFor();
   await page.keyboard.press("Escape");
   await botonExacto("Duplicar").click();
@@ -259,7 +302,7 @@ try {
   const evPrivada = await llamar("POST", `${BUILDER}/evaluations`, { name: `Con ítem privado ${sufijo}`, skills: [{ skill_id: prog.id, min_level: 1, max_level: 7 }] });
   await llamar("PUT", `${BUILDER}/evaluations/${evPrivada.id}`, { item_version_ids: [itemPrivado.version] });
   await page.getByRole("button", { name: "← Mis evaluaciones" }).click();
-  await page.locator("table.tabla-eval tbody tr", { hasText: `Con ítem privado ${sufijo}` }).getByRole("button", { name: "Continuar" }).click();
+  await page.locator("li.fila-evaluacion", { hasText: `Con ítem privado ${sufijo}` }).getByRole("button", { name: "Continuar" }).click();
   await page.getByRole("button", { name: /Publicación/ }).click();
   await botonExacto("Guardar como plantilla…").click();
   const dlg2 = page.getByRole("dialog", { name: "Guardar como plantilla" });
@@ -296,15 +339,14 @@ try {
 
   // Aviso al desactivar un ítem usado en una evaluación publicada y en una plantilla pública
   await page.getByRole("button", { name: "Banco de ítems" }).click();
-  await page.locator("button.fila", { hasText: `4b skill nueva ${sufijo}` }).first().click();
+  await page.locator("section.lista .fila-item", { hasText: `4b skill nueva ${sufijo}` }).first().click();
   let mensaje = "";
-  page.once("dialog", (d) => { mensaje = d.message(); d.dismiss(); });
   await botonExacto("Desactivar ítem").click();
-  await esperar(async () => mensaje !== "");
+  mensaje = await confirmar(page, false);
   if (!/1 evaluación publicada/.test(mensaje) || !/plantilla pública/.test(mensaje)) throw new Error("el aviso debe decir dónde se usa el ítem: " + mensaje);
   if ((await llamar("GET", `${CONTENT}/items/${itemNuevo.id}`)).status !== "active") throw new Error("cancelar no debe desactivar el ítem");
-  page.once("dialog", (d) => d.accept());
   await botonExacto("Desactivar ítem").click();
+  await confirmar(page);
   await esperar(async () => (await llamar("GET", `${CONTENT}/items/${itemNuevo.id}`)).status === "inactive");
   paso("[HU-09] desactivar un ítem usado avisa en cuántas evaluaciones publicadas y plantillas públicas está; cancelar no lo desactiva");
   await page.getByRole("button", { name: "Constructor" }).click();
@@ -321,8 +363,8 @@ try {
   // Plantilla: borrar
   const filaPrivada = page.locator("table.tabla-eval tbody tr", { hasText: `Con ítem privado ${sufijo}` });
   await filaPrivada.waitFor();
-  page.once("dialog", (d) => d.accept());
   await filaPrivada.getByRole("button", { name: "Borrar" }).click();
+  await confirmar(page);
   await esperar(async () => (await filaPrivada.count()) === 0);
   paso("[HU-12] una plantilla propia se borra");
 
@@ -330,7 +372,7 @@ try {
   await pestana("Mis roles").click();
   await botonExacto("+ Nuevo rol").click();
   await page.getByLabel("Nombre").fill(`Rol E2E 4c ${sufijo}`);
-  await botonExacto("+ Añadir skill…").click();
+  await botonExacto("Añadir una skill").click();
   await page.getByLabel("Buscar skill").fill("PROG");
   await page.locator("button.skill-opcion", { has: page.locator(".codigo", { hasText: /^PROG$/ }) }).first().click();
   await botonExacto("Guardar rol").click();
@@ -341,8 +383,8 @@ try {
   await botonExacto("Guardar rol").click();
   const filaEditada = page.locator(".fila-banco", { hasText: `Rol E2E 4c ${sufijo} editado` });
   await filaEditada.waitFor();
-  page.once("dialog", (d) => d.accept());
   await filaEditada.getByRole("button", { name: "Borrar" }).click();
+  await confirmar(page);
   await esperar(async () => (await filaEditada.count()) === 0);
   paso("[HU-38] la pestaña Mis roles crea, edita y borra roles propios (solo skills, sin niveles)");
 

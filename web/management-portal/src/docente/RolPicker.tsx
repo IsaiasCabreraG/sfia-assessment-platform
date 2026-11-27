@@ -3,6 +3,8 @@
 // Menú "+ Añadir skills de un rol": ventana con los roles SFIA agrupados por familia. Al elegir un rol se ven sus skills
 // core y related por separado; el docente marca las que quiere y se agregan al formulario. No se guarda de qué rol
 // salieron: se pueden añadir skills de un rol y después de otro.
+import { FichaSkill, titulosDeNiveles, useNiveles } from "../shared/DescripcionSkill";
+import { Modal } from "../shared/Modal";
 import { useEffect, useMemo, useState } from "react";
 import { colorDe } from "../shared/categorias";
 import { Niveles } from "../shared/Niveles";
@@ -51,14 +53,7 @@ export function RolPicker({ perfiles, skills, cargarPerfil, yaEnFormulario, alAg
       .map(([nombre, roles]) => ({ nombre, roles: roles.sort((x, y) => x.name.localeCompare(y.name)) }));
   }, [perfiles, q]);
 
-  const cerrar = () => { setAbierto(false); setBusqueda(""); setRol(null); setMarcadas(new Set()); setError(""); };
-
-  useEffect(() => {
-    if (!abierto) return;
-    const alTeclear = (e: KeyboardEvent) => { if (e.key === "Escape") cerrar(); };
-    window.addEventListener("keydown", alTeclear);
-    return () => window.removeEventListener("keydown", alTeclear);
-  }, [abierto]);
+  const cerrar = () => { setAbierto(false); setBusqueda(""); setRol(null); setMarcadas(new Set()); setFoco(null); setError(""); };
 
   const alternarFamilia = (f: string) => setExpandidas((prev) => { const n = new Set(prev); if (!n.delete(f)) n.add(f); return n; });
 
@@ -74,6 +69,7 @@ export function RolPicker({ perfiles, skills, cargarPerfil, yaEnFormulario, alAg
     }
   };
 
+  const [foco, setFoco] = useState<string | null>(null); // skill cuya descripción se ve a la derecha
   const alternarSkill = (id: string) => setMarcadas((prev) => { const n = new Set(prev); if (!n.delete(id)) n.add(id); return n; });
 
   const agregar = () => {
@@ -94,33 +90,48 @@ export function RolPicker({ perfiles, skills, cargarPerfil, yaEnFormulario, alAg
         return (
           <button key={s.id} type="button" role="checkbox" aria-checked={marcada} disabled={ya}
                   className={`skill-tarjeta ${marcada ? "marcada" : ""} ${ya ? "ya-esta" : ""}`} style={{ ["--cat" as string]: color }}
-                  onClick={() => alternarSkill(s.id)}>
+                  onClick={() => { alternarSkill(s.id); setFoco(s.id); }} onMouseEnter={() => setFoco(s.id)} onFocus={() => setFoco(s.id)}>
             <span className="codigo">{s.code}</span>
             <span className="nombre">{s.name}</span>
             {ya ? <span className="etiqueta">✓ ya está en el formulario</span> : <span />}
-            <Niveles min={s.min_level} max={s.max_level} color={color} />
+            <Niveles min={s.min_level} max={s.max_level} color={color} titulos={titulos} />
           </button>
         );
       })}
     </section>
   );
 
+  const titulos = titulosDeNiveles(useNiveles());
+  const fichaSkill = skills.find((x) => x.id === (foco ?? rol?.skills[0]?.id)) ?? null;
   const nuevas = rol ? rol.skills.filter((s) => marcadas.has(s.id) && !yaEnFormulario.has(s.id)).length : 0;
 
   return (
     <>
-      <button type="button" onClick={() => setAbierto(true)}>+ Añadir skills de un rol…</button>
+      <button type="button" onClick={() => setAbierto(true)}>Añadir desde un rol</button>
       {abierto && (
-        <div className="menu-fondo" onClick={cerrar}>
-          <div className={`menu-skills ${rol ? "angosto" : ""}`} role="dialog" aria-label="Añadir skills de un rol" onClick={(e) => e.stopPropagation()}>
+        <Modal etiqueta="Añadir skills de un rol" alCerrar={cerrar} encabezado={!rol ? (
+        <div className="menu-cabecera">
+          <strong>Elige un rol SFIA</strong>
+          <input type="search" className="menu-busqueda" autoFocus placeholder="Buscar rol…" aria-label="Buscar rol"
+                 value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+        </div>
+          ) : (
+        <div className="menu-cabecera">
+          <button type="button" onClick={() => { setRol(null); setMarcadas(new Set()); setFoco(null); }}>← Roles</button>
+          <strong>{rol.name}</strong>
+          <span className="suave">{nombreFamilia(rol.family)}</span>
+        </div>
+          )}
+          pie={rol ? (
+        <div className="acciones">
+          <button type="button" className="primario" disabled={nuevas === 0} onClick={agregar}>
+            {nuevas === 0 ? "Añadir skills" : `Añadir ${nuevas} skill${nuevas === 1 ? "" : "s"}`}
+          </button>
+          <button type="button" onClick={() => { setRol(null); setMarcadas(new Set()); setFoco(null); }}>Volver a los roles</button>
+        </div>
+          ) : undefined}>
             {!rol ? (
               <>
-                <div className="menu-cabecera">
-                  <strong>Elige un rol SFIA</strong>
-                  <input type="search" className="menu-busqueda" autoFocus placeholder="Buscar rol…" aria-label="Buscar rol"
-                         value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
-                  <button type="button" onClick={cerrar} aria-label="Cerrar">×</button>
-                </div>
                 <p className="suave">Los roles están agrupados por familia. Al elegir uno verás sus skills y marcarás las que quieres añadir.</p>
                 {error && <p className="error">{error}</p>}
                 {cargando && <p className="suave">Cargando el rol…</p>}
@@ -149,27 +160,20 @@ export function RolPicker({ perfiles, skills, cargarPerfil, yaEnFormulario, alAg
               </>
             ) : (
               <>
-                <div className="menu-cabecera">
-                  <button type="button" onClick={() => { setRol(null); setMarcadas(new Set()); }}>← Roles</button>
-                  <strong>{rol.name}</strong>
-                  <span className="suave">{nombreFamilia(rol.family)}</span>
-                  <button type="button" onClick={cerrar} aria-label="Cerrar">×</button>
-                </div>
                 <p className="suave">Elige las skills que quieres añadir. Las que ya están en el formulario aparecen rellenas y no se pueden quitar desde aquí.</p>
-                <div className="rol-detalle">
-                  {grupo("Skills core", rol.skills.filter((s) => s.is_primary))}
-                  {grupo("Skills related", rol.skills.filter((s) => !s.is_primary))}
-                </div>
-                <div className="acciones">
-                  <button type="button" className="primario" disabled={nuevas === 0} onClick={agregar}>
-                    {nuevas === 0 ? "Añadir skills" : `Añadir ${nuevas} skill${nuevas === 1 ? "" : "s"}`}
-                  </button>
-                  <button type="button" onClick={() => { setRol(null); setMarcadas(new Set()); }}>Volver a los roles</button>
+                <div className="rol-con-ficha">
+                  <div className="rol-detalle">
+                    {grupo("Skills core", rol.skills.filter((s) => s.is_primary))}
+                    {grupo("Skills related", rol.skills.filter((s) => !s.is_primary))}
+                  </div>
+                  <aside className="rol-ficha" aria-label="Descripción de la skill">
+                    {fichaSkill ? <FichaSkill skill={fichaSkill} color={colorDe(fichaSkill.category)} />
+                      : <p className="suave">Pasa el cursor por una skill para ver su descripción.</p>}
+                  </aside>
                 </div>
               </>
             )}
-          </div>
-        </div>
+        </Modal>
       )}
     </>
   );

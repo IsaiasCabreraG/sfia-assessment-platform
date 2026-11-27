@@ -147,20 +147,34 @@ WHERE (%(status)s::text IS NULL OR i.status = %(status)s)
   AND (i.available_to_experts OR (NOT %(only_available)s AND i.created_by = %(user_id)s))
   AND (NOT %(mine)s OR i.created_by = %(user_id)s)
   AND (%(skill_id)s::uuid IS NULL OR i.skill_id = %(skill_id)s)
+  AND (%(skill_ids)s::uuid[] IS NULL OR i.skill_id = ANY(%(skill_ids)s::uuid[]))
   AND (%(profile_id)s::uuid IS NULL OR i.skill_id IN
         (SELECT skill_id FROM catalog.role_profile_skills WHERE profile_id = %(profile_id)s))
   AND (%(item_type)s::text IS NULL OR v.type = %(item_type)s)
   AND (%(level)s::int IS NULL OR v.level = %(level)s)
+  AND (%(min_level)s::int IS NULL OR v.level >= %(min_level)s)
+  AND (%(max_level)s::int IS NULL OR v.level <= %(max_level)s)
   AND (%(scored)s::text IS NULL OR (%(scored)s = 'scored') = (sc.n > 0))
   AND (%(min_score)s::numeric IS NULL OR sc.average >= %(min_score)s)
   AND (%(max_score)s::numeric IS NULL OR sc.average <= %(max_score)s)
-ORDER BY i.created_at DESC, i.id
+ORDER BY {order}, i.id
 LIMIT %(limit)s OFFSET %(offset)s
 """
 
+# Ordenamientos del listado: el valor de `order` elige uno de estos fragmentos (nunca se interpola texto del usuario).
+ORDERS = {
+    "recent": "i.created_at DESC",
+    "oldest": "i.created_at",
+    "score": "sc.average DESC NULLS LAST",
+    "level_asc": "v.level, s.code",
+    "level_desc": "v.level DESC, s.code",
+    "time": "v.estimated_minutes, s.code",
+    "skill": "s.code, v.level",
+}
+
 
 def list_items(cur, filters: dict) -> list[dict]:
-    cur.execute(_LIST_SQL, filters)
+    cur.execute(_LIST_SQL.format(order=ORDERS[filters["order"]]), filters)
     return cur.fetchall()
 
 

@@ -3,20 +3,28 @@
 // Plantillas (HU-12): las mías y las públicas de otros docentes. Una plantilla pública con un ítem desactivado o no
 // público queda «no disponible» (decisión momentánea, ver sprint-2.md). De una plantilla se crea un borrador, y las
 // propias se pueden renombrar, cambiar de visibilidad o borrar.
+import { useConfirmar } from "../shared/useConfirmar";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../shared/api";
 import { BUILDER_URL } from "../shared/config";
+import { ErrorCarga } from "../shared/EstadoCarga";
+import { useVigencia } from "../shared/useVigencia";
 import type { TemplateSummary } from "../shared/types";
 import { DialogoPlantilla, type ItemDePlantilla } from "./DialogoPlantilla";
 
 export function ListaPlantillas({ alUsar }: { alUsar: (evaluacionId: string) => void }) {
+  const [confirmar, dialogoConfirmar] = useConfirmar();
   const [lista, setLista] = useState<TemplateSummary[] | null>(null);
   const [edicion, setEdicion] = useState<{ plantilla: TemplateSummary; items: ItemDePlantilla[] } | null>(null);
   const [error, setError] = useState("");
 
+  const nueva = useVigencia();
   const cargar = useCallback(() => {
-    api<TemplateSummary[]>("docente", `${BUILDER_URL}/templates`).then((r) => { setLista(r); setError(""); }).catch((e) => setError(e.message));
-  }, []);
+    const vigente = nueva();
+    api<TemplateSummary[]>("docente", `${BUILDER_URL}/templates`)
+      .then((r) => { if (vigente()) { setLista(r); setError(""); } })
+      .catch((e) => { if (vigente()) setError(e.message); });
+  }, [nueva]);
   useEffect(cargar, [cargar]);
 
   const usar = async (t: TemplateSummary) => {
@@ -34,16 +42,17 @@ export function ListaPlantillas({ alUsar }: { alUsar: (evaluacionId: string) => 
   };
 
   const borrar = async (t: TemplateSummary) => {
-    if (!window.confirm(`¿Borrar la plantilla «${t.name}»? Las evaluaciones creadas desde ella no cambian.`)) return;
+    if (!await confirmar(`¿Borrar la plantilla «${t.name}»? Las evaluaciones creadas desde ella no cambian.`)) return;
     try { await api("docente", `${BUILDER_URL}/templates/${t.id}`, { method: "DELETE" }); cargar(); }
     catch (e) { setError((e as Error).message); }
   };
 
   return (
     <section>
-      <h2 style={{ margin: "0 0 .5rem" }}>Plantillas</h2>
-      {error && <p className="error">{error}</p>}
-      {lista === null ? <p className="suave">Cargando…</p> : lista.length === 0 ? (
+      {dialogoConfirmar}
+      <h2 className="mb-5">Plantillas</h2>
+      {error && lista !== null && <p className="error">{error}</p>}
+      {lista === null ? (error ? <ErrorCarga mensaje={error} alReintentar={() => { setError(""); cargar(); }} /> : <p className="suave">Cargando…</p>) : lista.length === 0 ? (
         <p className="suave">No hay plantillas. Se crean con «Guardar como plantilla» desde una evaluación.</p>
       ) : (
         <table className="tabla-eval">
